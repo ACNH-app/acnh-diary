@@ -278,7 +278,11 @@ export function createDetailController({
     state.activeDetailPayload = payload;
     const summary = payload.summary || {};
     detailTitle.textContent = summary.name_en || payload.item?.name_en || "상세 정보";
-    detailImage.src = summary.image_url || "/static/no-image.svg";
+    const isArtMode = state.activeMode === "art";
+    const detailImageUrl = isArtMode
+      ? summary.art_real_image_url || summary.image_url
+      : summary.image_url;
+    detailImage.src = detailImageUrl || "/static/no-image.svg";
     detailImage.onerror = () => {
       detailImage.src = "/static/no-image.svg";
     };

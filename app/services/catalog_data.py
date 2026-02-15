@@ -305,6 +305,7 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         item["real_image_url"] = _first_non_empty(
             real_info,
             [
+                "texture_url",
                 "real_image_url",
                 "real_art_url",
                 "real_url",
@@ -312,12 +313,11 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
                 "image_url",
                 "image",
                 "highResTexture",
-                "texture_url",
             ],
         )
         item["fake_image_url"] = _first_non_empty(
             fake_info,
-            ["fake_image_url", "fake_art_url", "forgery_image_url", "image_url", "texture_url"],
+            ["texture_url", "fake_image_url", "fake_art_url", "forgery_image_url", "image_url"],
         )
         item["real_description"] = _first_non_empty(
             real_info,
@@ -549,6 +549,7 @@ def _catalog_detail_payload(
             "art_real_image_url": _first_non_empty(
                 real_info,
                 [
+                    "texture_url",
                     "real_image_url",
                     "real_art_url",
                     "real_url",
@@ -556,12 +557,11 @@ def _catalog_detail_payload(
                     "image_url",
                     "image",
                     "highResTexture",
-                    "texture_url",
                 ],
             ),
             "art_fake_image_url": _first_non_empty(
                 fake_info,
-                ["fake_image_url", "fake_art_url", "forgery_image_url", "image_url", "texture_url"],
+                ["texture_url", "fake_image_url", "fake_art_url", "forgery_image_url", "image_url"],
             ),
         },
         "fields": fields,

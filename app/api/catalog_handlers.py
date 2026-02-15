@@ -176,7 +176,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
 
         detail_row = base_row
         from_single = False
-        should_fetch_single = len(deps.build_variations(base_row)) == 0
+        # art는 목록 응답에 real_info/fake_info가 충분히 포함되므로
+        # single endpoint 추가 호출을 생략해 상세 열기 속도를 개선한다.
+        should_fetch_single = catalog_type != "art" and len(deps.build_variations(base_row)) == 0
         if should_fetch_single:
             name_en = str(base_row.get("event") or base_row.get("name") or "").strip()
             try:

@@ -46,6 +46,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         if catalog_type == "events":
             event_types = sorted({x["event_type"] for x in rows if x["event_type"]})
             response["event_types"] = event_types
+        if catalog_type == "art":
+            response["authenticity_types"] = [
+                {"en": "genuine_only", "ko": "진품만"},
+                {"en": "has_fake", "ko": "가품 있음"},
+            ]
 
         return response
 
@@ -56,6 +61,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         style: str = "",
         label_theme: str = "",
         event_type: str = "",
+        fake_state: str = "",
         owned: bool | None = None,
         variation_scope: str = "",
         sort_by: str = "name",
@@ -90,6 +96,8 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             items = [x for x in items if label_theme in x.get("label_themes", [])]
         if event_type:
             items = [x for x in items if x.get("event_type") == event_type]
+        if fake_state:
+            items = [x for x in items if x.get("authenticity") == fake_state]
 
         items = deps.with_catalog_state(catalog_type, items)
         items = deps.with_catalog_variation_counts(catalog_type, items)
@@ -127,6 +135,31 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             "page_size": page_size,
             "has_more": has_more,
             "items": paged_items,
+        }
+
+    def get_art_guide() -> dict[str, Any]:
+        if "art" not in deps.catalog_types:
+            raise HTTPException(status_code=404, detail="미술품 카탈로그가 없습니다.")
+        items = deps.load_catalog("art")
+        rows = deps.sort_catalog_items(items, sort_by="name", sort_order="asc")
+        return {
+            "count": len(rows),
+            "items": [
+                {
+                    "id": x["id"],
+                    "name": x.get("name") or x.get("name_en") or "",
+                    "name_ko": x.get("name_ko") or "",
+                    "name_en": x.get("name_en") or "",
+                    "authenticity": x.get("authenticity") or "",
+                    "authenticity_ko": x.get("authenticity_ko") or "",
+                    "real_image_url": x.get("real_image_url") or x.get("image_url") or "",
+                    "fake_image_url": x.get("fake_image_url") or "",
+                    "real_description": x.get("real_description") or "",
+                    "fake_description": x.get("fake_description") or "",
+                    "owned": bool(x.get("owned")),
+                }
+                for x in deps.with_catalog_state("art", rows)
+            ],
         }
 
     def get_catalog_detail(catalog_type: str, item_id: str) -> dict[str, Any]:
@@ -291,4 +324,5 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         update_catalog_state=update_catalog_state,
         update_catalog_variation_state=update_catalog_variation_state,
         update_catalog_variation_state_batch=update_catalog_variation_state_batch,
+        get_art_guide=get_art_guide,
     )

@@ -137,9 +137,35 @@ def _item_id(catalog_type: str, row: dict[str, Any], name_en: str) -> str:
 
 
 def _extract_image_url(row: dict[str, Any]) -> str:
-    image_url = str(row.get("image_url") or row.get("icon_url") or "").strip()
+    image_url = str(
+        row.get("image_url")
+        or row.get("icon_url")
+        or row.get("image")
+        or row.get("real_image_url")
+        or row.get("real_art_url")
+        or row.get("fake_image_url")
+        or row.get("texture_url")
+        or row.get("highResTexture")
+        or ""
+    ).strip()
+    if image_url.startswith("//"):
+        image_url = f"https:{image_url}"
     if image_url:
         return image_url
+    real_info = row.get("real_info")
+    if isinstance(real_info, dict):
+        nested = str(real_info.get("image_url") or real_info.get("texture_url") or "").strip()
+        if nested.startswith("//"):
+            nested = f"https:{nested}"
+        if nested:
+            return nested
+    fake_info = row.get("fake_info")
+    if isinstance(fake_info, dict):
+        nested = str(fake_info.get("image_url") or fake_info.get("texture_url") or "").strip()
+        if nested.startswith("//"):
+            nested = f"https:{nested}"
+        if nested:
+            return nested
     variations = row.get("variations")
     if isinstance(variations, list):
         for v in variations:
@@ -148,6 +174,48 @@ def _extract_image_url(row: dict[str, Any]) -> str:
                 if candidate:
                     return candidate
     return ""
+
+
+def _first_non_empty(row: dict[str, Any], keys: list[str]) -> str:
+    for key in keys:
+        value = row.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _first_bool(row: dict[str, Any], keys: list[str], default: bool = False) -> bool:
+    for key in keys:
+        value = row.get(key)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        if isinstance(value, str):
+            norm = value.strip().lower()
+            if norm in {"true", "1", "yes", "y"}:
+                return True
+            if norm in {"false", "0", "no", "n"}:
+                return False
+    return default
+
+
+def _art_auth_state(row: dict[str, Any]) -> str:
+    has_fake = _first_bool(row, ["has_fake", "fake_available", "is_fake_available"], False)
+    return "has_fake" if has_fake else "genuine_only"
+
+
+def _art_real_info(row: dict[str, Any]) -> dict[str, Any]:
+    info = row.get("real_info")
+    return info if isinstance(info, dict) else {}
+
+
+def _art_fake_info(row: dict[str, Any]) -> dict[str, Any]:
+    info = row.get("fake_info")
+    return info if isinstance(info, dict) else {}
 
 
 def _event_origin_key(name_en: str) -> str:
@@ -187,6 +255,8 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
 
     if catalog_type == "events":
         category = str(row.get("type") or "").strip()
+    if catalog_type == "art":
+        category = str(row.get("category") or "Artwork").strip()
     if catalog_type == "clothing":
         extra_filter = "style"
         extra_filter_values = [str(v) for v in (row.get("styles") or []) if str(v).strip()]
@@ -225,6 +295,85 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         origin_key = _event_origin_key(name_en)
         event_country_map = load_event_country_map()
         item["event_country_ko"] = str(event_country_map.get(origin_key, "")).strip()
+    elif catalog_type == "art":
+        has_fake = _first_bool(row, ["has_fake", "fake_available", "is_fake_available"], False)
+        real_info = _art_real_info(row)
+        fake_info = _art_fake_info(row)
+        item["has_fake"] = has_fake
+        item["authenticity"] = _art_auth_state(row)
+        item["authenticity_ko"] = "가품 있음" if has_fake else "진품만"
+        item["real_image_url"] = _first_non_empty(
+            real_info,
+            [
+                "real_image_url",
+                "real_art_url",
+                "real_url",
+                "genuine_image_url",
+                "image_url",
+                "image",
+                "highResTexture",
+                "texture_url",
+            ],
+        )
+        item["fake_image_url"] = _first_non_empty(
+            fake_info,
+            ["fake_image_url", "fake_art_url", "forgery_image_url", "image_url", "texture_url"],
+        )
+        item["real_description"] = _first_non_empty(
+            real_info,
+            [
+                "real_description",
+                "real_art_description",
+                "genuine_description",
+                "description_real",
+                "description",
+            ],
+        )
+        item["fake_description"] = _first_non_empty(
+            fake_info,
+            [
+                "fake_description",
+                "fake_art_description",
+                "forgery_description",
+                "description_fake",
+                "description",
+            ],
+        )
+        # 미술품 목록은 아이콘보다 텍스처가 고화질이라 우선 사용한다.
+        item["image_url"] = (
+            _first_non_empty(real_info, ["texture_url", "image_url"])
+            or _first_non_empty(fake_info, ["texture_url", "image_url"])
+            or item["real_image_url"]
+            or item["fake_image_url"]
+            or item["image_url"]
+        )
+        # 목록 응답에 이미지가 누락되는 경우 single endpoint로 보완한다.
+        if not item["image_url"]:
+            try:
+                single_row = _fetch_single_catalog_row(catalog_type, name_en)
+            except Exception:
+                single_row = None
+            if isinstance(single_row, dict):
+                item["image_url"] = _extract_image_url(single_row)
+                if not item["real_image_url"]:
+                    item["real_image_url"] = _first_non_empty(
+                        single_row,
+                        [
+                            "real_image_url",
+                            "real_art_url",
+                            "real_url",
+                            "genuine_image_url",
+                            "image_url",
+                            "image",
+                            "texture_url",
+                            "highResTexture",
+                        ],
+                    )
+                if not item["fake_image_url"]:
+                    item["fake_image_url"] = _first_non_empty(
+                        single_row,
+                        ["fake_image_url", "fake_art_url", "forgery_image_url", "fake_texture_url"],
+                    )
 
     return item
 
@@ -343,6 +492,41 @@ def _catalog_detail_payload(
         ("URL", str(detail.get("url") or item.get("url") or "")),
     ]
     fields = [{"label": k, "value": v} for k, v in common_fields if v]
+
+    if catalog_type == "art":
+        real_info = _art_real_info(detail)
+        fake_info = _art_fake_info(detail)
+        has_fake = _first_bool(detail, ["has_fake", "fake_available", "is_fake_available"], False)
+        real_desc = _first_non_empty(
+            real_info,
+            [
+                "real_description",
+                "real_art_description",
+                "genuine_description",
+                "description_real",
+                "description",
+            ],
+        )
+        fake_desc = _first_non_empty(
+            fake_info,
+            [
+                "fake_description",
+                "fake_art_description",
+                "forgery_description",
+                "description_fake",
+                "description",
+            ],
+        )
+        museum_desc = _first_non_empty(detail, ["museum_desc", "museum_description", "art_name"])
+        fields.extend(
+            [
+                {"label": "진품/가품", "value": "가품 있음" if has_fake else "진품만"},
+                {"label": "박물관 설명", "value": museum_desc},
+                {"label": "진품 특징", "value": real_desc},
+                {"label": "가품 특징", "value": fake_desc},
+            ]
+        )
+
     variations = _build_variations(detail)
     if variation_state_map:
         variations = [{**v, **variation_state_map.get(v["id"], {"owned": False})} for v in variations]
@@ -359,6 +543,26 @@ def _catalog_detail_payload(
             "event_type": str(detail.get("type") or item.get("event_type") or ""),
             "date": str(detail.get("date") or item.get("date") or ""),
             "variation_total": int(detail.get("variation_total") or item.get("variation_total") or 0),
+            "art_has_fake": _first_bool(
+                detail, ["has_fake", "fake_available", "is_fake_available"], False
+            ),
+            "art_real_image_url": _first_non_empty(
+                real_info,
+                [
+                    "real_image_url",
+                    "real_art_url",
+                    "real_url",
+                    "genuine_image_url",
+                    "image_url",
+                    "image",
+                    "highResTexture",
+                    "texture_url",
+                ],
+            ),
+            "art_fake_image_url": _first_non_empty(
+                fake_info,
+                ["fake_image_url", "fake_art_url", "forgery_image_url", "image_url", "texture_url"],
+            ),
         },
         "fields": fields,
         "variations": variations,

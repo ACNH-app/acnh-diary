@@ -249,6 +249,7 @@
             <div class="controls catalog-filter-controls">
               <input id="catalogSearchInput" type="text" placeholder="이름 검색" />
               <select id="catalogExtraSelect" class="hidden"></select>
+              <button id="catalogArtGuideBtn" type="button" class="hidden">진품/가품 특징</button>
             </div>
           </div>
 
@@ -324,6 +325,20 @@
         </div>
       </article>
     </section>
+
+    <section id="artGuideModal" class="modal hidden" aria-hidden="true">
+      <div id="artGuideBackdrop" class="modal-backdrop"></div>
+      <article class="modal-panel">
+        <header class="modal-header">
+          <h2>미술품 진품/가품 특징</h2>
+          <button id="artGuideCloseBtn" type="button" class="modal-close">닫기</button>
+        </header>
+        <div class="modal-body">
+          <p id="artGuideStatus" class="detail-source">로딩 중...</p>
+          <section id="artGuideList" class="art-guide-list"></section>
+        </div>
+      </article>
+    </section>
     <button id="scrollTopBtn" class="scroll-top-btn hidden" type="button" aria-label="맨 위로">
       ↑
     </button>
@@ -360,6 +375,6 @@
       </article>
     </template>
 
-    <script type="module" src="/static/app.js?v=20260215bu"></script>
+    <script type="module" src="/static/app.js?v=20260215by"></script>
   </body>
 </html>

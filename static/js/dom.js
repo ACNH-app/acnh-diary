@@ -72,6 +72,7 @@ export const villagerTabs = Array.from(document.querySelectorAll("#villagerTabs 
 
 export const catalogSearchInput = document.getElementById("catalogSearchInput");
 export const catalogExtraSelect = document.getElementById("catalogExtraSelect");
+export const catalogArtGuideBtn = document.getElementById("catalogArtGuideBtn");
 export const catalogSortBySelect = document.getElementById("catalogSortBySelect");
 export const catalogSortOrderSelect = document.getElementById("catalogSortOrderSelect");
 export const catalogResetBtn = document.getElementById("catalogResetBtn");
@@ -100,6 +101,11 @@ export const variationUnmarkAllBtn = document.getElementById("variationUnmarkAll
 export const detailPrevBtn = document.getElementById("detailPrevBtn");
 export const detailNextBtn = document.getElementById("detailNextBtn");
 export const detailNavHint = document.getElementById("detailNavHint");
+export const artGuideModal = document.getElementById("artGuideModal");
+export const artGuideBackdrop = document.getElementById("artGuideBackdrop");
+export const artGuideCloseBtn = document.getElementById("artGuideCloseBtn");
+export const artGuideStatus = document.getElementById("artGuideStatus");
+export const artGuideList = document.getElementById("artGuideList");
 
 export const villagerCardTemplate = document.getElementById("villagerCardTemplate");
 export const catalogCardTemplate = document.getElementById("catalogCardTemplate");

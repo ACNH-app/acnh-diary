@@ -133,6 +133,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const desc = fragment.querySelector(".description");
     const owned = fragment.querySelector(".owned");
     const ownedLabel = fragment.querySelector(".owned-label");
+    const isArtMode = state.activeMode === "art";
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.addEventListener("error", () => {
@@ -140,15 +141,21 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     });
 
     nameKo.textContent = v.name_ko || v.name_en;
-    nameEn.textContent = v.name_en ? `EN: ${v.name_en}` : "";
+    nameEn.textContent = isArtMode ? "" : v.name_en ? `EN: ${v.name_en}` : "";
 
     const category = v.category_ko || v.category || "분류 없음";
     const ownedCount = Number(v.variation_owned_count || 0);
     const variationTotal = Number(v.variation_total || 0);
     const variationInfo = variationTotal ? ` | 변형: ${ownedCount}/${variationTotal}` : "";
-    meta.textContent = `분류: ${category}${variationInfo}`;
+    const authenticityInfo = v.authenticity_ko ? ` | ${v.authenticity_ko}` : "";
+    meta.textContent = isArtMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
 
-    if (v.event_type || v.date) {
+    if (isArtMode) {
+      desc.textContent = "";
+      card.classList.add("art-card");
+      icon.classList.add("art-icon");
+      nameKo.classList.add("art-title");
+    } else if (v.event_type || v.date) {
       const parts = [];
       if (v.event_type) parts.push(`타입: ${v.event_type}`);
       if (v.date) parts.push(`날짜: ${v.date}`);

@@ -296,6 +296,34 @@ export function createDetailController({
 
     if (detailExtraImagesSection) detailExtraImagesSection.classList.add("hidden");
     if (detailExtraImages) detailExtraImages.innerHTML = "";
+    if (state.activeMode === "art" && detailExtraImagesSection && detailExtraImages) {
+      const realImage = String(summary.art_real_image_url || "").trim();
+      const fakeImage = String(summary.art_fake_image_url || "").trim();
+      const rows = [
+        ["진품 이미지", realImage],
+        ["가품 이미지", fakeImage],
+      ].filter(([, url]) => url);
+      if (rows.length) {
+        detailExtraImagesSection.classList.remove("hidden");
+        rows.forEach(([label, url]) => {
+          const box = document.createElement("article");
+          box.className = "variation-card static";
+          const img = document.createElement("img");
+          img.className = "variation-image detail-extra-image";
+          img.src = url;
+          img.alt = label;
+          img.onerror = () => {
+            img.src = "/static/no-image.svg";
+          };
+          const title = document.createElement("p");
+          title.className = "variation-title";
+          title.textContent = label;
+          box.appendChild(img);
+          box.appendChild(title);
+          detailExtraImages.appendChild(box);
+        });
+      }
+    }
 
     detailVariations.innerHTML = "";
     state.activeDetailVariations = payload.variations || [];

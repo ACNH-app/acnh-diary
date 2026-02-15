@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import (
+    ART_NAME_MAP_PATH,
     BASE_DIR,
     CATALOG_TYPES,
     CLOTHING_CATEGORY_MAP_PATH,
@@ -102,6 +103,30 @@ def build_local_name_maps() -> None:
 
         write_if_missing_or_empty(FURNITURE_NAME_MAP_PATH, furniture_map)
         write_if_missing_or_empty(FOSSIL_NAME_MAP_PATH, fossils_map)
+
+
+def ensure_art_name_map_from_furniture() -> None:
+    if not FURNITURE_NAME_MAP_PATH.exists():
+        return
+    try:
+        furniture_map = load_json_map(FURNITURE_NAME_MAP_PATH)
+    except Exception:
+        furniture_map = {}
+    if not furniture_map:
+        return
+
+    try:
+        art_map = load_json_map(ART_NAME_MAP_PATH)
+    except Exception:
+        art_map = {}
+
+    # 미술품 전용 맵이 비어 있으면, 기존 가구 한글 맵을 기본값으로 채운다.
+    if art_map:
+        return
+    ART_NAME_MAP_PATH.write_text(
+        json.dumps(furniture_map, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _normalize_name_map(path: Path) -> dict[str, str]:

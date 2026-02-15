@@ -1,6 +1,7 @@
 import { getJSON, updateCatalogState, updateVillagerState } from "./api.js";
 import {
   catalogExtraSelect,
+  catalogArtGuideBtn,
   catalogSearchInput,
   catalogSortBySelect,
   catalogSortOrderSelect,
@@ -89,7 +90,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     catalogSearchInput.placeholder = `${meta.label} 이름 검색 (한글/영문)`;
     const prevExtraValue = catalogExtraSelect.value;
     const prevExtraType = catalogExtraSelect.dataset.extraType || "";
-    renderSubCategoryTabs(catalogType, meta.categories || [], {
+    const subCategoryRows =
+      catalogType === "art" ? meta.authenticity_types || [] : meta.categories || [];
+    renderSubCategoryTabs(catalogType, subCategoryRows, {
       onCategoryChange: () => {
         loadCurrentModeData().catch((err) => console.error(err));
       },
@@ -98,6 +101,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     catalogExtraSelect.classList.add("hidden");
     catalogExtraSelect.innerHTML = "";
     catalogExtraSelect.dataset.extraType = "";
+    if (catalogArtGuideBtn) {
+      catalogArtGuideBtn.classList.toggle("hidden", catalogType !== "art");
+    }
 
     if (catalogType === "clothing") {
       fillSelect(
@@ -121,7 +127,6 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       catalogExtraSelect.dataset.extraType = "event_type";
       catalogExtraSelect.classList.remove("hidden");
     }
-
     const ownedTab = catalogTabs.find((el) => el.dataset.tab === "owned");
     if (ownedTab) ownedTab.textContent = `${meta.status_label}만`;
   }
@@ -168,7 +173,8 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
 
     const queryParams = {
       q: catalogSearchInput.value.trim(),
-      category: state.activeSubCategory,
+      category: catalogType === "art" ? "" : state.activeSubCategory,
+      fake_state: catalogType === "art" ? state.activeSubCategory : "",
       owned: state.activeCatalogTab === "owned" ? true : state.activeCatalogTab === "unowned" ? false : null,
       sort_by: catalogSortBySelect.value,
       sort_order: catalogSortOrderSelect.value,

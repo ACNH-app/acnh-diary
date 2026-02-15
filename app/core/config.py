@@ -25,6 +25,7 @@ FOSSIL_NAME_MAP_PATH = BASE_DIR / "data" / "fossil_name_map_ko.json"
 EVENT_NAME_MAP_PATH = BASE_DIR / "data" / "event_name_map_ko.json"
 EVENT_COUNTRY_MAP_PATH = BASE_DIR / "data" / "event_country_map_ko.json"
 PHOTO_NAME_MAP_PATH = BASE_DIR / "data" / "photo_name_map_ko.json"
+ART_NAME_MAP_PATH = BASE_DIR / "data" / "art_name_map_ko.json"
 
 DB_PATH = BASE_DIR / "app.db"
 NOOKIPEDIA_BASE_URL = "https://api.nookipedia.com"
@@ -228,6 +229,12 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "name_map_path": PHOTO_NAME_MAP_PATH,
         "status_label": "보유",
     },
+    "art": {
+        "label": "미술품",
+        "nook_path": "/nh/art",
+        "name_map_path": ART_NAME_MAP_PATH,
+        "status_label": "기증",
+    },
 }
 
 CATALOG_SINGLE_PATHS: dict[str, str] = {
@@ -240,4 +247,5 @@ CATALOG_SINGLE_PATHS: dict[str, str] = {
     "fossils": "/nh/fossils/all/{name}",
     "events": "/nh/events/{name}",
     "photos": "/nh/photos/{name}",
+    "art": "/nh/art/{name}",
 }

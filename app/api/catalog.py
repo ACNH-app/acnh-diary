@@ -19,6 +19,7 @@ def create_catalog_router(
     get_catalog_meta_handler: Callable[..., dict[str, Any]],
     get_catalog_handler: Callable[..., dict[str, Any]],
     get_catalog_detail_handler: Callable[..., dict[str, Any]],
+    get_art_guide_handler: Callable[..., dict[str, Any]],
     update_catalog_state_handler: Callable[..., CatalogStateOut],
     update_catalog_variation_state_handler: Callable[..., CatalogVariationStateOut],
     update_catalog_variation_state_batch_handler: Callable[..., dict[str, Any]],
@@ -37,6 +38,7 @@ def create_catalog_router(
         style: str = "",
         label_theme: str = "",
         event_type: str = "",
+        fake_state: str = "",
         owned: bool | None = None,
         variation_scope: str = "",
         sort_by: str = "name",
@@ -51,6 +53,7 @@ def create_catalog_router(
             style=style,
             label_theme=label_theme,
             event_type=event_type,
+            fake_state=fake_state,
             owned=owned,
             variation_scope=variation_scope,
             sort_by=sort_by,
@@ -62,6 +65,10 @@ def create_catalog_router(
     @router.get("/api/catalog/{catalog_type}/{item_id}/detail")
     def get_catalog_detail(catalog_type: str, item_id: str) -> dict[str, Any]:
         return get_catalog_detail_handler(catalog_type=catalog_type, item_id=item_id)
+
+    @router.get("/api/catalog/art/guide")
+    def get_art_guide() -> dict[str, Any]:
+        return get_art_guide_handler()
 
     @router.post("/api/catalog/{catalog_type}/{item_id}/state", response_model=CatalogStateOut)
     def update_catalog_state(

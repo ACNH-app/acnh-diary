@@ -31,6 +31,7 @@ import { calendarSelectedDate, resultCount } from "./js/dom.js";
 import { createDataController } from "./js/data.js";
 import { createDetailController } from "./js/detail.js";
 import { bindMainEvents } from "./js/events.js";
+import { bindArtGuideEvents } from "./js/art-guide.js";
 import {
   bindHomeEvents,
   loadHomeIslandResidents,
@@ -83,6 +84,7 @@ bindMainEvents({
   updateScrollTopButton,
   detailController,
 });
+bindArtGuideEvents({ getJSON });
 
 async function ensureHomeProfileLoaded() {
   if (state.islandProfileLoaded) return;

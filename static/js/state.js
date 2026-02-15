@@ -13,7 +13,7 @@ export const state = {
   navModes: [],
   catalogMetaCache: {},
   detailCacheByMode: {},
-  subCategoryEnabledModes: new Set(["clothing", "items", "interior", "furniture"]),
+  subCategoryEnabledModes: new Set(["clothing", "items", "interior", "furniture", "art"]),
   subCategoryStateByMode: {},
   catalogPage: 1,
   catalogPageSize: 60,

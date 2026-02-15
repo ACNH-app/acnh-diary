@@ -24,6 +24,7 @@ from app.core.config import (
     DEFAULT_SPECIES_MAP,
     EVENT_NAME_MAP_PATH,
     EVENT_COUNTRY_MAP_PATH,
+    ART_NAME_MAP_PATH,
     FOSSIL_NAME_MAP_PATH,
     PHOTO_NAME_MAP_PATH,
     FURNITURE_NAME_MAP_PATH,
@@ -71,6 +72,7 @@ from app.services.catalog_data import (
 )
 from app.services.mappings import (
     build_local_name_maps,
+    ensure_art_name_map_from_furniture,
     ensure_map_file,
     load_catalog_name_maps,
     load_clothing_category_map,
@@ -122,7 +124,9 @@ def on_startup() -> None:
     ensure_map_file(EVENT_NAME_MAP_PATH, {})
     ensure_map_file(EVENT_COUNTRY_MAP_PATH, {})
     ensure_map_file(PHOTO_NAME_MAP_PATH, {})
+    ensure_map_file(ART_NAME_MAP_PATH, {})
     build_local_name_maps()
+    ensure_art_name_map_from_furniture()
 
     if not get_api_key():
         raise RuntimeError(
@@ -237,6 +241,7 @@ app.include_router(
         get_catalog_meta_handler=handlers.catalog.get_catalog_meta,
         get_catalog_handler=handlers.catalog.get_catalog,
         get_catalog_detail_handler=handlers.catalog.get_catalog_detail,
+        get_art_guide_handler=handlers.catalog.get_art_guide,
         update_catalog_state_handler=handlers.catalog.update_catalog_state,
         update_catalog_variation_state_handler=handlers.catalog.update_catalog_variation_state,
         update_catalog_variation_state_batch_handler=handlers.catalog.update_catalog_variation_state_batch,

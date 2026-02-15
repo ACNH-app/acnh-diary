@@ -236,6 +236,7 @@ def catalog_progress_summary(
         ("items", "잡화"),
         ("tools", "도구"),
         ("photos", "사진"),
+        ("art", "미술품"),
     ]
     rows: list[dict[str, Any]] = []
     for key, label in catalog_types:

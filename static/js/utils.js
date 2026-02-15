@@ -21,6 +21,58 @@ export function toQuery(params) {
   return q.toString();
 }
 
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+export function toDateTimeLocalValue(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+export function parseDateTimeLocalValue(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+export function getEffectiveNow(stateLike) {
+  if (stateLike && stateLike.timeTravelEnabled) {
+    const parsed = parseDateTimeLocalValue(stateLike.gameDateTime);
+    if (parsed) return parsed;
+  }
+  return new Date();
+}
+
+export function normalizeMonthDay(value) {
+  const src = String(value || "").trim();
+  if (!src) return "";
+
+  // YYYY-MM-DD
+  let m = src.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+  }
+
+  // MM-DD, M-D, MM/DD, M/D
+  m = src.match(/^(\d{1,2})[-/.](\d{1,2})$/);
+  if (m) {
+    const month = Number(m[1]);
+    const day = Number(m[2]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+  }
+
+  return "";
+}
+
 function parseBirthdayRank(birthday) {
   if (!birthday) return 9999;
   const parts = String(birthday).trim().split(/\s+/);

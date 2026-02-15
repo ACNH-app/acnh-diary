@@ -12,11 +12,13 @@ from app.core.config import (
     CLOTHING_CATEGORY_MAP_PATH,
     CLOTHING_LABEL_THEME_MAP_PATH,
     CLOTHING_STYLE_MAP_PATH,
+    EVENT_COUNTRY_MAP_PATH,
     FOSSIL_NAME_MAP_PATH,
     FURNITURE_NAME_MAP_PATH,
     NAME_MAP_PATH,
     PERSONALITY_MAP_PATH,
     SPECIES_MAP_PATH,
+    VILLAGER_SAYING_MAP_PATH,
 )
 from app.utils.text import normalize_name
 
@@ -127,6 +129,11 @@ def load_species_map() -> dict[str, str]:
 
 
 @lru_cache(maxsize=1)
+def load_villager_saying_map() -> dict[str, str]:
+    return _normalize_name_map(VILLAGER_SAYING_MAP_PATH)
+
+
+@lru_cache(maxsize=1)
 def load_clothing_category_map() -> dict[str, str]:
     return load_json_map(CLOTHING_CATEGORY_MAP_PATH)
 
@@ -148,3 +155,62 @@ def load_catalog_name_maps() -> dict[str, dict[str, str]]:
         path = cfg["name_map_path"]
         maps[catalog_type] = _normalize_name_map(path)
     return maps
+
+
+@lru_cache(maxsize=1)
+def load_event_country_map() -> dict[str, str]:
+    return load_json_map(EVENT_COUNTRY_MAP_PATH)
+
+
+@lru_cache(maxsize=1)
+def load_local_villager_catchphrase_ko_map() -> dict[str, str]:
+    path = BASE_DIR / "data" / "acnhapi" / "villagers.json"
+    if not path.exists():
+        return {}
+    try:
+        source = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(source, dict):
+        return {}
+
+    mapped: dict[str, str] = {}
+    for row in source.values():
+        if not isinstance(row, dict):
+            continue
+        name_obj = row.get("name") or {}
+        catch_obj = row.get("catch-translations") or {}
+        if not isinstance(name_obj, dict) or not isinstance(catch_obj, dict):
+            continue
+
+        name_en = str(name_obj.get("name-USen") or name_obj.get("name-EUen") or "").strip()
+        catch_ko = str(catch_obj.get("catch-KRko") or "").strip()
+        if name_en and catch_ko:
+            mapped[normalize_name(name_en)] = catch_ko
+    return mapped
+
+
+@lru_cache(maxsize=1)
+def load_local_music_name_ko_map() -> dict[str, str]:
+    path = BASE_DIR / "data" / "acnhapi" / "music.json"
+    if not path.exists():
+        return {}
+    try:
+        source = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(source, dict):
+        return {}
+
+    mapped: dict[str, str] = {}
+    for row in source.values():
+        if not isinstance(row, dict):
+            continue
+        name_obj = row.get("name") or {}
+        if not isinstance(name_obj, dict):
+            continue
+        name_en = str(name_obj.get("name-USen") or name_obj.get("name-EUen") or "").strip()
+        name_ko = str(name_obj.get("name-KRko") or "").strip()
+        if name_en and name_ko:
+            mapped[normalize_name(name_en)] = name_ko
+    return mapped

@@ -7,6 +7,7 @@ from typing import Any
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 NAME_MAP_PATH = BASE_DIR / "data" / "name_map_ko.json"
+VILLAGER_SAYING_MAP_PATH = BASE_DIR / "data" / "villager_saying_map_ko.json"
 PERSONALITY_MAP_PATH = BASE_DIR / "data" / "personality_map_ko.json"
 SPECIES_MAP_PATH = BASE_DIR / "data" / "species_map_ko.json"
 
@@ -22,25 +23,65 @@ INTERIOR_NAME_MAP_PATH = BASE_DIR / "data" / "interior_name_map_ko.json"
 GYROID_NAME_MAP_PATH = BASE_DIR / "data" / "gyroid_name_map_ko.json"
 FOSSIL_NAME_MAP_PATH = BASE_DIR / "data" / "fossil_name_map_ko.json"
 EVENT_NAME_MAP_PATH = BASE_DIR / "data" / "event_name_map_ko.json"
+EVENT_COUNTRY_MAP_PATH = BASE_DIR / "data" / "event_country_map_ko.json"
+PHOTO_NAME_MAP_PATH = BASE_DIR / "data" / "photo_name_map_ko.json"
 
 DB_PATH = BASE_DIR / "app.db"
 NOOKIPEDIA_BASE_URL = "https://api.nookipedia.com"
 
+_DOTENV_CACHE: dict[str, str] | None = None
+
+
+def _load_dotenv() -> dict[str, str]:
+    global _DOTENV_CACHE
+    if _DOTENV_CACHE is not None:
+        return _DOTENV_CACHE
+
+    result: dict[str, str] = {}
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        _DOTENV_CACHE = result
+        return result
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key:
+            result[key] = value
+
+    _DOTENV_CACHE = result
+    return result
+
+
+def _env(key: str, default: str = "") -> str:
+    val = os.environ.get(key, "").strip()
+    if val:
+        return val
+    return str(_load_dotenv().get(key, default)).strip()
+
 
 def get_api_key() -> str:
-    return os.environ.get("NOOKIPEDIA_API_KEY", "").strip()
+    return _env("NOOKIPEDIA_API_KEY", "")
 
 
 def get_db_path() -> Path:
-    raw = os.environ.get("DB_PATH", str(DB_PATH)).strip()
+    raw = _env("DB_PATH", str(DB_PATH))
     return Path(raw).expanduser()
 
 
 def get_cors_origins() -> list[str]:
-    raw = os.environ.get("CORS_ORIGINS", "*").strip()
+    raw = _env("CORS_ORIGINS", "*")
     if not raw:
         return ["*"]
     return [x.strip() for x in raw.split(",") if x.strip()]
+
+
+def get_app_timezone() -> str:
+    return _env("APP_TIMEZONE", "Asia/Seoul")
 
 
 DEFAULT_PERSONALITY_MAP = {
@@ -181,6 +222,12 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "name_map_path": EVENT_NAME_MAP_PATH,
         "status_label": "완료",
     },
+    "photos": {
+        "label": "사진",
+        "nook_path": "/nh/photos",
+        "name_map_path": PHOTO_NAME_MAP_PATH,
+        "status_label": "보유",
+    },
 }
 
 CATALOG_SINGLE_PATHS: dict[str, str] = {
@@ -192,4 +239,5 @@ CATALOG_SINGLE_PATHS: dict[str, str] = {
     "gyroids": "/nh/gyroids/{name}",
     "fossils": "/nh/fossils/all/{name}",
     "events": "/nh/events/{name}",
+    "photos": "/nh/photos/{name}",
 }

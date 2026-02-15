@@ -23,7 +23,9 @@ from app.core.config import (
     DEFAULT_PERSONALITY_MAP,
     DEFAULT_SPECIES_MAP,
     EVENT_NAME_MAP_PATH,
+    EVENT_COUNTRY_MAP_PATH,
     FOSSIL_NAME_MAP_PATH,
+    PHOTO_NAME_MAP_PATH,
     FURNITURE_NAME_MAP_PATH,
     GYROID_NAME_MAP_PATH,
     INTERIOR_NAME_MAP_PATH,
@@ -32,16 +34,28 @@ from app.core.config import (
     PERSONALITY_MAP_PATH,
     SPECIES_MAP_PATH,
     TOOLS_NAME_MAP_PATH,
+    VILLAGER_SAYING_MAP_PATH,
     get_api_key,
     get_cors_origins,
 )
 from app.core.db import get_db, init_db
 from app.domain.catalog import category_ko_for, order_categories
 from app.repositories.state import (
+    delete_player,
+    delete_calendar_entry,
+    get_island_profile,
+    list_players,
+    list_calendar_entries,
+    list_calendar_entries_by_date,
     get_catalog_variation_state_map,
     recalc_item_owned_from_variations,
+    set_main_player,
     upsert_all_variation_states,
+    upsert_calendar_entry,
     upsert_catalog_state,
+    upsert_island_profile,
+    upsert_player,
+    update_calendar_entry_checked,
     with_catalog_state,
     with_catalog_variation_counts,
     with_villager_state,
@@ -65,6 +79,7 @@ from app.services.mappings import (
     load_korean_name_map,
     load_personality_map,
     load_species_map,
+    load_villager_saying_map,
 )
 from app.utils.sort import sort_catalog_items
 
@@ -89,6 +104,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 @app.on_event("startup")
 def on_startup() -> None:
     ensure_map_file(NAME_MAP_PATH, {})
+    ensure_map_file(VILLAGER_SAYING_MAP_PATH, {})
     ensure_map_file(PERSONALITY_MAP_PATH, DEFAULT_PERSONALITY_MAP)
     ensure_map_file(SPECIES_MAP_PATH, DEFAULT_SPECIES_MAP)
 
@@ -104,13 +120,19 @@ def on_startup() -> None:
     ensure_map_file(GYROID_NAME_MAP_PATH, {})
     ensure_map_file(FOSSIL_NAME_MAP_PATH, {})
     ensure_map_file(EVENT_NAME_MAP_PATH, {})
+    ensure_map_file(EVENT_COUNTRY_MAP_PATH, {})
+    ensure_map_file(PHOTO_NAME_MAP_PATH, {})
     build_local_name_maps()
 
     if not get_api_key():
-        raise RuntimeError("NOOKIPEDIA_API_KEY 환경변수를 설정하세요.")
+        raise RuntimeError(
+            "NOOKIPEDIA_API_KEY가 없습니다. OS 환경변수로 설정하거나 프로젝트 루트의 .env 파일에 "
+            "NOOKIPEDIA_API_KEY=... 형태로 추가하세요."
+        )
 
     init_db()
     load_korean_name_map()
+    load_villager_saying_map()
     load_personality_map()
     load_species_map()
     load_catalog_name_maps()
@@ -138,6 +160,18 @@ handlers = create_handlers(
             load_villagers=load_villagers,
             load_personality_map=load_personality_map,
             load_species_map=load_species_map,
+            load_catalog=load_catalog,
+            get_island_profile=get_island_profile,
+            upsert_island_profile=upsert_island_profile,
+            list_calendar_entries=list_calendar_entries,
+            list_calendar_entries_by_date=list_calendar_entries_by_date,
+            upsert_calendar_entry=upsert_calendar_entry,
+            update_calendar_entry_checked=update_calendar_entry_checked,
+            delete_calendar_entry=delete_calendar_entry,
+            list_players=list_players,
+            upsert_player=upsert_player,
+            set_main_player=set_main_player,
+            delete_player=delete_player,
         ),
         villagers=VillagerHandlerDeps(
             load_villagers=load_villagers,
@@ -176,12 +210,26 @@ app.include_router(
         home_handler=handlers.meta.home,
         nav_handler=handlers.meta.get_nav,
         villager_meta_handler=handlers.meta.get_villager_meta,
+        home_summary_handler=handlers.meta.get_home_summary,
+        island_profile_handler=handlers.meta.get_island_profile,
+        update_island_profile_handler=handlers.meta.update_island_profile,
+        calendar_entries_handler=handlers.meta.get_calendar_entries,
+        calendar_annotations_handler=handlers.meta.get_calendar_annotations,
+        calendar_entries_by_date_handler=handlers.meta.get_calendar_entries_by_date,
+        save_calendar_entry_handler=handlers.meta.save_calendar_entry,
+        set_calendar_entry_checked_handler=handlers.meta.set_calendar_entry_checked,
+        remove_calendar_entry_handler=handlers.meta.remove_calendar_entry,
+        players_handler=handlers.meta.get_players,
+        save_player_handler=handlers.meta.save_player,
+        set_main_player_handler=handlers.meta.set_main_player,
+        remove_player_handler=handlers.meta.remove_player,
     )
 )
 app.include_router(
     create_villager_router(
         get_villagers_handler=handlers.villagers.get_villagers,
         update_villager_state_handler=handlers.villagers.update_villager_state,
+        update_island_order_handler=handlers.villagers.update_island_order,
     )
 )
 app.include_router(

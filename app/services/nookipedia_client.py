@@ -82,9 +82,13 @@ def fetch_nookipedia(path: str, params: dict[str, Any] | None = None) -> Any:
     return data
 
 
-@lru_cache(maxsize=1)
-def load_nookipedia_villagers() -> list[dict[str, Any]]:
-    return fetch_nookipedia("/villagers", {"game": "nh", "nhdetails": "true"})
+@lru_cache(maxsize=4)
+def load_nookipedia_villagers(lang: str = "") -> list[dict[str, Any]]:
+    params: dict[str, Any] = {"game": "nh", "nhdetails": "true"}
+    normalized_lang = str(lang or "").strip().lower()
+    if normalized_lang:
+        params["lang"] = normalized_lang
+    return fetch_nookipedia("/villagers", params)
 
 
 @lru_cache(maxsize=None)

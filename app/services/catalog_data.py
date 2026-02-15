@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from functools import lru_cache
 from typing import Any
 from urllib.parse import quote
@@ -12,9 +13,13 @@ from app.services.mappings import (
     load_catalog_name_maps,
     load_clothing_label_theme_map,
     load_clothing_style_map,
+    load_event_country_map,
     load_korean_name_map,
+    load_local_villager_catchphrase_ko_map,
+    load_local_music_name_ko_map,
     load_personality_map,
     load_species_map,
+    load_villager_saying_map,
 )
 from app.services.nookipedia_client import (
     fetch_nookipedia,
@@ -28,9 +33,22 @@ from app.utils.text import normalize_name
 @lru_cache(maxsize=1)
 def load_villagers() -> list[dict[str, Any]]:
     ko_name_map = load_korean_name_map()
+    saying_ko_map = load_villager_saying_map()
+    catchphrase_ko_map = load_local_villager_catchphrase_ko_map()
+    music_ko_map = load_local_music_name_ko_map()
     personality_map = load_personality_map()
     species_map = load_species_map()
     rows = load_nookipedia_villagers()
+    try:
+        rows_ko = load_nookipedia_villagers("ko")
+    except Exception:
+        rows_ko = []
+
+    rows_ko_by_id: dict[str, dict[str, Any]] = {}
+    for row_ko in rows_ko:
+        row_id = str((row_ko or {}).get("id") or "").strip()
+        if row_id:
+            rows_ko_by_id[row_id] = row_ko
 
     villagers: list[dict[str, Any]] = []
     for row in rows:
@@ -38,10 +56,24 @@ def load_villagers() -> list[dict[str, Any]]:
         if not name_en:
             continue
 
+        row_id = str(row.get("id") or "").strip()
+        row_ko = rows_ko_by_id.get(row_id, {})
         nh = row.get("nh_details") or {}
         personality = str(row.get("personality") or "")
         species = str(row.get("species") or "")
         name_ko = ko_name_map.get(normalize_name(name_en), "")
+        saying_ko = str((row_ko or {}).get("quote") or "").strip()
+        if not saying_ko:
+            saying_ko = saying_ko_map.get(normalize_name(name_en), "")
+        catchphrase_ko = str((row_ko or {}).get("phrase") or "").strip()
+        if not catchphrase_ko:
+            catchphrase_ko = catchphrase_ko_map.get(normalize_name(name_en), "")
+        favorite_colors = [str(v).strip() for v in (nh.get("fav_colors") or []) if str(v).strip()]
+        favorite_styles = [str(v).strip() for v in (nh.get("fav_styles") or []) if str(v).strip()]
+        prev_phrases = [str(v).strip() for v in (row.get("prev_phrases") or []) if str(v).strip()]
+        appearances = [str(v).strip() for v in (row.get("appearances") or []) if str(v).strip()]
+        house_music = str(nh.get("house_music") or "").strip()
+        house_music_ko = music_ko_map.get(normalize_name(house_music), "")
 
         birthday_month = str(row.get("birthday_month") or "").strip()
         birthday_day = str(row.get("birthday_day") or "").strip()
@@ -49,7 +81,7 @@ def load_villagers() -> list[dict[str, Any]]:
 
         villagers.append(
             {
-                "id": str(row.get("id") or ""),
+                "id": row_id,
                 "name": name_ko or name_en,
                 "name_ko": name_ko,
                 "name_en": name_en,
@@ -57,10 +89,37 @@ def load_villagers() -> list[dict[str, Any]]:
                 "species_ko": species_map.get(species, species),
                 "personality": personality,
                 "personality_ko": personality_map.get(personality, personality),
+                "sub_personality": str(nh.get("sub-personality") or ""),
                 "gender": str(row.get("gender") or ""),
                 "hobby": str(nh.get("hobby") or ""),
+                "sign": str(row.get("sign") or ""),
+                "debut": str(row.get("debut") or ""),
+                "title_color": str(row.get("title_color") or ""),
+                "text_color": str(row.get("text_color") or ""),
                 "birthday": birthday,
+                "birthday_month": birthday_month,
+                "birthday_day": birthday_day,
+                "phrase": str(row.get("phrase") or ""),
+                "prev_phrases": prev_phrases,
+                "catchphrase": str(nh.get("catchphrase") or row.get("phrase") or ""),
+                "catchphrase_ko": catchphrase_ko,
                 "saying": str(row.get("quote") or ""),
+                "saying_ko": saying_ko,
+                "favorite_colors": favorite_colors,
+                "favorite_styles": favorite_styles,
+                "default_clothing": str(nh.get("clothing") or row.get("clothing") or ""),
+                "default_clothing_variation": str(nh.get("clothing_variation") or ""),
+                "default_umbrella": str(nh.get("umbrella") or ""),
+                "islander": bool(row.get("islander")),
+                "appearances": appearances,
+                "photo_url": str(nh.get("photo_url") or ""),
+                "house_exterior_url": str(nh.get("house_exterior_url") or ""),
+                "house_interior_url": str(nh.get("house_interior_url") or ""),
+                "house_wallpaper": str(nh.get("house_wallpaper") or ""),
+                "house_flooring": str(nh.get("house_flooring") or ""),
+                "house_music": house_music,
+                "house_music_ko": house_music_ko,
+                "house_music_note": str(nh.get("house_music_note") or ""),
                 "icon_uri": str(nh.get("icon_url") or ""),
                 "image_uri": str(nh.get("image_url") or row.get("image_url") or ""),
             }
@@ -89,6 +148,23 @@ def _extract_image_url(row: dict[str, Any]) -> str:
                 if candidate:
                     return candidate
     return ""
+
+
+def _event_origin_key(name_en: str) -> str:
+    src = str(name_en or "").strip()
+    patterns = [
+        r"^(.+?) Nook Shopping event (?:begins|ends)(?: \((?:Northern|Southern) Hemisphere\))?$",
+        r"^(.+?) Able Sisters event (?:begins|ends)$",
+        r"^(.+?) event (?:begins|ends)$",
+        r"^(.+?) preparation days (?:begin|end)$",
+        r"^(.+?) \((?:Northern|Southern) Hemisphere\)$",
+        r"^(.+?) (?:begins|ends)$",
+    ]
+    for p in patterns:
+        m = re.match(p, src)
+        if m:
+            return str(m.group(1)).strip()
+    return src
 
 
 def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any] | None:
@@ -145,6 +221,10 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         item["styles_ko"] = [style_map.get(v, v) for v in styles]
         item["label_themes"] = label_themes
         item["label_themes_ko"] = [label_theme_map.get(v, v) for v in label_themes]
+    elif catalog_type == "events":
+        origin_key = _event_origin_key(name_en)
+        event_country_map = load_event_country_map()
+        item["event_country_ko"] = str(event_country_map.get(origin_key, "")).strip()
 
     return item
 

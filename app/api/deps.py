@@ -12,6 +12,18 @@ class MetaHandlerDeps:
     load_villagers: Callable[[], list[dict[str, Any]]]
     load_personality_map: Callable[[], dict[str, str]]
     load_species_map: Callable[[], dict[str, str]]
+    load_catalog: Callable[[str], list[dict[str, Any]]]
+    get_island_profile: Callable[[], dict[str, Any]]
+    upsert_island_profile: Callable[..., dict[str, Any]]
+    list_calendar_entries: Callable[[str], list[dict[str, Any]]]
+    list_calendar_entries_by_date: Callable[[str], list[dict[str, Any]]]
+    upsert_calendar_entry: Callable[..., dict[str, Any]]
+    update_calendar_entry_checked: Callable[..., dict[str, Any]]
+    delete_calendar_entry: Callable[[int], dict[str, Any]]
+    list_players: Callable[[], list[dict[str, Any]]]
+    upsert_player: Callable[..., dict[str, Any]]
+    set_main_player: Callable[[int], dict[str, Any]]
+    delete_player: Callable[[int], dict[str, Any]]
 
 
 @dataclass(frozen=True)
@@ -58,12 +70,26 @@ class MetaHandlers:
     home: Callable[[], Any]
     get_nav: Callable[[], dict[str, Any]]
     get_villager_meta: Callable[[], dict[str, Any]]
+    get_home_summary: Callable[[], dict[str, Any]]
+    get_island_profile: Callable[[], dict[str, Any]]
+    update_island_profile: Callable[..., dict[str, Any]]
+    get_calendar_entries: Callable[[str], list[dict[str, Any]]]
+    get_calendar_annotations: Callable[[str], list[dict[str, Any]]]
+    get_calendar_entries_by_date: Callable[[str], list[dict[str, Any]]]
+    save_calendar_entry: Callable[..., dict[str, Any]]
+    set_calendar_entry_checked: Callable[..., dict[str, Any]]
+    remove_calendar_entry: Callable[[int], dict[str, Any]]
+    get_players: Callable[[], list[dict[str, Any]]]
+    save_player: Callable[..., dict[str, Any]]
+    set_main_player: Callable[[int], dict[str, Any]]
+    remove_player: Callable[[int], dict[str, Any]]
 
 
 @dataclass(frozen=True)
 class VillagerHandlers:
     get_villagers: Callable[..., dict[str, Any]]
     update_villager_state: Callable[..., Any]
+    update_island_order: Callable[..., dict[str, Any]]
 
 
 @dataclass(frozen=True)

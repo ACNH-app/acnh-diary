@@ -16,6 +16,10 @@ class VillagerStateOut(BaseModel):
     former_resident: bool
 
 
+class VillagerIslandOrderIn(BaseModel):
+    villager_ids: list[str]
+
+
 class CatalogStateIn(BaseModel):
     owned: bool | None = None
 
@@ -44,3 +48,61 @@ class CatalogVariationStateBatchItem(BaseModel):
 
 class CatalogVariationStateBatchIn(BaseModel):
     items: list[CatalogVariationStateBatchItem]
+
+
+class IslandProfileIn(BaseModel):
+    island_name: str = ""
+    nickname: str = ""
+    representative_fruit: str = ""
+    representative_flower: str = ""
+    birthday: str = ""
+    hemisphere: str = "north"
+    time_travel_enabled: bool = False
+    game_datetime: str = ""
+
+
+class IslandProfileOut(BaseModel):
+    island_name: str
+    nickname: str
+    representative_fruit: str
+    representative_flower: str
+    birthday: str
+    hemisphere: str
+    time_travel_enabled: bool
+    game_datetime: str
+
+
+class CalendarEntryIn(BaseModel):
+    id: int | None = None
+    visit_date: str
+    npc_name: str
+    note: str = ""
+    checked: bool = False
+
+
+class CalendarEntryOut(BaseModel):
+    id: int
+    visit_date: str
+    npc_name: str
+    note: str
+    checked: bool
+
+
+class CalendarCheckedIn(BaseModel):
+    checked: bool
+
+
+class PlayerIn(BaseModel):
+    id: int | None = None
+    name: str
+    birthday: str = ""
+    is_main: bool = False
+    is_sub: bool = False
+
+
+class PlayerOut(BaseModel):
+    id: int
+    name: str
+    birthday: str
+    is_main: bool
+    is_sub: bool

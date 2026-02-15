@@ -5,13 +5,14 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from app.schemas.state import VillagerStateIn, VillagerStateOut
+from app.schemas.state import VillagerIslandOrderIn, VillagerStateIn, VillagerStateOut
 
 
 def create_villager_router(
     *,
     get_villagers_handler: Callable[..., dict[str, Any]],
     update_villager_state_handler: Callable[..., VillagerStateOut],
+    update_island_order_handler: Callable[..., dict[str, Any]],
 ) -> APIRouter:
     router = APIRouter()
 
@@ -36,5 +37,9 @@ def create_villager_router(
     @router.post("/api/villagers/{villager_id}/state", response_model=VillagerStateOut)
     def update_villager_state(villager_id: str, payload: VillagerStateIn) -> VillagerStateOut:
         return update_villager_state_handler(villager_id=villager_id, payload=payload)
+
+    @router.post("/api/villagers/island-order")
+    def update_island_order(payload: VillagerIslandOrderIn) -> dict[str, Any]:
+        return update_island_order_handler(payload=payload)
 
     return router

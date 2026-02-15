@@ -22,15 +22,35 @@ import { sortVillagers, toQuery } from "./utils.js";
 
 /**
  * Data loading/orchestration controller for villagers and catalog.
- * @param {{ onSyncDetailNav?: () => void, onOpenDetail?: (itemId: string) => void }} [handlers]
+ * @param {{
+ *   onSyncDetailNav?: () => void,
+ *   onOpenDetail?: (itemId: string) => void,
+ *   onOpenVillagerDetail?: (villager: any) => void
+ * }} [handlers]
  */
-export function createDataController({ onSyncDetailNav, onOpenDetail } = {}) {
+export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVillagerDetail } = {}) {
   const safeSyncDetailNav = () => {
     if (onSyncDetailNav) onSyncDetailNav();
   };
   const safeOpenDetail = (itemId) => {
     if (onOpenDetail) onOpenDetail(itemId);
   };
+  const safeOpenVillagerDetail = (villager) => {
+    if (onOpenVillagerDetail) onOpenVillagerDetail(villager);
+  };
+  function needsVillagerReloadAfterToggle(payload) {
+    if (!payload || typeof payload !== "object") return false;
+    if (state.activeVillagerTab === "liked" && payload.liked === false) return true;
+    if (state.activeVillagerTab === "island" && payload.on_island === false) return true;
+    if (state.activeVillagerTab === "former" && payload.former_resident === false) return true;
+    return false;
+  }
+
+  function needsCatalogReloadAfterToggle(nextOwned) {
+    if (state.activeCatalogTab === "owned" && nextOwned === false) return true;
+    if (state.activeCatalogTab === "unowned" && nextOwned === true) return true;
+    return false;
+  }
 
   /** Load villager filter metadata into select boxes. */
   async function loadVillagerMeta() {
@@ -122,11 +142,15 @@ export function createDataController({ onSyncDetailNav, onOpenDetail } = {}) {
 
     const data = await getJSON(`/api/villagers?${query}`);
     renderVillagers(sortVillagers(data.items, sortBySelect.value || "name", sortOrderSelect.value || "asc"), {
+      onSyncDetailNav: safeSyncDetailNav,
       onToggleState: async (villagerId, payload) => {
         await updateVillagerState(villagerId, payload);
         if (needsVillagerReloadAfterToggle(payload)) {
           await loadCurrentModeData();
         }
+      },
+      onOpenDetail: (villager) => {
+        safeOpenVillagerDetail(villager);
       },
     });
   }
@@ -187,6 +211,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail } = {}) {
 
   /** Dispatch loading based on current active mode (villagers/catalog). */
   async function loadCurrentModeData() {
+    if (state.activeMode === "home") return;
     if (state.activeMode === "villagers") {
       await loadVillagers();
       return;
@@ -219,16 +244,3 @@ export function createDataController({ onSyncDetailNav, onOpenDetail } = {}) {
     scheduleLoad,
   };
 }
-  function needsVillagerReloadAfterToggle(payload) {
-    if (!payload || typeof payload !== "object") return false;
-    if (state.activeVillagerTab === "liked" && payload.liked === false) return true;
-    if (state.activeVillagerTab === "island" && payload.on_island === false) return true;
-    if (state.activeVillagerTab === "former" && payload.former_resident === false) return true;
-    return false;
-  }
-
-  function needsCatalogReloadAfterToggle(nextOwned) {
-    if (state.activeCatalogTab === "owned" && nextOwned === false) return true;
-    if (state.activeCatalogTab === "unowned" && nextOwned === true) return true;
-    return false;
-  }

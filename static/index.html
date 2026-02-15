@@ -4,13 +4,202 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>모동숲 관리 서비스</title>
-    <link rel="stylesheet" href="/static/styles.css?v=20260214j" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260215bu" />
   </head>
   <body>
     <main class="container">
       <h1>모동숲 플레이 매니저</h1>
 
       <nav class="top-nav" id="topNav"></nav>
+
+      <section id="homePanel" class="hidden">
+        <section class="control-group">
+          <div class="home-island-header">
+            <h2>내 섬</h2>
+            <button id="openSettingsModalBtn" type="button">정보 수정</button>
+          </div>
+          <p id="homeIslandNameText" class="profile-status">섬 이름: -</p>
+          <p id="homeMainPlayerText" class="profile-status">주민대표: -</p>
+          <p id="homeMainPlayerBirthdayText" class="profile-status">주민대표 생일: -</p>
+        </section>
+
+        <section class="control-group">
+          <div class="home-island-header">
+            <h2>현재 섬 주민</h2>
+            <p id="homeIslandResidentCountText" class="profile-status">0/10</p>
+          </div>
+          <p id="homeResidentStatus" class="profile-status"></p>
+          <div id="homeIslandResidents" class="home-resident-grid"></div>
+        </section>
+
+        <section id="homeResidentPickerModal" class="modal hidden" aria-hidden="true">
+          <div id="homeResidentPickerBackdrop" class="modal-backdrop"></div>
+          <article class="modal-panel">
+            <header class="modal-header">
+              <h2>섬 주민 등록</h2>
+              <button id="homeResidentPickerCloseBtn" type="button" class="modal-close">닫기</button>
+            </header>
+            <div class="modal-body">
+              <div class="controls home-resident-picker-controls">
+                <input id="homeResidentSearchInput" type="text" placeholder="주민 이름 검색 (한글/영문)" />
+                <select id="homeResidentPersonalitySelect">
+                  <option value="">성격 전체</option>
+                </select>
+                <select id="homeResidentSpeciesSelect">
+                  <option value="">종 전체</option>
+                </select>
+              </div>
+              <p id="homeResidentPickerStatus" class="profile-status"></p>
+              <div id="homeResidentPickerList" class="home-resident-picker-grid"></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="control-group home-calendar">
+          <h2>NPC 방문 캘린더</h2>
+          <div class="controls home-calendar-time-controls">
+            <label class="inline-check"
+              ><input id="timeTravelEnabledInput" type="checkbox" /> 타임슬립 시간 사용</label
+            >
+            <input id="gameDateTimeInput" type="datetime-local" />
+            <button id="setNowGameTimeBtn" type="button">현재 시간으로</button>
+          </div>
+          <p id="effectiveDateTimeText" class="profile-status"></p>
+          <div class="calendar-toolbar">
+            <button id="calendarPrevBtn" type="button">이전달</button>
+            <strong id="calendarMonthLabel"></strong>
+            <button id="calendarNextBtn" type="button">다음달</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>일</span>
+            <span>월</span>
+            <span>화</span>
+            <span>수</span>
+            <span>목</span>
+            <span>금</span>
+            <span>토</span>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div class="calendar-entry-form">
+            <input id="calendarSelectedDate" type="date" />
+            <input id="calendarNoteInput" type="text" placeholder="메모" />
+            <label><input id="calendarCheckedInput" type="checkbox" /> 방문 확인</label>
+          </div>
+          <div class="calendar-npc-picker">
+            <p class="profile-status">해당 날짜에 방문한 NPC를 클릭해서 추가</p>
+            <div id="npcPicker" class="npc-picker"></div>
+          </div>
+          <ul id="calendarEntryList" class="calendar-entry-list"></ul>
+        </section>
+
+        <section class="control-group home-summary">
+          <h2>오늘의 요약</h2>
+          <div class="summary-cards">
+            <article class="summary-card">
+              <h3>현재 시즌</h3>
+              <p id="summarySeasonText">-</p>
+            </article>
+            <article class="summary-card">
+              <h3>별자리</h3>
+              <p id="summaryZodiacText">-</p>
+            </article>
+            <article class="summary-card">
+              <h3>기준 시간</h3>
+              <p id="summaryDateTimeText">-</p>
+            </article>
+          </div>
+          <h3 class="summary-subtitle">다가오는 이벤트</h3>
+          <ul id="summaryUpcomingEvents" class="calendar-entry-list"></ul>
+
+          <h3 class="summary-subtitle">오늘의 너굴 쇼핑</h3>
+          <ul id="summaryNookShopping" class="calendar-entry-list"></ul>
+
+          <h3 class="summary-subtitle">이번 시즌 레시피</h3>
+          <ul id="summarySeasonalRecipes" class="calendar-entry-list"></ul>
+
+          <h3 class="summary-subtitle">개화 중인 낮은 나무</h3>
+          <ul id="summaryBloomingShrubs" class="calendar-entry-list"></ul>
+
+          <h3 class="summary-subtitle">카탈로그 진행률</h3>
+          <div id="summaryCatalogProgress" class="progress-grid"></div>
+        </section>
+      </section>
+
+      <section id="settingsModal" class="modal hidden" aria-hidden="true">
+        <div id="settingsModalBackdrop" class="modal-backdrop"></div>
+        <article class="modal-panel">
+          <header class="modal-header">
+            <h2>섬/플레이어 정보 설정</h2>
+            <div class="modal-header-actions">
+              <button id="saveProfileBtn" type="button">저장</button>
+              <button id="settingsModalCloseBtn" type="button" class="modal-close">닫기</button>
+            </div>
+          </header>
+          <div class="modal-body">
+            <section class="control-group">
+              <h2>섬 정보</h2>
+              <div class="island-settings-grid">
+                <input id="islandNameInput" type="text" placeholder="섬 이름" />
+                <select id="hemisphereSelect">
+                  <option value="north">북반구</option>
+                  <option value="south">남반구</option>
+                </select>
+                <select id="representativeFruitInput">
+                  <option value="">대표 과일 선택</option>
+                  <option value="apple">사과</option>
+                  <option value="cherry">체리</option>
+                  <option value="orange">오렌지</option>
+                  <option value="peach">복숭아</option>
+                  <option value="pear">배</option>
+                </select>
+                <select id="representativeFlowerInput">
+                  <option value="">대표 꽃 선택</option>
+                  <option value="cosmos">코스모스</option>
+                  <option value="hyacinth">히아신스</option>
+                  <option value="lily">백합</option>
+                  <option value="mum">국화</option>
+                  <option value="pansy">팬지</option>
+                  <option value="rose">장미</option>
+                  <option value="tulip">튤립</option>
+                  <option value="windflower">아네모네</option>
+                </select>
+                <div class="rep-section">
+                  <h2>주민 대표</h2>
+                  <div class="rep-fields-row">
+                    <input id="nicknameInput" type="text" placeholder="주민대표 이름" />
+                    <div class="month-day-selects">
+                      <select id="birthdayMonthInput" aria-label="주민대표 생일 월">
+                        <option value="">월</option>
+                      </select>
+                      <select id="birthdayDayInput" aria-label="주민대표 생일 일">
+                        <option value="">일</option>
+                      </select>
+                    </div>
+                    <button id="addSubPlayerBtn" type="button">부주 추가</button>
+                  </div>
+                </div>
+              </div>
+              <p id="profileStatus" class="profile-status"></p>
+              <div id="subPlayerForm" class="controls home-player-controls hidden">
+                <input id="playerNameInput" type="text" placeholder="플레이어 이름" />
+                <div class="month-day-selects">
+                  <select id="playerBirthdayMonthInput" aria-label="플레이어 생일 월">
+                    <option value="">월</option>
+                  </select>
+                  <select id="playerBirthdayDayInput" aria-label="플레이어 생일 일">
+                    <option value="">일</option>
+                  </select>
+                </div>
+                <button id="savePlayerBtn" type="button">플레이어 등록</button>
+                <button id="clearPlayerFormBtn" type="button">입력 초기화</button>
+                <button id="cancelSubPlayerBtn" type="button">닫기</button>
+              </div>
+              <p id="playerStatus" class="profile-status"></p>
+              <ul id="playerList" class="calendar-entry-list"></ul>
+            </section>
+          </div>
+        </article>
+      </section>
 
       <section id="villagerPanel">
         <section class="control-groups">
@@ -116,6 +305,10 @@
             <h3>기본 정보</h3>
             <div id="detailFields" class="detail-fields"></div>
           </section>
+          <section id="detailExtraImagesSection" class="hidden">
+            <h3>하우스 이미지</h3>
+            <div id="detailExtraImages" class="variation-grid"></div>
+          </section>
           <section>
             <h3>변형(색상/패턴)</h3>
             <div class="variation-actions">
@@ -167,6 +360,6 @@
       </article>
     </template>
 
-    <script type="module" src="/static/app.js?v=20260215k"></script>
+    <script type="module" src="/static/app.js?v=20260215bu"></script>
   </body>
 </html>

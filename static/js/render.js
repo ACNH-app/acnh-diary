@@ -1,6 +1,7 @@
 import {
   catalogCardTemplate,
   catalogPanel,
+  homePanel,
   list,
   loadMoreWrap,
   resultCount,
@@ -39,18 +40,27 @@ export function updatePanels() {
     el.classList.toggle("active", el.dataset.mode === state.activeMode);
   });
 
+  const homeMode = state.activeMode === "home";
   const villagerMode = state.activeMode === "villagers";
+  homePanel.classList.toggle("hidden", !homeMode);
   villagerPanel.classList.toggle("hidden", !villagerMode);
-  catalogPanel.classList.toggle("hidden", villagerMode);
-  loadMoreWrap.classList.toggle("hidden", villagerMode || !state.catalogHasMore);
+  catalogPanel.classList.toggle("hidden", villagerMode || homeMode);
+  resultCount.classList.toggle("hidden", homeMode);
+  list.classList.toggle("hidden", homeMode);
+  loadMoreWrap.classList.toggle("hidden", homeMode || villagerMode || !state.catalogHasMore);
 }
 
-export function renderVillagers(items, { onToggleState } = {}) {
+export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDetailNav } = {}) {
   list.innerHTML = "";
   resultCount.textContent = `${items.length}명`;
+  state.renderedVillagers = items.slice();
+  state.activeCatalogItemIds = state.renderedVillagers.map((v) => String(v.id || ""));
+  if (onSyncDetailNav) onSyncDetailNav();
 
   items.forEach((v) => {
     const fragment = villagerCardTemplate.content.cloneNode(true);
+    const card = fragment.querySelector(".card");
+    card.classList.add("clickable");
     const icon = fragment.querySelector(".icon");
     const nameKo = fragment.querySelector(".name-ko");
     const nameEn = fragment.querySelector(".name-en");
@@ -85,6 +95,11 @@ export function renderVillagers(items, { onToggleState } = {}) {
     formerResident.addEventListener("change", async () => {
       if (!onToggleState) return;
       await onToggleState(v.id, { former_resident: formerResident.checked });
+    });
+
+    card.addEventListener("click", (e) => {
+      if (e.target && e.target.closest("input, label, button")) return;
+      if (onOpenDetail) onOpenDetail(v);
     });
 
     list.appendChild(fragment);
@@ -137,6 +152,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       const parts = [];
       if (v.event_type) parts.push(`타입: ${v.event_type}`);
       if (v.date) parts.push(`날짜: ${v.date}`);
+      if (v.event_country_ko) parts.push(`국가/문화권: ${v.event_country_ko}`);
       desc.textContent = parts.join(" | ");
     } else if (
       state.activeMode === "clothing" ||

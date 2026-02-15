@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모동숲 관리 서비스</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260214j" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>모동숲 플레이 매니저</h1>
+
+      <nav class="top-nav" id="topNav"></nav>
+
+      <section id="villagerPanel">
+        <section class="control-groups">
+          <div class="control-group">
+            <h2>필터 조건</h2>
+            <div class="controls filter-controls">
+              <input id="searchInput" type="text" placeholder="주민 이름 검색 (한글/영문)" />
+              <select id="personalitySelect">
+                <option value="">성격 전체</option>
+              </select>
+              <select id="speciesSelect">
+                <option value="">종 전체</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h2>정렬 조건</h2>
+            <div class="controls sort-controls">
+              <select id="sortBySelect">
+                <option value="name">이름순</option>
+                <option value="species">종순</option>
+                <option value="birthday">생일순</option>
+                <option value="personality">성격순</option>
+              </select>
+              <select id="sortOrderSelect">
+                <option value="asc">오름차순</option>
+                <option value="desc">내림차순</option>
+              </select>
+              <button id="resetBtn" type="button">초기화</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="tabs" id="villagerTabs">
+          <button type="button" class="tab active" data-tab="all">전체 주민</button>
+          <button type="button" class="tab" data-tab="liked">좋아하는 주민</button>
+          <button type="button" class="tab" data-tab="island">우리 섬 주민</button>
+          <button type="button" class="tab" data-tab="former">과거 주민</button>
+        </section>
+      </section>
+
+      <section id="catalogPanel" class="hidden">
+        <section class="control-groups">
+          <div class="control-group">
+            <h2>필터 조건</h2>
+            <div class="controls catalog-filter-controls">
+              <input id="catalogSearchInput" type="text" placeholder="이름 검색" />
+              <select id="catalogExtraSelect" class="hidden"></select>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <h2>정렬 조건</h2>
+            <div class="controls catalog-sort-controls">
+              <select id="catalogSortBySelect">
+                <option value="name">이름순</option>
+                <option value="category">분류순</option>
+                <option value="date">날짜순</option>
+              </select>
+              <select id="catalogSortOrderSelect">
+                <option value="asc">오름차순</option>
+                <option value="desc">내림차순</option>
+              </select>
+              <button id="catalogResetBtn" type="button">초기화</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="tabs" id="catalogTabs">
+          <button type="button" class="tab active" data-tab="all">전체</button>
+          <span id="subCategoryTabs" class="sub-category-tabs hidden"></span>
+          <button type="button" class="tab" data-tab="owned">보유/완료</button>
+          <button type="button" class="tab" data-tab="unowned">미보유</button>
+        </section>
+      </section>
+
+      <p id="resultCount">0개</p>
+      <section id="list" class="grid"></section>
+      <div id="loadMoreWrap" class="load-more-wrap hidden">
+        <button id="loadMoreBtn" type="button">더보기</button>
+      </div>
+    </main>
+
+    <section id="detailModal" class="modal hidden" aria-hidden="true">
+      <div id="detailBackdrop" class="modal-backdrop"></div>
+      <article class="modal-panel">
+        <header class="modal-header">
+          <div class="modal-title-wrap">
+            <h2 id="detailTitle">상세 정보</h2>
+            <span id="detailNavHint" class="detail-nav-hint"></span>
+          </div>
+          <div class="detail-nav-actions">
+            <button id="detailPrevBtn" type="button">이전</button>
+            <button id="detailNextBtn" type="button">다음</button>
+            <button id="detailCloseBtn" type="button" class="modal-close">닫기</button>
+          </div>
+        </header>
+        <div class="modal-body">
+          <img id="detailImage" class="detail-image" alt="상세 이미지" />
+          <p id="detailSourceHint" class="detail-source"></p>
+          <section>
+            <h3>기본 정보</h3>
+            <div id="detailFields" class="detail-fields"></div>
+          </section>
+          <section>
+            <h3>변형(색상/패턴)</h3>
+            <div class="variation-actions">
+              <button id="variationMarkAllBtn" type="button">전체 보유</button>
+              <button id="variationUnmarkAllBtn" type="button">전체 해제</button>
+            </div>
+            <div id="detailVariations" class="variation-grid"></div>
+          </section>
+          <details class="raw-details">
+            <summary>원문(raw) 필드 보기</summary>
+            <div id="detailRawFields" class="raw-fields"></div>
+          </details>
+        </div>
+      </article>
+    </section>
+    <button id="scrollTopBtn" class="scroll-top-btn hidden" type="button" aria-label="맨 위로">
+      ↑
+    </button>
+
+    <template id="villagerCardTemplate">
+      <article class="card">
+        <img class="icon" alt="주민 아이콘" />
+        <div class="content">
+          <h2 class="name-ko"></h2>
+          <p class="name-en"></p>
+          <p class="meta"></p>
+          <p class="birthday"></p>
+          <div class="toggles">
+            <label><input type="checkbox" class="liked" /> 좋아하는 주민</label>
+            <label><input type="checkbox" class="on-island" /> 우리 섬 주민</label>
+            <label><input type="checkbox" class="former-resident" /> 과거 주민</label>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <template id="catalogCardTemplate">
+      <article class="card">
+        <img class="icon" alt="카탈로그 아이콘" />
+        <div class="content">
+          <h2 class="name-ko"></h2>
+          <p class="name-en"></p>
+          <p class="meta"></p>
+          <p class="description"></p>
+          <div class="toggles">
+            <label><input type="checkbox" class="owned" /> <span class="owned-label">보유</span></label>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="/static/app.js?v=20260215k"></script>
+  </body>
+</html>

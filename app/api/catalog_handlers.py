@@ -211,14 +211,25 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
 
         with deps.get_db() as conn:
             existing = conn.execute(
-                "SELECT owned FROM catalog_state WHERE catalog_type = ? AND item_id = ?",
+                "SELECT owned, quantity FROM catalog_state WHERE catalog_type = ? AND item_id = ?",
                 (catalog_type, item_id),
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
+            current_qty = max(0, int((existing["quantity"] if existing else 0) or 0))
             new_owned = payload.owned if payload.owned is not None else current_owned
-
-            deps.upsert_catalog_state(conn, catalog_type, item_id, bool(new_owned))
+            new_qty = (
+                max(0, int(payload.quantity))
+                if payload.quantity is not None
+                else current_qty
+            )
+            deps.upsert_catalog_state(
+                conn,
+                catalog_type,
+                item_id,
+                bool(new_owned),
+                int(new_qty),
+            )
             deps.upsert_all_variation_states(
                 conn, catalog_type, item_id, variation_ids, bool(new_owned)
             )
@@ -227,6 +238,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             catalog_type=catalog_type,
             item_id=item_id,
             owned=bool(new_owned),
+            quantity=int(new_qty),
         )
 
     def update_catalog_variation_state(
@@ -249,7 +261,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         with deps.get_db() as conn:
             existing = conn.execute(
                 """
-                SELECT owned
+                SELECT owned, quantity
                 FROM catalog_variation_state
                 WHERE catalog_type = ? AND item_id = ? AND variation_id = ?
                 """,
@@ -257,17 +269,26 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
+            current_qty = max(0, int((existing["quantity"] if existing else 0) or 0))
             new_owned = payload.owned if payload.owned is not None else current_owned
+            new_qty = (
+                max(0, int(payload.quantity))
+                if payload.quantity is not None
+                else current_qty
+            )
+            if payload.quantity is not None:
+                new_owned = new_qty > 0
 
             conn.execute(
                 """
-                INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
                     owned = excluded.owned,
+                    quantity = excluded.quantity,
                     updated_at = CURRENT_TIMESTAMP
                 """,
-                (catalog_type, item_id, variation_id, int(new_owned)),
+                (catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
             )
             deps.recalc_item_owned_from_variations(conn, catalog_type, item_id, variation_ids)
 
@@ -276,6 +297,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             item_id=item_id,
             variation_id=variation_id,
             owned=bool(new_owned),
+            quantity=int(new_qty),
         )
 
     def update_catalog_variation_state_batch(
@@ -302,14 +324,21 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         with deps.get_db() as conn:
             conn.executemany(
                 """
-                INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
+                VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
                     owned = excluded.owned,
+                    quantity = excluded.quantity,
                     updated_at = CURRENT_TIMESTAMP
                 """,
                 [
-                    (catalog_type, item_id, row.variation_id, int(row.owned))
+                    (
+                        catalog_type,
+                        item_id,
+                        row.variation_id,
+                        int((max(0, int(row.quantity)) > 0) if row.quantity is not None else row.owned),
+                        int(max(0, int(row.quantity)) if row.quantity is not None else (1 if row.owned else 0)),
+                    )
                     for row in payload.items
                 ],
             )

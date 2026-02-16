@@ -476,9 +476,12 @@ def _catalog_detail_payload(
     item: dict[str, Any],
     detail: dict[str, Any],
     from_single: bool,
-    variation_state_map: dict[str, dict[str, bool]] | None = None,
+    variation_state_map: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     category = str(detail.get("category") or item.get("category") or "")
+    # summary 블록에서 art 관련 필드를 공통으로 참조하므로 기본값을 먼저 둔다.
+    real_info: dict[str, Any] = {}
+    fake_info: dict[str, Any] = {}
     detail_source, detail_source_notes = extract_source_pair(detail)
     common_fields = [
         ("카테고리", category),
@@ -529,9 +532,12 @@ def _catalog_detail_payload(
 
     variations = _build_variations(detail)
     if variation_state_map:
-        variations = [{**v, **variation_state_map.get(v["id"], {"owned": False})} for v in variations]
+        variations = [
+            {**v, **variation_state_map.get(v["id"], {"owned": False, "quantity": 0})}
+            for v in variations
+        ]
     else:
-        variations = [{**v, "owned": False} for v in variations]
+        variations = [{**v, "owned": False, "quantity": 0} for v in variations]
 
     return {
         "item": item,

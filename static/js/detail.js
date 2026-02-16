@@ -22,8 +22,8 @@ import { state } from "./state.js";
  * Detail modal controller for catalog item details and variation ownership state.
  * @param {{
  *   getJSON: (url: string, options?: RequestInit) => Promise<any>,
- *   updateCatalogVariationState: (catalogType: string, itemId: string, variationId: string, payload: { owned: boolean }) => Promise<any>,
- *   updateCatalogVariationStateBatch: (catalogType: string, itemId: string, items: Array<{ variation_id: string, owned: boolean }>) => Promise<any>,
+ *   updateCatalogVariationState: (catalogType: string, itemId: string, variationId: string, payload: { owned?: boolean, quantity?: number }) => Promise<any>,
+ *   updateCatalogVariationStateBatch: (catalogType: string, itemId: string, items: Array<{ variation_id: string, owned: boolean, quantity?: number }>) => Promise<any>,
  *   scheduleCatalogRefresh: (delayMs?: number) => void
  * }} deps
  */
@@ -366,21 +366,65 @@ export function createDetailController({
         stateRow.className = "variation-state";
         stateRow.textContent = v.owned ? "보유됨" : "미보유";
 
-        box.addEventListener("click", async () => {
-          const nextOwned = !Boolean(v.owned);
+        const qtyWrap = document.createElement("label");
+        qtyWrap.className = "variation-qty-wrap";
+        qtyWrap.textContent = "개수";
+        const qtyInput = document.createElement("input");
+        qtyInput.type = "number";
+        qtyInput.min = "0";
+        qtyInput.step = "1";
+        qtyInput.className = "variation-qty-input";
+        qtyInput.value = String(Math.max(0, Number(v.quantity || 0)));
+        qtyInput.addEventListener("click", (e) => e.stopPropagation());
+        qtyInput.addEventListener("change", async (e) => {
+          e.stopPropagation();
+          const safeQty = Math.max(0, Math.trunc(Number(qtyInput.value || 0)));
+          qtyInput.value = String(safeQty);
+          const nextOwned = safeQty > 0;
           try {
             await updateCatalogVariationState(state.activeMode, state.activeDetailItemId, v.id, {
+              quantity: safeQty,
               owned: nextOwned,
             });
+            v.quantity = safeQty;
             v.owned = nextOwned;
             stateRow.textContent = nextOwned ? "보유됨" : "미보유";
             box.classList.toggle("owned", nextOwned);
             state.activeDetailVariations = state.activeDetailVariations.map((x) =>
-              x.id === v.id ? { ...x, owned: nextOwned } : x
+              x.id === v.id ? { ...x, owned: nextOwned, quantity: safeQty } : x
             );
             if (state.activeDetailPayload && Array.isArray(state.activeDetailPayload.variations)) {
               state.activeDetailPayload.variations = state.activeDetailPayload.variations.map((x) =>
-                x.id === v.id ? { ...x, owned: nextOwned } : x
+                x.id === v.id ? { ...x, owned: nextOwned, quantity: safeQty } : x
+              );
+              getDetailModeCache(state.activeMode).set(state.activeDetailItemId, state.activeDetailPayload);
+            }
+            scheduleCatalogRefresh(200);
+          } catch (err) {
+            console.error(err);
+          }
+        });
+        qtyWrap.appendChild(qtyInput);
+
+        box.addEventListener("click", async () => {
+          const nextOwned = !Boolean(v.owned);
+          const nextQty = nextOwned ? Math.max(1, Number(v.quantity || 0)) : 0;
+          try {
+            await updateCatalogVariationState(state.activeMode, state.activeDetailItemId, v.id, {
+              owned: nextOwned,
+              quantity: nextQty,
+            });
+            v.owned = nextOwned;
+            v.quantity = nextQty;
+            qtyInput.value = String(nextQty);
+            stateRow.textContent = nextOwned ? "보유됨" : "미보유";
+            box.classList.toggle("owned", nextOwned);
+            state.activeDetailVariations = state.activeDetailVariations.map((x) =>
+              x.id === v.id ? { ...x, owned: nextOwned, quantity: nextQty } : x
+            );
+            if (state.activeDetailPayload && Array.isArray(state.activeDetailPayload.variations)) {
+              state.activeDetailPayload.variations = state.activeDetailPayload.variations.map((x) =>
+                x.id === v.id ? { ...x, owned: nextOwned, quantity: nextQty } : x
               );
               getDetailModeCache(state.activeMode).set(state.activeDetailItemId, state.activeDetailPayload);
             }
@@ -394,6 +438,7 @@ export function createDetailController({
         box.appendChild(title);
         box.appendChild(meta);
         box.appendChild(stateRow);
+        box.appendChild(qtyWrap);
         detailVariations.appendChild(box);
       });
     }
@@ -644,7 +689,11 @@ export function createDetailController({
         await updateCatalogVariationStateBatch(
           state.activeMode,
           state.activeDetailItemId,
-          state.activeDetailVariations.map((v) => ({ variation_id: v.id, owned: true }))
+          state.activeDetailVariations.map((v) => ({
+            variation_id: v.id,
+            owned: true,
+            quantity: Math.max(1, Number(v.quantity || 0)),
+          }))
         );
         await openCatalogDetail(state.activeDetailItemId, { force: true });
         scheduleCatalogRefresh(250);
@@ -658,7 +707,7 @@ export function createDetailController({
         await updateCatalogVariationStateBatch(
           state.activeMode,
           state.activeDetailItemId,
-          state.activeDetailVariations.map((v) => ({ variation_id: v.id, owned: false }))
+          state.activeDetailVariations.map((v) => ({ variation_id: v.id, owned: false, quantity: 0 }))
         );
         await openCatalogDetail(state.activeDetailItemId, { force: true });
         scheduleCatalogRefresh(250);

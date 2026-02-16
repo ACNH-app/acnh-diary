@@ -514,7 +514,10 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const desc = fragment.querySelector(".description");
     const owned = fragment.querySelector(".owned");
     const ownedLabel = fragment.querySelector(".owned-label");
+    const qtyWrap = fragment.querySelector(".owned-qty-wrap");
+    const qtyInput = fragment.querySelector(".owned-qty");
     const isArtMode = state.activeMode === "art";
+    const isFurnitureMode = state.activeMode === "furniture";
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.loading = "lazy";
@@ -529,6 +532,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const category = v.category_ko || v.category || "분류 없음";
     const ownedCount = Number(v.variation_owned_count || 0);
     const variationTotal = Number(v.variation_total || 0);
+    const variationQtyTotal = Number(v.variation_quantity_total || 0);
     const variationInfo = variationTotal ? ` | 변형: ${ownedCount}/${variationTotal}` : "";
     const authenticityInfo = v.authenticity_ko ? ` | ${v.authenticity_ko}` : "";
     meta.textContent = isArtMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
@@ -578,6 +582,18 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     owned.checked = Boolean(v.owned);
     owned.indeterminate = isPartialOwned;
     ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
+    if (qtyWrap) {
+      qtyWrap.classList.toggle("hidden", !isFurnitureMode);
+      qtyWrap.hidden = !isFurnitureMode;
+      qtyWrap.style.display = isFurnitureMode ? "inline-flex" : "none";
+    }
+    const effectiveQty = variationTotal > 0 ? variationQtyTotal : Math.max(0, Number(v.quantity || 0));
+    if (qtyInput) {
+      qtyInput.value = String(effectiveQty);
+      qtyInput.readOnly = variationTotal > 0;
+      qtyInput.disabled = variationTotal > 0;
+      qtyInput.title = variationTotal > 0 ? "변형별 수량 합계입니다. 상세에서 수정하세요." : "";
+    }
     if (isPartialOwned) {
       card.classList.add("partially-owned");
     }
@@ -585,9 +601,32 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       owned.indeterminate = false;
       ownedLabel.textContent = statusLabel;
       card.classList.remove("partially-owned");
+      if (isFurnitureMode && qtyInput && variationTotal === 0) {
+        const nextQty = owned.checked ? Math.max(1, Number(qtyInput.value || 0)) : 0;
+        qtyInput.value = String(nextQty);
+      }
       if (!handlers.onToggleOwned) return;
-      await handlers.onToggleOwned(v.id, owned.checked);
+      await handlers.onToggleOwned(v.id, owned.checked, {
+        quantity:
+          isFurnitureMode && qtyInput && variationTotal === 0
+            ? Math.max(0, Number(qtyInput.value || 0))
+            : undefined,
+      });
     });
+
+    if (isFurnitureMode && qtyInput && variationTotal === 0) {
+      qtyInput.addEventListener("click", (e) => e.stopPropagation());
+      qtyInput.addEventListener("change", async () => {
+        const raw = Number(qtyInput.value || 0);
+        const safeQty = Number.isFinite(raw) ? Math.max(0, Math.trunc(raw)) : 0;
+        qtyInput.value = String(safeQty);
+        owned.checked = safeQty > 0;
+        owned.indeterminate = false;
+        ownedLabel.textContent = statusLabel;
+        if (!handlers.onUpdateQuantity) return;
+        await handlers.onUpdateQuantity(v.id, safeQty);
+      });
+    }
 
     card.addEventListener("click", (e) => {
       if (e.target && e.target.closest("input, label, button")) return;

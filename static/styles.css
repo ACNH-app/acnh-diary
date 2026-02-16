@@ -765,6 +765,18 @@ button {
   flex-wrap: wrap;
 }
 
+.owned-qty-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.owned-qty {
+  width: 72px;
+  min-height: 30px;
+  padding: 0 8px;
+}
+
 label {
   font-size: 0.9rem;
 }
@@ -772,7 +784,7 @@ label {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 120;
 }
 
 .modal-backdrop {
@@ -969,6 +981,21 @@ label {
   font-size: 0.84rem;
   color: var(--accent);
   font-weight: 700;
+}
+
+.variation-qty-wrap {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.variation-qty-input {
+  width: 74px;
+  min-height: 30px;
+  padding: 0 8px;
 }
 
 .note-hint {

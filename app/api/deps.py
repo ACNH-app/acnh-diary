@@ -48,7 +48,7 @@ class CatalogHandlerDeps:
     find_catalog_row: Callable[[str, str], dict[str, Any] | None]
     build_variations: Callable[[dict[str, Any]], list[dict[str, Any]]]
     fetch_single_catalog_row: Callable[[str, str], dict[str, Any] | None]
-    get_catalog_variation_state_map: Callable[[str, str], dict[str, dict[str, bool]]]
+    get_catalog_variation_state_map: Callable[[str, str], dict[str, dict[str, Any]]]
     catalog_detail_payload: Callable[..., dict[str, Any]]
     variation_ids_for_item: Callable[[str, str], list[str]]
     upsert_catalog_state: Callable[..., None]

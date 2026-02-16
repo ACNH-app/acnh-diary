@@ -22,16 +22,19 @@ class VillagerIslandOrderIn(BaseModel):
 
 class CatalogStateIn(BaseModel):
     owned: bool | None = None
+    quantity: int | None = None
 
 
 class CatalogStateOut(BaseModel):
     catalog_type: str
     item_id: str
     owned: bool
+    quantity: int
 
 
 class CatalogVariationStateIn(BaseModel):
     owned: bool | None = None
+    quantity: int | None = None
 
 
 class CatalogVariationStateOut(BaseModel):
@@ -39,11 +42,13 @@ class CatalogVariationStateOut(BaseModel):
     item_id: str
     variation_id: str
     owned: bool
+    quantity: int
 
 
 class CatalogVariationStateBatchItem(BaseModel):
     variation_id: str
     owned: bool
+    quantity: int | None = None
 
 
 class CatalogVariationStateBatchIn(BaseModel):

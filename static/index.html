@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>모동숲 다이어리</title>
-    <link rel="stylesheet" href="/static/styles.css?v=20260215cn" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260215cq" />
   </head>
   <body>
     <main class="container">
@@ -391,6 +391,10 @@
           <p class="description"></p>
           <div class="toggles">
             <label><input type="checkbox" class="owned" /> <span class="owned-label">보유</span></label>
+            <label class="owned-qty-wrap hidden">
+              개수
+              <input type="number" class="owned-qty" min="0" step="1" inputmode="numeric" />
+            </label>
           </div>
         </div>
       </article>
@@ -405,6 +409,6 @@
     ></button>
     <section id="mobileNavSheet" class="mobile-nav-sheet hidden" aria-hidden="true"></section>
 
-    <script type="module" src="/static/app.js?v=20260215cm"></script>
+    <script type="module" src="/static/app.js?v=20260215cp"></script>
   </body>
 </html>

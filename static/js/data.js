@@ -209,10 +209,30 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       },
       {
         onSyncDetailNav: safeSyncDetailNav,
-        onToggleOwned: async (itemId, owned) => {
-          await updateCatalogState(state.activeMode, itemId, { owned });
+        onToggleOwned: async (itemId, owned, extra = {}) => {
+          await updateCatalogState(state.activeMode, itemId, {
+            owned,
+            quantity: extra.quantity,
+          });
           const target = state.renderedCatalogItems.find((x) => x.id === itemId);
-          if (target) target.owned = owned;
+          if (target) {
+            target.owned = owned;
+            if (state.activeMode === "furniture" && typeof extra.quantity === "number") {
+              target.quantity = extra.quantity;
+            }
+          }
+          if (needsCatalogReloadAfterToggle(owned)) {
+            await loadCurrentModeData();
+          }
+        },
+        onUpdateQuantity: async (itemId, quantity) => {
+          const owned = quantity > 0;
+          await updateCatalogState(state.activeMode, itemId, { owned, quantity });
+          const target = state.renderedCatalogItems.find((x) => x.id === itemId);
+          if (target) {
+            target.quantity = quantity;
+            target.owned = owned;
+          }
           if (needsCatalogReloadAfterToggle(owned)) {
             await loadCurrentModeData();
           }

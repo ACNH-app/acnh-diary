@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="홈">
+  <defs>
+    <linearGradient id="leafG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#89d64a"/>
+      <stop offset="100%" stop-color="#47a82f"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 8C18 8 8 18 8 32s10 24 24 24 24-10 24-24V8H32z" fill="url(#leafG)"/>
+  <path d="M24 41c5-10 12-15 22-17" fill="none" stroke="#eaf8d8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M30 29c2 2 4 4 5 7" fill="none" stroke="#eaf8d8" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

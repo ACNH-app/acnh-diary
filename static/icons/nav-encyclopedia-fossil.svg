@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="도감">
+  <rect x="9" y="11" width="46" height="42" rx="10" fill="#7cc5ff"/>
+  <rect x="13" y="15" width="38" height="34" rx="8" fill="#dff3ff"/>
+  <path d="M27 26c0-3 2.4-5.4 5.4-5.4s5.4 2.4 5.4 5.4-2.4 5.4-5.4 5.4S27 29 27 26z" fill="#8b6e4a"/>
+  <rect x="30" y="31" width="4.8" height="11" rx="2.4" fill="#8b6e4a"/>
+  <circle cx="23.5" cy="26" r="2.6" fill="#8b6e4a"/>
+  <circle cx="40.5" cy="26" r="2.6" fill="#8b6e4a"/>
+  <circle cx="23.5" cy="41" r="2.8" fill="#8b6e4a"/>
+  <circle cx="40.5" cy="41" r="2.8" fill="#8b6e4a"/>
+</svg>

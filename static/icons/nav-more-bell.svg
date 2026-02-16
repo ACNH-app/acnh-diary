@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="기타">
+  <path d="M32 10c-12 0-22 9-22 20v9c0 4 3 7 7 7h30c4 0 7-3 7-7v-9c0-11-10-20-22-20z" fill="#ffd55a"/>
+  <circle cx="32" cy="30" r="8" fill="#fff3c5"/>
+  <circle cx="32" cy="30" r="2.6" fill="#e0b13d"/>
+  <path d="M22 49c2.2 3.5 5.8 5.5 10 5.5s7.8-2 10-5.5" fill="none" stroke="#c18d1f" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -30,6 +30,8 @@ import { sortVillagers, toQuery } from "./utils.js";
  * }} [handlers]
  */
 export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVillagerDetail } = {}) {
+  const villagerQueryCache = new Map();
+
   const safeSyncDetailNav = () => {
     if (onSyncDetailNav) onSyncDetailNav();
   };
@@ -145,11 +147,18 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       ...tabFilters,
     });
 
-    const data = await getJSON(`/api/villagers?${query}`);
+    const cacheKey = query || "__all__";
+    let data = villagerQueryCache.get(cacheKey);
+    if (!data) {
+      data = await getJSON(`/api/villagers?${query}`);
+      villagerQueryCache.set(cacheKey, data);
+    }
+
     renderVillagers(sortVillagers(data.items, sortBySelect.value || "name", sortOrderSelect.value || "asc"), {
       onSyncDetailNav: safeSyncDetailNav,
       onToggleState: async (villagerId, payload) => {
         await updateVillagerState(villagerId, payload);
+        villagerQueryCache.clear();
         if (needsVillagerReloadAfterToggle(payload)) {
           await loadCurrentModeData();
         }

@@ -3,20 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>모동숲 관리 서비스</title>
-    <link rel="stylesheet" href="/static/styles.css?v=20260215bu" />
+    <title>모동숲 다이어리</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260215cn" />
   </head>
   <body>
     <main class="container">
-      <h1>모동숲 플레이 매니저</h1>
-
-      <nav class="top-nav" id="topNav"></nav>
+      <header class="site-header">
+        <button id="brandHomeBtn" type="button" class="brand-home-btn">모동숲 다이어리</button>
+        <nav class="top-nav" id="topNav" aria-label="주요 메뉴" role="navigation"></nav>
+      </header>
+      <p id="navBreadcrumb" class="nav-breadcrumb hidden" aria-live="polite"></p>
 
       <section id="homePanel" class="hidden">
         <section class="control-group">
           <div class="home-island-header">
             <h2>내 섬</h2>
-            <button id="openSettingsModalBtn" type="button">정보 수정</button>
+            <button id="openSettingsModalBtn" type="button" aria-haspopup="dialog" aria-controls="settingsModal">
+              정보 수정
+            </button>
           </div>
           <p id="homeIslandNameText" class="profile-status">섬 이름: -</p>
           <p id="homeMainPlayerText" class="profile-status">주민대표: -</p>
@@ -28,15 +32,22 @@
             <h2>현재 섬 주민</h2>
             <p id="homeIslandResidentCountText" class="profile-status">0/10</p>
           </div>
-          <p id="homeResidentStatus" class="profile-status"></p>
+          <p id="homeResidentStatus" class="profile-status" aria-live="polite"></p>
           <div id="homeIslandResidents" class="home-resident-grid"></div>
         </section>
 
-        <section id="homeResidentPickerModal" class="modal hidden" aria-hidden="true">
+        <section
+          id="homeResidentPickerModal"
+          class="modal hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-hidden="true"
+          aria-labelledby="homeResidentPickerTitle"
+        >
           <div id="homeResidentPickerBackdrop" class="modal-backdrop"></div>
           <article class="modal-panel">
             <header class="modal-header">
-              <h2>섬 주민 등록</h2>
+              <h2 id="homeResidentPickerTitle">섬 주민 등록</h2>
               <button id="homeResidentPickerCloseBtn" type="button" class="modal-close">닫기</button>
             </header>
             <div class="modal-body">
@@ -56,7 +67,10 @@
         </section>
 
         <section class="control-group home-calendar">
-          <h2>NPC 방문 캘린더</h2>
+          <div class="home-island-header">
+            <h2>NPC 방문 캘린더</h2>
+            <button id="openEventsFromHomeBtn" type="button" aria-label="이벤트 카테고리 열기">이벤트 보기</button>
+          </div>
           <div class="controls home-calendar-time-controls">
             <label class="inline-check"
               ><input id="timeTravelEnabledInput" type="checkbox" /> 타임슬립 시간 사용</label
@@ -125,11 +139,18 @@
         </section>
       </section>
 
-      <section id="settingsModal" class="modal hidden" aria-hidden="true">
+      <section
+        id="settingsModal"
+        class="modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="settingsModalTitle"
+      >
         <div id="settingsModalBackdrop" class="modal-backdrop"></div>
         <article class="modal-panel">
           <header class="modal-header">
-            <h2>섬/플레이어 정보 설정</h2>
+            <h2 id="settingsModalTitle">섬/플레이어 정보 설정</h2>
             <div class="modal-header-actions">
               <button id="saveProfileBtn" type="button">저장</button>
               <button id="settingsModalCloseBtn" type="button" class="modal-close">닫기</button>
@@ -179,7 +200,7 @@
                   </div>
                 </div>
               </div>
-              <p id="profileStatus" class="profile-status"></p>
+              <p id="profileStatus" class="profile-status" aria-live="polite"></p>
               <div id="subPlayerForm" class="controls home-player-controls hidden">
                 <input id="playerNameInput" type="text" placeholder="플레이어 이름" />
                 <div class="month-day-selects">
@@ -194,7 +215,7 @@
                 <button id="clearPlayerFormBtn" type="button">입력 초기화</button>
                 <button id="cancelSubPlayerBtn" type="button">닫기</button>
               </div>
-              <p id="playerStatus" class="profile-status"></p>
+              <p id="playerStatus" class="profile-status" aria-live="polite"></p>
               <ul id="playerList" class="calendar-entry-list"></ul>
             </section>
           </div>
@@ -375,6 +396,15 @@
       </article>
     </template>
 
-    <script type="module" src="/static/app.js?v=20260215bz"></script>
+    <nav id="mobileBottomNav" class="mobile-bottom-nav hidden" aria-label="모바일 하단 메뉴"></nav>
+    <button
+      id="mobileNavSheetBackdrop"
+      class="mobile-nav-sheet-backdrop hidden"
+      type="button"
+      aria-label="하단 메뉴 닫기"
+    ></button>
+    <section id="mobileNavSheet" class="mobile-nav-sheet hidden" aria-hidden="true"></section>
+
+    <script type="module" src="/static/app.js?v=20260215cm"></script>
   </body>
 </html>

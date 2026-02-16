@@ -1,4 +1,9 @@
 export const topNav = document.getElementById("topNav");
+export const brandHomeBtn = document.getElementById("brandHomeBtn");
+export const navBreadcrumb = document.getElementById("navBreadcrumb");
+export const mobileBottomNav = document.getElementById("mobileBottomNav");
+export const mobileNavSheet = document.getElementById("mobileNavSheet");
+export const mobileNavSheetBackdrop = document.getElementById("mobileNavSheetBackdrop");
 export const homePanel = document.getElementById("homePanel");
 export const villagerPanel = document.getElementById("villagerPanel");
 export const catalogPanel = document.getElementById("catalogPanel");
@@ -46,6 +51,7 @@ export const playerStatus = document.getElementById("playerStatus");
 export const playerList = document.getElementById("playerList");
 export const calendarPrevBtn = document.getElementById("calendarPrevBtn");
 export const calendarNextBtn = document.getElementById("calendarNextBtn");
+export const openEventsFromHomeBtn = document.getElementById("openEventsFromHomeBtn");
 export const calendarMonthLabel = document.getElementById("calendarMonthLabel");
 export const calendarGrid = document.getElementById("calendarGrid");
 export const calendarSelectedDate = document.getElementById("calendarSelectedDate");

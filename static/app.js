@@ -27,7 +27,7 @@ import {
   initializeCalendarState,
   loadCalendarMonth,
 } from "./js/calendar.js";
-import { calendarSelectedDate, resultCount } from "./js/dom.js";
+import { brandHomeBtn, calendarSelectedDate, resultCount } from "./js/dom.js";
 import { createDataController } from "./js/data.js";
 import { createDetailController } from "./js/detail.js";
 import { bindMainEvents } from "./js/events.js";
@@ -46,6 +46,39 @@ import { getEffectiveNow } from "./js/utils.js";
 let detailController = null;
 let calendarReloadMonth = null;
 let calendarLoadDay = null;
+
+async function navigateToMode(mode) {
+  const target = String(mode || "").trim();
+  if (!target) return;
+  const hit = (state.navModes || []).find((m) => m.key === target);
+  if (!hit) return;
+  state.activeMode = target;
+  updatePanels();
+  renderNav({
+    onModeChange: async (nextMode) => {
+      state.activeMode = nextMode;
+      updatePanels();
+      if (state.activeMode === "home") {
+        await ensureHomeProfileLoaded();
+        await ensureHomeIslandResidentsLoaded();
+        await ensureHomeSummaryLoaded();
+        await ensurePlayersLoaded();
+        await ensureCalendarLoaded();
+        return;
+      }
+      await dataController.loadCurrentModeData();
+    },
+  });
+  if (state.activeMode === "home") {
+    await ensureHomeProfileLoaded();
+    await ensureHomeIslandResidentsLoaded();
+    await ensureHomeSummaryLoaded();
+    await ensurePlayersLoaded();
+    await ensureCalendarLoaded();
+    return;
+  }
+  await dataController.loadCurrentModeData();
+}
 
 const dataController = createDataController({
   onSyncDetailNav: () => {
@@ -170,6 +203,15 @@ async function syncCalendarToEffectiveDate() {
 window.addEventListener("acnh:effective-date-changed", () => {
   syncCalendarToEffectiveDate().catch((err) => console.error(err));
 });
+window.addEventListener("acnh:navigate-mode", (e) => {
+  const mode = e?.detail?.mode || "";
+  navigateToMode(mode).catch((err) => console.error(err));
+});
+if (brandHomeBtn) {
+  brandHomeBtn.addEventListener("click", () => {
+    navigateToMode("home").catch((err) => console.error(err));
+  });
+}
 
 (async () => {
   try {

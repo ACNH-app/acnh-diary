@@ -4,6 +4,10 @@ import {
   homePanel,
   list,
   loadMoreWrap,
+  mobileBottomNav,
+  mobileNavSheet,
+  mobileNavSheetBackdrop,
+  navBreadcrumb,
   resultCount,
   scrollTopBtn,
   subCategoryTabs,
@@ -13,6 +17,222 @@ import {
 } from "./dom.js";
 import { state } from "./state.js";
 
+let navDismissHandlersBound = false;
+const mobileNavQuery = window.matchMedia("(max-width: 768px)");
+const tapNavQuery = window.matchMedia("(hover: none), (pointer: coarse)");
+let villagerRenderToken = 0;
+
+function buildNavGroups(modes) {
+  const rows = Array.isArray(modes) ? modes : [];
+  const byKey = new Map(rows.map((m) => [m.key, m]));
+  const used = new Set();
+  const pick = (keys) =>
+    keys
+      .map((key) => byKey.get(key))
+      .filter(Boolean)
+      .filter((m) => {
+        if (used.has(m.key)) return false;
+        used.add(m.key);
+        return true;
+      });
+
+  const groups = [];
+  // 홈은 브랜드 버튼에서만 진입한다.
+  pick(["home"]);
+  const villagerModes = pick(["villagers"]);
+  const encyclopediaModes = pick(["fossils", "art"]);
+  const catalogModes = pick(["furniture", "interior", "clothing", "items", "tools", "gyroids", "photos"]);
+  // 이벤트는 상단 네비에서 숨기고 홈 캘린더에서만 진입한다.
+  pick(["events"]);
+  if (villagerModes.length) groups.push({ key: "villagers", label: "주민", modes: villagerModes });
+  if (encyclopediaModes.length) groups.push({ key: "encyclopedia", label: "도감", modes: encyclopediaModes });
+  if (catalogModes.length) groups.push({ key: "catalog", label: "카탈로그", modes: catalogModes });
+  groups.push({ key: "more", label: "기타", modes: [] });
+  return groups;
+}
+
+function syncActivePrimaryFromMode() {
+  const key = state.activeMode;
+  if (key === "home") {
+    state.nav.activePrimaryKey = "";
+    return;
+  }
+  const hit = state.nav.groups.find((g) => (g.modes || []).some((m) => m.key === key));
+  if (hit) {
+    state.nav.activePrimaryKey = hit.key;
+    return;
+  }
+  state.nav.activePrimaryKey = state.nav.groups[0]?.key || "home";
+}
+
+function syncLegacyNavState() {
+  state.navGroups = state.nav.groups;
+  state.activePrimaryNav = state.nav.activePrimaryKey;
+  state.openNavPrimaryKey = state.nav.openPrimaryKey;
+}
+
+function clearOpenPrimary() {
+  state.nav.openPrimaryKey = "";
+}
+
+function getModeByKey(modeKey) {
+  return (state.navModes || []).find((mode) => mode.key === modeKey) || null;
+}
+
+function updateNavBreadcrumb() {
+  if (!navBreadcrumb) return;
+  if (state.activeMode === "home") {
+    navBreadcrumb.textContent = "";
+    navBreadcrumb.classList.add("hidden");
+    return;
+  }
+  const mode = getModeByKey(state.activeMode);
+  const activeGroup = state.nav.groups.find((g) => g.key === state.nav.activePrimaryKey) || null;
+  const modeInGroup = activeGroup?.modes?.some((m) => m.key === state.activeMode);
+  const text = modeInGroup && activeGroup
+    ? `${activeGroup.label} > ${mode?.label || state.activeMode}`
+    : mode?.label || state.activeMode;
+  state.nav.breadcrumb = text;
+  navBreadcrumb.textContent = text;
+  navBreadcrumb.classList.remove("hidden");
+}
+
+function mobileEntryIcon(key) {
+  if (key === "home") return "/static/icons/nav-home-leaf.svg";
+  if (key === "villagers") return "/static/icons/nav-villager-face.svg";
+  if (key === "encyclopedia") return "/static/icons/nav-encyclopedia-fossil.svg";
+  if (key === "catalog") return "/static/icons/shopping_icon.png";
+  if (key === "more") return "/static/icons/nav-more-bell.svg";
+  return "/static/no-image.svg";
+}
+
+function getMobileEntries() {
+  const entries = [
+    { key: "home", label: "홈", modes: [{ key: "home", label: "홈" }] },
+    ...state.nav.groups,
+  ];
+  return entries.slice(0, 5);
+}
+
+function renderMobileBottomNav({ onModeChange } = {}) {
+  if (!mobileBottomNav || !mobileNavSheet || !mobileNavSheetBackdrop) return;
+  const entries = getMobileEntries();
+
+  mobileBottomNav.classList.remove("hidden");
+  mobileBottomNav.innerHTML = "";
+
+  const menu = document.createElement("div");
+  menu.className = "mobile-nav-menu";
+
+  entries.forEach((entry) => {
+    const hasSubmenu = (entry.modes || []).length > 1;
+    const isHome = entry.key === "home";
+    const isActive = isHome ? state.activeMode === "home" : state.nav.activePrimaryKey === entry.key;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `mobile-nav-btn ${isActive ? "active" : ""}`;
+    btn.dataset.primary = entry.key;
+
+    const icon = document.createElement("span");
+    icon.className = "mobile-nav-icon";
+    const iconImg = document.createElement("img");
+    iconImg.className = "mobile-nav-icon-img";
+    iconImg.src = mobileEntryIcon(entry.key);
+    iconImg.alt = `${entry.label} 아이콘`;
+    iconImg.loading = "lazy";
+    icon.appendChild(iconImg);
+    btn.appendChild(icon);
+
+    const label = document.createElement("span");
+    label.className = "mobile-nav-label";
+    label.textContent = entry.label;
+    btn.appendChild(label);
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (isHome) {
+        clearOpenPrimary();
+        state.activeMode = "home";
+        state.nav.activePrimaryKey = "";
+        syncLegacyNavState();
+        renderNav({ onModeChange });
+        if (onModeChange) onModeChange("home");
+        return;
+      }
+
+      state.nav.activePrimaryKey = entry.key;
+      if (!hasSubmenu) {
+        clearOpenPrimary();
+        const target = entry.modes?.[0]?.key || "";
+        if (!target) {
+          renderNav({ onModeChange });
+          return;
+        }
+        state.activeMode = target;
+        syncLegacyNavState();
+        renderNav({ onModeChange });
+        if (onModeChange) onModeChange(target);
+        return;
+      }
+      state.nav.openPrimaryKey = state.nav.openPrimaryKey === entry.key ? "" : entry.key;
+      syncLegacyNavState();
+      renderNav({ onModeChange });
+    });
+
+    menu.appendChild(btn);
+  });
+
+  mobileBottomNav.appendChild(menu);
+
+  const activeSheetEntry = entries.find(
+    (entry) => entry.key === state.nav.openPrimaryKey && (entry.modes || []).length > 1
+  );
+
+  if (!activeSheetEntry) {
+    mobileNavSheet.classList.add("hidden");
+    mobileNavSheetBackdrop.classList.add("hidden");
+    mobileNavSheet.setAttribute("aria-hidden", "true");
+    mobileNavSheet.innerHTML = "";
+    return;
+  }
+
+  mobileNavSheetBackdrop.classList.remove("hidden");
+  mobileNavSheet.classList.remove("hidden");
+  mobileNavSheet.setAttribute("aria-hidden", "false");
+  mobileNavSheet.innerHTML = "";
+
+  const panel = document.createElement("div");
+  panel.className = "mobile-nav-sheet-panel";
+
+  const title = document.createElement("p");
+  title.className = "mobile-nav-sheet-title";
+  title.textContent = activeSheetEntry.label;
+  panel.appendChild(title);
+
+  const listWrap = document.createElement("div");
+  listWrap.className = "mobile-nav-sheet-list";
+
+  activeSheetEntry.modes.forEach((mode) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `mobile-nav-sheet-btn ${mode.key === state.activeMode ? "active" : ""}`;
+    btn.textContent = mode.label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.activeMode = mode.key;
+      state.nav.activePrimaryKey = activeSheetEntry.key;
+      clearOpenPrimary();
+      syncLegacyNavState();
+      renderNav({ onModeChange });
+      if (onModeChange) onModeChange(mode.key);
+    });
+    listWrap.appendChild(btn);
+  });
+
+  panel.appendChild(listWrap);
+  mobileNavSheet.appendChild(panel);
+}
+
 export function updateScrollTopButton() {
   if (!scrollTopBtn) return;
   const shouldShow = window.scrollY > 320;
@@ -20,25 +240,166 @@ export function updateScrollTopButton() {
 }
 
 export function renderNav({ onModeChange } = {}) {
-  topNav.innerHTML = "";
-  state.navModes.forEach((mode) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `nav-btn ${mode.key === state.activeMode ? "active" : ""}`;
-    button.dataset.mode = mode.key;
-    button.textContent = mode.label;
-    button.addEventListener("click", () => {
-      state.activeMode = mode.key;
-      if (onModeChange) onModeChange(mode.key);
+  if (!navDismissHandlersBound) {
+    document.addEventListener("click", (e) => {
+      const clickedInTopNav = topNav && topNav.contains(e.target);
+      const clickedInBottomNav = mobileBottomNav && mobileBottomNav.contains(e.target);
+      const clickedInSheet = mobileNavSheet && mobileNavSheet.contains(e.target);
+      const clickedNavControl =
+        e.target &&
+        e.target.closest &&
+        e.target.closest(".nav-trigger, .nav-submenu, .mobile-nav-btn, .mobile-nav-sheet-panel");
+      if (!(clickedInTopNav || clickedInBottomNav || clickedInSheet) || !clickedNavControl) {
+        clearOpenPrimary();
+        const openItems = topNav ? topNav.querySelectorAll(".nav-item.open") : [];
+        openItems.forEach((el) => el.classList.remove("open"));
+        if (mobileNavSheet) mobileNavSheet.classList.add("hidden");
+        if (mobileNavSheetBackdrop) mobileNavSheetBackdrop.classList.add("hidden");
+      }
     });
-    topNav.appendChild(button);
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      clearOpenPrimary();
+      const openItems = topNav.querySelectorAll(".nav-item.open");
+      openItems.forEach((el) => el.classList.remove("open"));
+    });
+    mobileNavQuery.addEventListener("change", () => {
+      state.nav.isMobile = mobileNavQuery.matches;
+      state.nav.isTapNav = tapNavQuery.matches || mobileNavQuery.matches;
+      if (!state.nav.isTapNav) clearOpenPrimary();
+      syncLegacyNavState();
+      updateNavBreadcrumb();
+      renderNav({ onModeChange });
+    });
+    tapNavQuery.addEventListener("change", () => {
+      state.nav.isTapNav = tapNavQuery.matches || mobileNavQuery.matches;
+      if (!state.nav.isTapNav) clearOpenPrimary();
+      syncLegacyNavState();
+      updateNavBreadcrumb();
+      renderNav({ onModeChange });
+    });
+    if (mobileNavSheetBackdrop) {
+      mobileNavSheetBackdrop.addEventListener("click", () => {
+        clearOpenPrimary();
+        syncLegacyNavState();
+        renderNav({ onModeChange });
+      });
+    }
+    navDismissHandlersBound = true;
+  }
+
+  state.nav.isMobile = mobileNavQuery.matches;
+  state.nav.isTapNav = tapNavQuery.matches || mobileNavQuery.matches;
+  state.nav.groups = buildNavGroups(state.navModes);
+  syncActivePrimaryFromMode();
+  if (!state.nav.isTapNav) clearOpenPrimary();
+  syncLegacyNavState();
+  updateNavBreadcrumb();
+
+  if (state.nav.isMobile) {
+    if (topNav) {
+      topNav.innerHTML = "";
+      topNav.classList.add("hidden");
+    }
+    renderMobileBottomNav({ onModeChange });
+    return;
+  }
+
+  if (topNav) topNav.classList.remove("hidden");
+  if (mobileBottomNav) {
+    mobileBottomNav.classList.add("hidden");
+    mobileBottomNav.innerHTML = "";
+  }
+  if (mobileNavSheet) {
+    mobileNavSheet.classList.add("hidden");
+    mobileNavSheet.innerHTML = "";
+    mobileNavSheet.setAttribute("aria-hidden", "true");
+  }
+  if (mobileNavSheetBackdrop) mobileNavSheetBackdrop.classList.add("hidden");
+
+  topNav.innerHTML = "";
+  const menu = document.createElement("ul");
+  menu.className = "nav-menu";
+
+  state.nav.groups.forEach((group) => {
+    const li = document.createElement("li");
+    li.className = "nav-item";
+    const modes = group.modes || [];
+    const hasSubmenu = modes.length > 1;
+    if (hasSubmenu) li.classList.add("has-submenu");
+    if (group.key === state.nav.activePrimaryKey) li.classList.add("active");
+    if (hasSubmenu && state.nav.openPrimaryKey === group.key) li.classList.add("open");
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "nav-trigger";
+    trigger.dataset.primary = group.key;
+    trigger.textContent = group.label;
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const prevOpenPrimary = state.nav.openPrimaryKey;
+      state.nav.activePrimaryKey = group.key;
+      if (group.key === "more" && !hasSubmenu) {
+        clearOpenPrimary();
+        syncLegacyNavState();
+        updateNavBreadcrumb();
+        renderNav({ onModeChange });
+        return;
+      }
+      if (!hasSubmenu) {
+        clearOpenPrimary();
+        const target = modes[0]?.key || "";
+        if (!target) return;
+        state.activeMode = target;
+        syncLegacyNavState();
+        updateNavBreadcrumb();
+        renderNav({ onModeChange });
+        if (onModeChange) onModeChange(target);
+        return;
+      }
+      if (!state.nav.isTapNav) return;
+      state.nav.openPrimaryKey = prevOpenPrimary === group.key ? "" : group.key;
+      syncLegacyNavState();
+      renderNav({ onModeChange });
+    });
+    li.appendChild(trigger);
+
+    if (hasSubmenu) {
+      const sub = document.createElement("div");
+      sub.className = "nav-submenu";
+      modes.forEach((mode) => {
+        const subBtn = document.createElement("button");
+        subBtn.type = "button";
+        subBtn.className = `nav-sub-btn ${mode.key === state.activeMode ? "active" : ""}`;
+        subBtn.dataset.mode = mode.key;
+        subBtn.textContent = mode.label;
+        subBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          state.activeMode = mode.key;
+          state.nav.activePrimaryKey = group.key;
+          clearOpenPrimary();
+          syncLegacyNavState();
+          updateNavBreadcrumb();
+          renderNav({ onModeChange });
+          if (onModeChange) onModeChange(mode.key);
+        });
+        sub.appendChild(subBtn);
+      });
+      li.appendChild(sub);
+    } else {
+      trigger.classList.add("single");
+      trigger.classList.toggle("active", modes[0]?.key === state.activeMode);
+    }
+
+    menu.appendChild(li);
   });
+  topNav.appendChild(menu);
 }
 
 export function updatePanels() {
-  Array.from(topNav.querySelectorAll(".nav-btn")).forEach((el) => {
-    el.classList.toggle("active", el.dataset.mode === state.activeMode);
-  });
+  syncActivePrimaryFromMode();
+  syncLegacyNavState();
+  updateNavBreadcrumb();
 
   const homeMode = state.activeMode === "home";
   const villagerMode = state.activeMode === "villagers";
@@ -57,53 +418,73 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
   state.activeCatalogItemIds = state.renderedVillagers.map((v) => String(v.id || ""));
   if (onSyncDetailNav) onSyncDetailNav();
 
-  items.forEach((v) => {
-    const fragment = villagerCardTemplate.content.cloneNode(true);
-    const card = fragment.querySelector(".card");
-    card.classList.add("clickable");
-    const icon = fragment.querySelector(".icon");
-    const nameKo = fragment.querySelector(".name-ko");
-    const nameEn = fragment.querySelector(".name-en");
-    const meta = fragment.querySelector(".meta");
-    const birthday = fragment.querySelector(".birthday");
-    const liked = fragment.querySelector(".liked");
-    const onIsland = fragment.querySelector(".on-island");
-    const formerResident = fragment.querySelector(".former-resident");
+  const token = ++villagerRenderToken;
+  const batchSize = 60;
+  let index = 0;
 
-    icon.src = v.icon_uri || v.image_uri || "";
-    icon.addEventListener("error", () => {
-      if (icon.src !== v.image_uri && v.image_uri) icon.src = v.image_uri;
-    });
+  const appendBatch = () => {
+    if (token !== villagerRenderToken) return;
+    const fragment = document.createDocumentFragment();
+    const end = Math.min(index + batchSize, items.length);
 
-    nameKo.textContent = v.name_ko || v.name_en;
-    nameEn.textContent = v.name_en ? `EN: ${v.name_en}` : "";
-    meta.textContent = `${v.species_ko} | ${v.personality_ko}`;
-    birthday.textContent = v.birthday ? `생일: ${v.birthday}` : "";
+    for (; index < end; index += 1) {
+      const v = items[index];
+      const node = villagerCardTemplate.content.cloneNode(true);
+      const card = node.querySelector(".card");
+      card.classList.add("clickable");
+      const icon = node.querySelector(".icon");
+      const nameKo = node.querySelector(".name-ko");
+      const nameEn = node.querySelector(".name-en");
+      const meta = node.querySelector(".meta");
+      const birthday = node.querySelector(".birthday");
+      const liked = node.querySelector(".liked");
+      const onIsland = node.querySelector(".on-island");
+      const formerResident = node.querySelector(".former-resident");
 
-    liked.checked = Boolean(v.liked);
-    onIsland.checked = Boolean(v.on_island);
-    formerResident.checked = Boolean(v.former_resident);
+      icon.loading = "lazy";
+      icon.decoding = "async";
+      icon.src = v.icon_uri || v.image_uri || "";
+      icon.addEventListener("error", () => {
+        if (icon.src !== v.image_uri && v.image_uri) icon.src = v.image_uri;
+      });
 
-    liked.addEventListener("change", async () => {
-      if (!onToggleState) return;
-      await onToggleState(v.id, { liked: liked.checked });
-    });
-    onIsland.addEventListener("change", async () => {
-      if (!onToggleState) return;
-      await onToggleState(v.id, { on_island: onIsland.checked });
-    });
-    formerResident.addEventListener("change", async () => {
-      if (!onToggleState) return;
-      await onToggleState(v.id, { former_resident: formerResident.checked });
-    });
+      nameKo.textContent = v.name_ko || v.name_en;
+      nameEn.textContent = v.name_en ? `EN: ${v.name_en}` : "";
+      meta.textContent = `${v.species_ko} | ${v.personality_ko}`;
+      birthday.textContent = v.birthday ? `생일: ${v.birthday}` : "";
 
-    card.addEventListener("click", (e) => {
-      if (e.target && e.target.closest("input, label, button")) return;
-      if (onOpenDetail) onOpenDetail(v);
-    });
+      liked.checked = Boolean(v.liked);
+      onIsland.checked = Boolean(v.on_island);
+      formerResident.checked = Boolean(v.former_resident);
+
+      liked.addEventListener("change", async () => {
+        if (!onToggleState) return;
+        await onToggleState(v.id, { liked: liked.checked });
+      });
+      onIsland.addEventListener("change", async () => {
+        if (!onToggleState) return;
+        await onToggleState(v.id, { on_island: onIsland.checked });
+      });
+      formerResident.addEventListener("change", async () => {
+        if (!onToggleState) return;
+        await onToggleState(v.id, { former_resident: formerResident.checked });
+      });
+
+      card.addEventListener("click", (e) => {
+        if (e.target && e.target.closest("input, label, button")) return;
+        if (onOpenDetail) onOpenDetail(v);
+      });
+
+      fragment.appendChild(node);
+    }
 
     list.appendChild(fragment);
-  });
+    if (index < items.length) {
+      window.requestAnimationFrame(appendBatch);
+    }
+  };
+
+  window.requestAnimationFrame(appendBatch);
 }
 
 export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
@@ -136,6 +517,8 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const isArtMode = state.activeMode === "art";
 
     icon.src = v.image_url || "/static/no-image.svg";
+    icon.loading = "lazy";
+    icon.decoding = "async";
     icon.addEventListener("error", () => {
       icon.src = "/static/no-image.svg";
     });

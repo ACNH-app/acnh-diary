@@ -32,6 +32,7 @@ import {
   settingsModalBackdrop,
   settingsModalCloseBtn,
   nicknameInput,
+  openEventsFromHomeBtn,
   profileStatus,
   representativeFlowerInput,
   representativeFruitInput,
@@ -47,7 +48,6 @@ import {
   summaryUpcomingEvents,
   summaryZodiacText,
   subPlayerForm,
-  topNav,
   timeTravelEnabledInput,
 } from "./dom.js";
 import { state } from "./state.js";
@@ -466,8 +466,7 @@ function renderHomeSummary(summary) {
     item.title = "클릭하면 해당 카탈로그로 이동";
     item.addEventListener("click", () => {
       const mode = String(row.catalog_type || "");
-      const navBtn = topNav.querySelector(`.nav-btn[data-mode='${mode}']`);
-      if (navBtn) navBtn.click();
+      window.dispatchEvent(new CustomEvent("acnh:navigate-mode", { detail: { mode } }));
     });
 
     const label = document.createElement("p");
@@ -651,6 +650,11 @@ export function bindHomeEvents({
   }
   if (settingsModalCloseBtn) {
     settingsModalCloseBtn.addEventListener("click", closeSettingsModal);
+  }
+  if (openEventsFromHomeBtn) {
+    openEventsFromHomeBtn.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("acnh:navigate-mode", { detail: { mode: "events" } }));
+    });
   }
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && settingsModal && !settingsModal.classList.contains("hidden")) {

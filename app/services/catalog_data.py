@@ -353,16 +353,33 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
             "event_type": str(row.get("seasonEvent") or "").strip(),
         }
 
+    local_number_value = 0
+    if catalog_type == "recipes" and isinstance(local_recipe_row, dict):
+        local_number_value = (
+            local_recipe_row.get("number")
+            or local_recipe_row.get("serial_id")
+            or local_recipe_row.get("serialId")
+            or local_recipe_row.get("internal_id")
+            or local_recipe_row.get("internalId")
+            or 0
+        )
+
+    number_value = (
+        row.get("number")
+        or row.get("serial_id")
+        or row.get("serialId")
+        or row.get("internal_id")
+        or row.get("internalId")
+        or local_number_value
+        or 0
+    )
+
     item = {
         "id": _item_id(catalog_type, row, name_en),
         "name": name_ko or name_en,
         "name_ko": name_ko,
         "name_en": name_en,
-        "number": int(
-            row.get("number")
-            or (row.get("serial_id") if catalog_type == "recipes" else 0)
-            or 0
-        ),
+        "number": int(number_value or 0),
         "url": str(row.get("url") or ""),
         "image_url": _extract_image_url(row),
         "category": category,

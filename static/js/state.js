@@ -29,6 +29,7 @@ export const state = {
   subCategoryEnabledModes: new Set(["clothing", "items", "interior", "furniture", "recipes", "art"]),
   subCategoryStateByMode: {},
   catalogPage: 1,
+  catalogLoadedPages: 1,
   catalogPageSize: 60,
   catalogHasMore: false,
   renderedCatalogItems: [],

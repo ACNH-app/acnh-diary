@@ -16,6 +16,8 @@ venv/
 
 # Local runtime artifacts
 app.db
+app.db-shm
+app.db-wal
 *.log
 data/.cache/
 

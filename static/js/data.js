@@ -57,7 +57,13 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   const safeOpenVillagerDetail = (villager) => {
     if (onOpenVillagerDetail) onOpenVillagerDetail(villager);
   };
-  const textKoSort = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
+  const textKoSort = (a, b) => {
+    const sa = String(a || "").normalize("NFKC").toLowerCase();
+    const sb = String(b || "").normalize("NFKC").toLowerCase();
+    if (sa < sb) return -1;
+    if (sa > sb) return 1;
+    return 0;
+  };
   const catalogName = (x) => x?.name_ko || x?.name || x?.name_en || "";
   const getExtraFilterValue = () => {
     if (catalogExtraSelect.classList.contains("hidden")) return "";
@@ -113,7 +119,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
         const diff = ad.localeCompare(bd);
         if (diff) return diff * sign;
       }
-      return textKoSort(catalogName(a), catalogName(b)) * sign;
+      const nameDiff = textKoSort(catalogName(a), catalogName(b));
+      if (nameDiff) return nameDiff * sign;
+      return textKoSort(a?.id || "", b?.id || "") * sign;
     });
     return safeRows;
   };
@@ -252,9 +260,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     });
   }
 
-  /** Load first catalog page for the given type. */
-  async function loadCatalog(catalogType) {
-    return loadCatalogPage(catalogType, { append: false });
+  /** Load catalog list (optionally preserving currently visible page span). */
+  async function loadCatalog(catalogType, { preserveVisible = false } = {}) {
+    return loadCatalogPage(catalogType, { append: false, preserveVisible });
   }
 
   async function ensureCatalogRows(catalogType) {
@@ -282,7 +290,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   }
 
   /** Fetch and render one catalog page; append if requested. */
-  async function loadCatalogPage(catalogType, { append = false } = {}) {
+  async function loadCatalogPage(catalogType, { append = false, preserveVisible = false } = {}) {
     const requestSeq = ++catalogFetchSeq;
     if (!append && catalogFetchAbortController) {
       try {
@@ -344,11 +352,16 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       String(catalogSortOrderSelect.value || "asc")
     );
 
-    const nextPage = append ? state.catalogPage + 1 : 1;
-    const start = (nextPage - 1) * state.catalogPageSize;
-    const end = start + state.catalogPageSize;
+    const targetPage = append
+      ? Math.max(1, Number(state.catalogLoadedPages || 1)) + 1
+      : preserveVisible
+        ? Math.max(1, Number(state.catalogLoadedPages || 1))
+        : 1;
+    const start = append ? (targetPage - 1) * state.catalogPageSize : 0;
+    const end = targetPage * state.catalogPageSize;
     const items = filtered.slice(start, end);
-    state.catalogPage = nextPage;
+    state.catalogPage = targetPage;
+    state.catalogLoadedPages = targetPage;
     renderCatalog(
       items,
       meta.status_label || "보유",
@@ -430,7 +443,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       await loadVillagers();
       return;
     }
-    await loadCatalog(state.activeMode);
+    await loadCatalog(state.activeMode, { preserveVisible: false });
   }
 
   /** Set owned state for all currently rendered catalog items (current filtered list/page). */
@@ -551,8 +564,8 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   function scheduleCatalogRefresh(delayMs = 400) {
     clearTimeout(state.catalogRefreshTimer);
     state.catalogRefreshTimer = setTimeout(() => {
-      if (state.activeMode === "villagers") return;
-      loadCurrentModeData().catch((err) => console.error(err));
+      if (state.activeMode === "villagers" || state.activeMode === "home") return;
+      loadCatalog(state.activeMode, { preserveVisible: true }).catch((err) => console.error(err));
     }, delayMs);
   }
 

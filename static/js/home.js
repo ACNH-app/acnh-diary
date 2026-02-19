@@ -175,11 +175,15 @@ function renderHomeIslandResidents(
       img.addEventListener("error", () => {
         img.src = "/static/no-image.svg";
       });
+      const thumbWrap = document.createElement("div");
+      thumbWrap.className = "home-resident-thumb-wrap";
       const name = document.createElement("p");
       name.textContent = v.name_ko || v.name_en || "-";
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
-      removeBtn.textContent = "삭제";
+      removeBtn.className = "home-resident-remove-btn";
+      removeBtn.setAttribute("aria-label", "섬 주민 삭제");
+      removeBtn.textContent = "×";
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         if (onRemoveResident) await onRemoveResident(v);
@@ -221,7 +225,8 @@ function renderHomeIslandResidents(
       card.addEventListener("click", () => {
         if (onOpenVillagerDetail) onOpenVillagerDetail(v, items);
       });
-      card.append(img, name, removeBtn);
+      thumbWrap.append(img, removeBtn);
+      card.append(thumbWrap, name);
       homeIslandResidents.appendChild(card);
     });
   }

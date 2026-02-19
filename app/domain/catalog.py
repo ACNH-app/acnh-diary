@@ -23,9 +23,7 @@ RECIPE_CATEGORY_KO_MAP = {
     "Wall-mounted": "벽걸이",
     "Ceiling Decor": "천장",
     "Ceiling decor": "천장",
-    "Wallpaper": "벽지",
-    "Floors": "바닥",
-    "Rugs": "러그",
+    "Interior": "벽지/바닥/러그",
     "Equipment": "의류",
     "Other": "기타",
     "Savory": "푸드",
@@ -38,9 +36,7 @@ RECIPE_CATEGORY_ORDER = [
     "Miscellaneous",
     "Wall-mounted",
     "Ceiling Decor",
-    "Wallpaper",
-    "Floors",
-    "Rugs",
+    "Interior",
     "Equipment",
     "Other",
     "Savory",
@@ -93,6 +89,12 @@ def normalize_recipe_category(category: str) -> str:
 
     if key in {"ceiling decor", "ceiling decoration", "ceiling"}:
         return "Ceiling Decor"
+    if key in {"wallpaper", "walls", "wall"}:
+        return "Interior"
+    if key in {"floors", "floor", "flooring"}:
+        return "Interior"
+    if key in {"rugs", "rug"}:
+        return "Interior"
     return raw
 
 

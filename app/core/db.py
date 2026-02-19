@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import sqlite3
+from threading import Lock
 
 from app.core.config import get_db_path
+
+_INIT_LOCK = Lock()
+_INIT_DONE = False
 
 VILLAGER_STATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS villager_state (
@@ -20,6 +24,7 @@ CREATE TABLE IF NOT EXISTS catalog_state (
     catalog_type TEXT NOT NULL,
     item_id TEXT NOT NULL,
     owned INTEGER NOT NULL DEFAULT 0,
+    donated INTEGER NOT NULL DEFAULT 0,
     quantity INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (catalog_type, item_id)
@@ -79,8 +84,11 @@ CREATE TABLE IF NOT EXISTS player_profile (
 
 
 def get_db() -> sqlite3.Connection:
-    conn = sqlite3.connect(get_db_path())
+    conn = sqlite3.connect(get_db_path(), timeout=10.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")
+    conn.execute("PRAGMA busy_timeout = 10000")
     return conn
 
 
@@ -213,23 +221,35 @@ def _migrate_player_profile(conn: sqlite3.Connection) -> None:
 
 
 def init_db() -> None:
-    with get_db() as conn:
-        _migrate_villager_state(conn)
-        conn.execute(CATALOG_STATE_TABLE_SQL)
-        info = conn.execute("PRAGMA table_info(catalog_state)").fetchall()
-        cols = {str(r["name"]) for r in info}
-        if "quantity" not in cols:
-            conn.execute(
-                "ALTER TABLE catalog_state ADD COLUMN quantity INTEGER NOT NULL DEFAULT 0"
-            )
-        conn.execute(CATALOG_VARIATION_STATE_TABLE_SQL)
-        vinfo = conn.execute("PRAGMA table_info(catalog_variation_state)").fetchall()
-        vcols = {str(r["name"]) for r in vinfo}
-        if "quantity" not in vcols:
-            conn.execute(
-                "ALTER TABLE catalog_variation_state ADD COLUMN quantity INTEGER NOT NULL DEFAULT 0"
-            )
-        _migrate_clothing_state(conn)
-        _migrate_island_profile(conn)
-        _migrate_calendar_entry(conn)
-        _migrate_player_profile(conn)
+    global _INIT_DONE
+    if _INIT_DONE:
+        return
+
+    with _INIT_LOCK:
+        if _INIT_DONE:
+            return
+        with get_db() as conn:
+            _migrate_villager_state(conn)
+            conn.execute(CATALOG_STATE_TABLE_SQL)
+            info = conn.execute("PRAGMA table_info(catalog_state)").fetchall()
+            cols = {str(r["name"]) for r in info}
+            if "donated" not in cols:
+                conn.execute(
+                    "ALTER TABLE catalog_state ADD COLUMN donated INTEGER NOT NULL DEFAULT 0"
+                )
+            if "quantity" not in cols:
+                conn.execute(
+                    "ALTER TABLE catalog_state ADD COLUMN quantity INTEGER NOT NULL DEFAULT 0"
+                )
+            conn.execute(CATALOG_VARIATION_STATE_TABLE_SQL)
+            vinfo = conn.execute("PRAGMA table_info(catalog_variation_state)").fetchall()
+            vcols = {str(r["name"]) for r in vinfo}
+            if "quantity" not in vcols:
+                conn.execute(
+                    "ALTER TABLE catalog_variation_state ADD COLUMN quantity INTEGER NOT NULL DEFAULT 0"
+                )
+            _migrate_clothing_state(conn)
+            _migrate_island_profile(conn)
+            _migrate_calendar_entry(conn)
+            _migrate_player_profile(conn)
+        _INIT_DONE = True

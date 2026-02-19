@@ -173,7 +173,7 @@ body {
 
 .control-groups {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
@@ -209,7 +209,68 @@ body {
 
 .sort-controls,
 .catalog-sort-controls {
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr auto auto auto;
+}
+
+.controls-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.controls-inline input[type="text"] {
+  flex: 1 1 280px;
+  min-width: 220px;
+}
+
+.controls-inline select,
+.controls-inline button {
+  flex: 0 0 auto;
+}
+
+.controls-inline button {
+  touch-action: manipulation;
+}
+
+#catalogToggleAllBtn {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.catalog-toggle-fab {
+  display: none;
+  position: fixed;
+  right: 14px;
+  bottom: 84px;
+  z-index: 90;
+  min-width: 58px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  touch-action: manipulation;
+}
+
+body:not([data-active-mode="home"]):not([data-active-mode="villagers"]) .catalog-toggle-fab {
+  display: block;
+}
+
+@media (min-width: 1367px) {
+  .catalog-toggle-fab {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  #catalogToggleAllBtn {
+    display: none !important;
+  }
 }
 
 .catalog-filter-controls {
@@ -407,7 +468,7 @@ body {
 
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -691,6 +752,32 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 12px;
+}
+
+.grid.grid-five-cols {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.grid.grid-five-cols .card {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 10px;
+}
+
+.grid.grid-five-cols .icon {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+
+.grid.grid-five-cols .name-ko {
+  font-size: 0.92rem;
+}
+
+.grid.grid-five-cols .name-en,
+.grid.grid-five-cols .meta,
+.grid.grid-five-cols .description {
+  font-size: 0.8rem;
 }
 
 .card {
@@ -1296,6 +1383,10 @@ label {
 
   .home-resident-picker-controls {
     grid-template-columns: 1fr;
+  }
+
+  .grid.grid-five-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-resident-picker-grid {

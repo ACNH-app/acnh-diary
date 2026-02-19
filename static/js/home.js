@@ -40,11 +40,12 @@ import {
   saveProfileBtn,
   savePlayerBtn,
   summaryBloomingShrubs,
+  summaryBloomingShrubsText,
   summaryCatalogProgress,
-  summaryDateTimeText,
   summaryNookShopping,
   summarySeasonText,
   summarySeasonalRecipes,
+  summarySeasonalRecipesText,
   summaryUpcomingEvents,
   summaryZodiacText,
   subPlayerForm,
@@ -415,7 +416,6 @@ function renderHomeSummary(summary) {
   const data = summary || {};
   summarySeasonText.textContent = data.season_ko || "-";
   summaryZodiacText.textContent = data.zodiac_ko || "-";
-  summaryDateTimeText.textContent = data.effective_datetime || "-";
 
   const renderEventList = (target, rows, emptyText) => {
     target.innerHTML = "";
@@ -441,11 +441,42 @@ function renderHomeSummary(summary) {
   const shopping = Array.isArray(data.nook_shopping_today) ? data.nook_shopping_today : [];
   renderEventList(summaryNookShopping, shopping, "오늘 너굴 쇼핑 항목 없음");
 
-  const recipes = Array.isArray(data.seasonal_recipes_now) ? data.seasonal_recipes_now : [];
-  renderEventList(summarySeasonalRecipes, recipes, "해당 기간 레시피 이벤트 없음");
+  const toRecipeLabel = (value) => {
+    if (!value) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "object") {
+      return String(value.name_ko || value.name_en || value.name || value.theme || "").trim();
+    }
+    return String(value).trim();
+  };
+
+  const recipes = (Array.isArray(data.seasonal_recipes_now) ? data.seasonal_recipes_now : [])
+    .map((x) => toRecipeLabel(x))
+    .filter(Boolean);
+  summarySeasonalRecipes.innerHTML = "";
+  if (!recipes.length) {
+    const li = document.createElement("li");
+    li.textContent = "현재 가능한 시즌 레시피 없음";
+    summarySeasonalRecipes.appendChild(li);
+  } else {
+    recipes.forEach((name) => {
+      const li = document.createElement("li");
+      li.textContent = String(name);
+      summarySeasonalRecipes.appendChild(li);
+    });
+  }
+  if (summarySeasonalRecipesText) {
+    const recipeNames = recipes.slice(0, 2).map((name) => String(name)).filter(Boolean);
+    summarySeasonalRecipesText.textContent = recipeNames.length
+      ? recipeNames.join(", ")
+      : "없음";
+  }
 
   summaryBloomingShrubs.innerHTML = "";
   const shrubs = Array.isArray(data.blooming_shrubs_now) ? data.blooming_shrubs_now : [];
+  if (summaryBloomingShrubsText) {
+    summaryBloomingShrubsText.textContent = shrubs.length ? shrubs.join(", ") : "없음";
+  }
   if (!shrubs.length) {
     const li = document.createElement("li");
     li.textContent = "현재 개화 중인 낮은 나무 없음";

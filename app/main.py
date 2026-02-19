@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from threading import Thread
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -25,14 +26,19 @@ from app.core.config import (
     EVENT_NAME_MAP_PATH,
     EVENT_COUNTRY_MAP_PATH,
     ART_NAME_MAP_PATH,
+    BUG_NAME_MAP_PATH,
+    REACTION_NAME_MAP_PATH,
+    FISH_NAME_MAP_PATH,
     FOSSIL_NAME_MAP_PATH,
     PHOTO_NAME_MAP_PATH,
     FURNITURE_NAME_MAP_PATH,
     GYROID_NAME_MAP_PATH,
     INTERIOR_NAME_MAP_PATH,
     ITEMS_NAME_MAP_PATH,
+    RECIPE_NAME_MAP_PATH,
     NAME_MAP_PATH,
     PERSONALITY_MAP_PATH,
+    SEA_NAME_MAP_PATH,
     SPECIES_MAP_PATH,
     TOOLS_NAME_MAP_PATH,
     VILLAGER_SAYING_MAP_PATH,
@@ -44,6 +50,7 @@ from app.domain.catalog import category_ko_for, order_categories
 from app.repositories.state import (
     delete_player,
     delete_calendar_entry,
+    invalidate_catalog_state_caches,
     get_island_profile,
     list_players,
     list_calendar_entries,
@@ -91,6 +98,16 @@ def _should_prewarm_on_startup() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
+def _prewarm_caches() -> None:
+    try:
+        load_villagers()
+        for catalog_type in CATALOG_TYPES.keys():
+            load_catalog(catalog_type)
+    except Exception:
+        # 프리워밍 실패는 앱 기동 실패로 취급하지 않는다.
+        pass
+
+
 app = FastAPI(title="ACNH Manager Prototype", version="0.4.0")
 app.add_middleware(
     CORSMiddleware,
@@ -121,10 +138,15 @@ def on_startup() -> None:
     ensure_map_file(INTERIOR_NAME_MAP_PATH, {})
     ensure_map_file(GYROID_NAME_MAP_PATH, {})
     ensure_map_file(FOSSIL_NAME_MAP_PATH, {})
+    ensure_map_file(BUG_NAME_MAP_PATH, {})
+    ensure_map_file(FISH_NAME_MAP_PATH, {})
+    ensure_map_file(SEA_NAME_MAP_PATH, {})
+    ensure_map_file(RECIPE_NAME_MAP_PATH, {})
     ensure_map_file(EVENT_NAME_MAP_PATH, {})
     ensure_map_file(EVENT_COUNTRY_MAP_PATH, {})
     ensure_map_file(PHOTO_NAME_MAP_PATH, {})
     ensure_map_file(ART_NAME_MAP_PATH, {})
+    ensure_map_file(REACTION_NAME_MAP_PATH, {})
     build_local_name_maps()
     ensure_art_name_map_from_furniture()
 
@@ -144,16 +166,10 @@ def on_startup() -> None:
     load_clothing_style_map()
     load_clothing_label_theme_map()
 
-    # 첫 요청 지연을 줄이기 위해 목록 데이터를 메모리 캐시에 미리 적재한다.
-    # (시작 시간은 늘어나지만, 첫 API 호출은 빨라짐)
+    # 첫 요청 지연을 줄이기 위한 프리워밍은 백그라운드에서 실행한다.
+    # (startup 블로킹 방지)
     if _should_prewarm_on_startup():
-        try:
-            load_villagers()
-            for catalog_type in CATALOG_TYPES.keys():
-                load_catalog(catalog_type)
-        except Exception:
-            # 프리워밍 실패는 앱 기동 실패로 취급하지 않는다.
-            pass
+        Thread(target=_prewarm_caches, daemon=True).start()
 
 
 handlers = create_handlers(
@@ -202,6 +218,7 @@ handlers = create_handlers(
             upsert_catalog_state=upsert_catalog_state,
             upsert_all_variation_states=upsert_all_variation_states,
             recalc_item_owned_from_variations=recalc_item_owned_from_variations,
+            invalidate_catalog_state_caches=invalidate_catalog_state_caches,
             init_db=init_db,
             get_db=get_db,
         ),
@@ -243,6 +260,7 @@ app.include_router(
         get_catalog_detail_handler=handlers.catalog.get_catalog_detail,
         get_art_guide_handler=handlers.catalog.get_art_guide,
         update_catalog_state_handler=handlers.catalog.update_catalog_state,
+        update_catalog_state_bulk_handler=handlers.catalog.update_catalog_state_bulk,
         update_catalog_variation_state_handler=handlers.catalog.update_catalog_variation_state,
         update_catalog_variation_state_batch_handler=handlers.catalog.update_catalog_variation_state_batch,
     )

@@ -23,6 +23,21 @@ FROM_MAP_KO = {
     "festivale": "카니발 이벤트",
     "turkey day": "추수감사절 이벤트",
     "happy home paradise": "해피홈 파라다이스",
+    "all villagers": "모든 성격 주민",
+    "big sister villagers": "단순활발 주민",
+    "cranky villagers": "무뚝뚝 주민",
+    "dj kk concert": "K.K. 공연",
+    "group stretching": "단체 체조",
+    "hip reaction collection": "힙 리액션 컬렉션",
+    "jack": "잭",
+    "jock villagers": "운동광 주민",
+    "lazy villagers": "먹보 주민",
+    "new reactions notebook": "새 리액션 노트",
+    "normal villagers": "친절함 주민",
+    "peppy villagers": "아이돌 주민",
+    "smug villagers": "느끼함 주민",
+    "snooty villagers": "성숙함 주민",
+    "viva festivale reaction set": "비바 카니발 리액션 세트",
 }
 
 NOTE_MAP_KO = {
@@ -31,15 +46,9 @@ NOTE_MAP_KO = {
     "not for sale": "상점 구매가 불가능한 아이템입니다.",
     "seasonal item": "시즌 한정 아이템입니다.",
     "event item": "이벤트 한정 아이템입니다.",
+    "received after doing your 50th group stretch": "단체 체조를 50회 달성하면 획득합니다.",
+    "requires a high level of friendship": "주민과의 친밀도가 높아야 획득할 수 있습니다.",
 }
-
-
-def _stringify_source(value: Any) -> str:
-    if isinstance(value, list):
-        return ", ".join(str(x).strip() for x in value if str(x).strip())
-    if isinstance(value, str):
-        return value.strip()
-    return str(value).strip() if value is not None else ""
 
 
 def _translate_from_to_ko(value: str) -> str:
@@ -51,6 +60,20 @@ def _translate_from_to_ko(value: str) -> str:
         if en in lowered:
             return ko
     return text
+
+
+def translate_source_value_to_ko(value: Any) -> str:
+    if isinstance(value, list):
+        translated = []
+        for x in value:
+            s = str(x).strip()
+            if not s:
+                continue
+            translated.append(_translate_from_to_ko(s))
+        return ", ".join(dict.fromkeys(translated))
+    if value is None:
+        return ""
+    return _translate_from_to_ko(str(value).strip())
 
 
 def _translate_note_to_ko(value: str) -> str:
@@ -106,7 +129,7 @@ def extract_source_pair(row: dict[str, Any]) -> tuple[str, str]:
     )
 
     if not source:
-        source = _translate_from_to_ko(_stringify_source(row.get("source")))
+        source = translate_source_value_to_ko(row.get("source"))
     if not source_notes:
         raw_note = str(
             row.get("source_notes")
@@ -131,7 +154,7 @@ def extract_source_pair(row: dict[str, Any]) -> tuple[str, str]:
         v_froms, v_notes = _parse_availability(variation.get("availability"))
         s = ", ".join(dict.fromkeys([_translate_from_to_ko(x) for x in v_froms if x]))
         if not s:
-            s = _translate_from_to_ko(_stringify_source(variation.get("source")))
+            s = translate_source_value_to_ko(variation.get("source"))
         n = " / ".join(dict.fromkeys([_translate_note_to_ko(x) for x in v_notes if x]))
         if not n:
             raw_note = str(

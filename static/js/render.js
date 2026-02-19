@@ -40,8 +40,18 @@ function buildNavGroups(modes) {
   // 홈은 브랜드 버튼에서만 진입한다.
   pick(["home"]);
   const villagerModes = pick(["villagers"]);
-  const encyclopediaModes = pick(["fossils", "art"]);
-  const catalogModes = pick(["furniture", "interior", "clothing", "items", "tools", "gyroids", "photos"]);
+  const encyclopediaModes = pick(["fossils", "bugs", "fish", "sea", "art"]);
+  const catalogModes = pick([
+    "furniture",
+    "interior",
+    "clothing",
+    "items",
+    "tools",
+    "gyroids",
+    "photos",
+    "recipes",
+    "reactions",
+  ]);
   // 이벤트는 상단 네비에서 숨기고 홈 캘린더에서만 진입한다.
   pick(["events"]);
   if (villagerModes.length) groups.push({ key: "villagers", label: "주민", modes: villagerModes });
@@ -400,6 +410,7 @@ export function updatePanels() {
   syncActivePrimaryFromMode();
   syncLegacyNavState();
   updateNavBreadcrumb();
+  document.body.dataset.activeMode = String(state.activeMode || "");
 
   const homeMode = state.activeMode === "home";
   const villagerMode = state.activeMode === "villagers";
@@ -488,6 +499,10 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
 }
 
 export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
+  const forceFiveCols = ["bugs", "fish", "sea", "recipes"].includes(state.activeMode);
+  list.classList.toggle("grid-five-cols", forceFiveCols);
+  list.dataset.catalogMode = String(state.activeMode || "");
+
   const append = Boolean(options.append);
   const totalCount = Number(options.totalCount ?? items.length);
   state.catalogHasMore = Boolean(options.hasMore);
@@ -507,17 +522,24 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const fragment = catalogCardTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".card");
     card.classList.add("clickable");
+    card.dataset.itemId = String(v.id || "");
     const icon = fragment.querySelector(".icon");
     const nameKo = fragment.querySelector(".name-ko");
     const nameEn = fragment.querySelector(".name-en");
     const meta = fragment.querySelector(".meta");
     const desc = fragment.querySelector(".description");
     const owned = fragment.querySelector(".owned");
+    if (owned) {
+      owned.dataset.itemId = String(v.id || "");
+    }
+    const donated = fragment.querySelector(".donated");
+    const donatedWrap = fragment.querySelector(".donated-wrap");
     const ownedLabel = fragment.querySelector(".owned-label");
     const qtyWrap = fragment.querySelector(".owned-qty-wrap");
     const qtyInput = fragment.querySelector(".owned-qty");
     const isArtMode = state.activeMode === "art";
     const isFurnitureMode = state.activeMode === "furniture";
+    const isMuseumMode = ["bugs", "fish", "sea"].includes(state.activeMode);
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.loading = "lazy";
@@ -552,7 +574,8 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       state.activeMode === "clothing" ||
       state.activeMode === "furniture" ||
       state.activeMode === "interior" ||
-      state.activeMode === "tools"
+      state.activeMode === "tools" ||
+      state.activeMode === "recipes"
     ) {
       desc.innerHTML = "";
       const base = document.createElement("span");
@@ -569,6 +592,12 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         note.addEventListener("click", (e) => e.stopPropagation());
         desc.appendChild(note);
       }
+    } else if (state.activeMode === "reactions") {
+      const src = v.reaction_source || v.source || "획득처 정보 없음";
+      const parts = [`획득처: ${src}`];
+      if (v.event_type) parts.push(`연관 이벤트: ${v.event_type}`);
+      if (v.date) parts.push(`버전: ${v.date}`);
+      desc.textContent = parts.join(" | ");
     } else if (Array.isArray(v.styles_ko) && v.styles_ko.length) {
       const labelThemes =
         Array.isArray(v.label_themes_ko) && v.label_themes_ko.length ? v.label_themes_ko.join(", ") : "-";
@@ -582,6 +611,12 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     owned.checked = Boolean(v.owned);
     owned.indeterminate = isPartialOwned;
     ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
+    if (donatedWrap) {
+      donatedWrap.classList.toggle("hidden", !isMuseumMode);
+    }
+    if (donated) {
+      donated.checked = Boolean(v.donated);
+    }
     if (qtyWrap) {
       qtyWrap.classList.toggle("hidden", !isFurnitureMode);
       qtyWrap.hidden = !isFurnitureMode;
@@ -613,6 +648,13 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
             : undefined,
       });
     });
+
+    if (isMuseumMode && donated) {
+      donated.addEventListener("change", async () => {
+        if (!handlers.onToggleDonated) return;
+        await handlers.onToggleDonated(v.id, donated.checked);
+      });
+    }
 
     if (isFurnitureMode && qtyInput && variationTotal === 0) {
       qtyInput.addEventListener("click", (e) => e.stopPropagation());

@@ -22,6 +22,7 @@ class VillagerIslandOrderIn(BaseModel):
 
 class CatalogStateIn(BaseModel):
     owned: bool | None = None
+    donated: bool | None = None
     quantity: int | None = None
 
 
@@ -29,7 +30,13 @@ class CatalogStateOut(BaseModel):
     catalog_type: str
     item_id: str
     owned: bool
+    donated: bool
     quantity: int
+
+
+class CatalogStateBulkIn(BaseModel):
+    item_ids: list[str]
+    owned: bool
 
 
 class CatalogVariationStateIn(BaseModel):

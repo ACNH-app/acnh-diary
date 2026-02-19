@@ -20,7 +20,6 @@ const CALENDAR_NPC_OPTIONS = [
   { name: "레온", night: false },
   { name: "여울", night: false },
   { name: "고숙이", night: false },
-  { name: "케이트", night: false },
   { name: "무파니", night: false },
   { name: "K.K.", night: false },
   { name: "부옥", night: true },

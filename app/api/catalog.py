@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from app.schemas.state import (
+    CatalogStateBulkIn,
     CatalogStateIn,
     CatalogStateOut,
     CatalogVariationStateBatchIn,
@@ -21,6 +22,7 @@ def create_catalog_router(
     get_catalog_detail_handler: Callable[..., dict[str, Any]],
     get_art_guide_handler: Callable[..., dict[str, Any]],
     update_catalog_state_handler: Callable[..., CatalogStateOut],
+    update_catalog_state_bulk_handler: Callable[..., dict[str, Any]],
     update_catalog_variation_state_handler: Callable[..., CatalogVariationStateOut],
     update_catalog_variation_state_batch_handler: Callable[..., dict[str, Any]],
 ) -> APIRouter:
@@ -76,6 +78,16 @@ def create_catalog_router(
     ) -> CatalogStateOut:
         return update_catalog_state_handler(
             catalog_type=catalog_type, item_id=item_id, payload=payload
+        )
+
+    @router.post("/api/catalog/{catalog_type}/state/bulk")
+    def update_catalog_state_bulk(
+        catalog_type: str,
+        payload: CatalogStateBulkIn,
+    ) -> dict[str, Any]:
+        return update_catalog_state_bulk_handler(
+            catalog_type=catalog_type,
+            payload=payload,
         )
 
     @router.post(

@@ -54,6 +54,7 @@ class CatalogHandlerDeps:
     upsert_catalog_state: Callable[..., None]
     upsert_all_variation_states: Callable[..., None]
     recalc_item_owned_from_variations: Callable[..., bool]
+    invalidate_catalog_state_caches: Callable[[str | None], None]
     init_db: Callable[[], None]
     get_db: Callable[..., Any]
 
@@ -98,6 +99,7 @@ class CatalogHandlers:
     get_catalog: Callable[..., dict[str, Any]]
     get_catalog_detail: Callable[..., dict[str, Any]]
     update_catalog_state: Callable[..., Any]
+    update_catalog_state_bulk: Callable[..., dict[str, Any]]
     update_catalog_variation_state: Callable[..., Any]
     update_catalog_variation_state_batch: Callable[..., dict[str, Any]]
     get_art_guide: Callable[..., dict[str, Any]]

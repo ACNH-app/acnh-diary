@@ -53,10 +53,12 @@ async function navigateToMode(mode) {
   const hit = (state.navModes || []).find((m) => m.key === target);
   if (!hit) return;
   state.activeMode = target;
+  window.__acnhCurrentMode = state.activeMode;
   updatePanels();
   renderNav({
     onModeChange: async (nextMode) => {
       state.activeMode = nextMode;
+      window.__acnhCurrentMode = state.activeMode;
       updatePanels();
       if (state.activeMode === "home") {
         await ensureHomeProfileLoaded();
@@ -114,9 +116,19 @@ bindMainEvents({
   scheduleLoad: dataController.scheduleLoad,
   loadCurrentModeData: dataController.loadCurrentModeData,
   loadCatalogPage: dataController.loadCatalogPage,
+  toggleVisibleCatalogOwned: dataController.toggleVisibleCatalogOwned,
   updateScrollTopButton,
   detailController,
 });
+window.__acnhToggleAllOwned = () => dataController.toggleVisibleCatalogOwned();
+window.__acnhCurrentMode = state.activeMode;
+window.__acnhForceBulkToggleVisible = async () => {
+  const ownedInputs = Array.from(document.querySelectorAll("#list .owned"));
+  if (!ownedInputs.length) return false;
+  const allOwned = ownedInputs.every((el) => Boolean(el.checked) && !Boolean(el.indeterminate));
+  await dataController.setVisibleCatalogOwned(!allOwned);
+  return true;
+};
 bindArtGuideEvents({ getJSON });
 
 async function ensureHomeProfileLoaded() {
@@ -227,6 +239,7 @@ if (brandHomeBtn) {
 
     renderNav({
       onModeChange: () => {
+        window.__acnhCurrentMode = state.activeMode;
         updatePanels();
         if (state.activeMode === "home") {
           ensureHomeProfileLoaded().catch((err) => console.error(err));

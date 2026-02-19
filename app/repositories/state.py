@@ -2,9 +2,68 @@ from __future__ import annotations
 
 import re
 import sqlite3
+import time
+from threading import Lock
 from typing import Any
 
 from app.core.db import get_db, init_db
+
+_CACHE_LOCK = Lock()
+_CATALOG_STATE_CACHE: dict[str, dict[str, dict[str, Any]]] = {}
+_VARIATION_OWNED_COUNT_CACHE: dict[str, dict[str, int]] = {}
+_VARIATION_QTY_TOTAL_CACHE: dict[str, dict[str, int]] = {}
+
+
+def _clone_catalog_state_map(src: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {k: dict(v) for k, v in src.items()}
+
+
+def invalidate_catalog_state_caches(catalog_type: str | None = None) -> None:
+    with _CACHE_LOCK:
+        if not catalog_type:
+            _CATALOG_STATE_CACHE.clear()
+            _VARIATION_OWNED_COUNT_CACHE.clear()
+            _VARIATION_QTY_TOTAL_CACHE.clear()
+            return
+        _CATALOG_STATE_CACHE.pop(catalog_type, None)
+        _VARIATION_OWNED_COUNT_CACHE.pop(catalog_type, None)
+        _VARIATION_QTY_TOTAL_CACHE.pop(catalog_type, None)
+
+
+def _exec_with_retry(
+    conn: sqlite3.Connection,
+    sql: str,
+    params: tuple[Any, ...] = (),
+    *,
+    retries: int = 6,
+    delay_sec: float = 0.03,
+) -> sqlite3.Cursor:
+    for attempt in range(retries + 1):
+        try:
+            return conn.execute(sql, params)
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc).lower() or attempt >= retries:
+                raise
+            time.sleep(delay_sec * (attempt + 1))
+    raise RuntimeError("unreachable")
+
+
+def _executemany_with_retry(
+    conn: sqlite3.Connection,
+    sql: str,
+    params_seq: list[tuple[Any, ...]],
+    *,
+    retries: int = 6,
+    delay_sec: float = 0.03,
+) -> sqlite3.Cursor:
+    for attempt in range(retries + 1):
+        try:
+            return conn.executemany(sql, params_seq)
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc).lower() or attempt >= retries:
+                raise
+            time.sleep(delay_sec * (attempt + 1))
+    raise RuntimeError("unreachable")
 
 
 def _normalize_month_day(value: str) -> str:
@@ -58,26 +117,35 @@ def with_villager_state(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def get_catalog_state_map(catalog_type: str) -> dict[str, dict[str, Any]]:
+    with _CACHE_LOCK:
+        cached = _CATALOG_STATE_CACHE.get(catalog_type)
+        if cached is not None:
+            return _clone_catalog_state_map(cached)
+
     init_db()
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT item_id, owned, quantity FROM catalog_state WHERE catalog_type = ?",
+            "SELECT item_id, owned, donated, quantity FROM catalog_state WHERE catalog_type = ?",
             (catalog_type,),
         ).fetchall()
-    return {
+    result = {
         str(r["item_id"]): {
             "owned": bool(r["owned"]),
+            "donated": bool(r["donated"]),
             "quantity": max(0, int(r["quantity"] or 0)),
         }
         for r in rows
     }
+    with _CACHE_LOCK:
+        _CATALOG_STATE_CACHE[catalog_type] = _clone_catalog_state_map(result)
+    return result
 
 
 def with_catalog_state(catalog_type: str, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     state_map = get_catalog_state_map(catalog_type)
     merged = []
     for item in items:
-        s = state_map.get(item["id"], {"owned": False, "quantity": 0})
+        s = state_map.get(item["id"], {"owned": False, "donated": False, "quantity": 0})
         merged.append({**item, **s})
     return merged
 
@@ -105,19 +173,26 @@ def get_catalog_variation_state_map(
 
 
 def upsert_catalog_state(
-    conn: sqlite3.Connection, catalog_type: str, item_id: str, owned: bool, quantity: int
+    conn: sqlite3.Connection,
+    catalog_type: str,
+    item_id: str,
+    owned: bool,
+    quantity: int,
+    donated: bool = False,
 ) -> None:
     safe_qty = max(0, int(quantity or 0))
-    conn.execute(
+    _exec_with_retry(
+        conn,
         """
-        INSERT INTO catalog_state (catalog_type, item_id, owned, quantity)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO catalog_state (catalog_type, item_id, owned, donated, quantity)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(catalog_type, item_id) DO UPDATE SET
             owned = excluded.owned,
+            donated = excluded.donated,
             quantity = excluded.quantity,
             updated_at = CURRENT_TIMESTAMP
         """,
-        (catalog_type, item_id, int(owned), safe_qty),
+        (catalog_type, item_id, int(owned), int(donated), safe_qty),
     )
 
 
@@ -131,7 +206,8 @@ def upsert_all_variation_states(
     if not variation_ids:
         return
     qty = 1 if owned else 0
-    conn.executemany(
+    _executemany_with_retry(
+        conn,
         """
         INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
         VALUES (?, ?, ?, ?, ?)
@@ -150,8 +226,18 @@ def recalc_item_owned_from_variations(
     item_id: str,
     variation_ids: list[str],
 ) -> bool:
+    existing_row = conn.execute(
+        """
+        SELECT donated
+        FROM catalog_state
+        WHERE catalog_type = ? AND item_id = ?
+        """,
+        (catalog_type, item_id),
+    ).fetchone()
+    existing_donated = bool(existing_row["donated"]) if existing_row else False
+
     if not variation_ids:
-        upsert_catalog_state(conn, catalog_type, item_id, False, 0)
+        upsert_catalog_state(conn, catalog_type, item_id, False, 0, existing_donated)
         return False
     placeholders = ",".join("?" for _ in variation_ids)
     row = conn.execute(
@@ -174,11 +260,16 @@ def recalc_item_owned_from_variations(
     owned_count = int(row["owned_count"] or 0) if row else 0
     quantity_total = int(row["quantity_total"] or 0) if row else 0
     all_owned = owned_count == len(variation_ids)
-    upsert_catalog_state(conn, catalog_type, item_id, all_owned, quantity_total)
+    upsert_catalog_state(conn, catalog_type, item_id, all_owned, quantity_total, existing_donated)
     return all_owned
 
 
 def get_catalog_variation_owned_counts(catalog_type: str) -> dict[str, int]:
+    with _CACHE_LOCK:
+        cached = _VARIATION_OWNED_COUNT_CACHE.get(catalog_type)
+        if cached is not None:
+            return dict(cached)
+
     init_db()
     with get_db() as conn:
         rows = conn.execute(
@@ -190,10 +281,18 @@ def get_catalog_variation_owned_counts(catalog_type: str) -> dict[str, int]:
             """,
             (catalog_type,),
         ).fetchall()
-    return {str(r["item_id"]): int(r["owned_count"] or 0) for r in rows}
+    result = {str(r["item_id"]): int(r["owned_count"] or 0) for r in rows}
+    with _CACHE_LOCK:
+        _VARIATION_OWNED_COUNT_CACHE[catalog_type] = dict(result)
+    return result
 
 
 def get_catalog_variation_quantity_totals(catalog_type: str) -> dict[str, int]:
+    with _CACHE_LOCK:
+        cached = _VARIATION_QTY_TOTAL_CACHE.get(catalog_type)
+        if cached is not None:
+            return dict(cached)
+
     init_db()
     with get_db() as conn:
         rows = conn.execute(
@@ -213,7 +312,10 @@ def get_catalog_variation_quantity_totals(catalog_type: str) -> dict[str, int]:
             """,
             (catalog_type,),
         ).fetchall()
-    return {str(r["item_id"]): int(r["quantity_total"] or 0) for r in rows}
+    result = {str(r["item_id"]): int(r["quantity_total"] or 0) for r in rows}
+    with _CACHE_LOCK:
+        _VARIATION_QTY_TOTAL_CACHE[catalog_type] = dict(result)
+    return result
 
 
 def with_catalog_variation_counts(

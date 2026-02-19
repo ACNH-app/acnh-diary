@@ -32,8 +32,15 @@ def sort_catalog_items(items: list[dict[str, Any]], sort_by: str, sort_order: st
     def key_date(x: dict[str, Any]) -> Any:
         return (x.get("date") or "9999-99-99").lower()
 
+    def key_number(x: dict[str, Any]) -> Any:
+        num = int(x.get("number") or 0)
+        name = (x.get("name_ko") or x.get("name_en") or "").casefold()
+        return (num if num > 0 else 999999, name)
+
     if sort_by == "category":
         return sorted(items, key=key_category, reverse=(direction < 0))
     if sort_by == "date":
         return sorted(items, key=key_date, reverse=(direction < 0))
+    if sort_by == "number":
+        return sorted(items, key=key_number, reverse=(direction < 0))
     return sorted(items, key=key_name, reverse=(direction < 0))

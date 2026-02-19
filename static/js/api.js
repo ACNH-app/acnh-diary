@@ -2,7 +2,9 @@ export async function getJSON(url, options = {}) {
   const res = await fetch(url, options);
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "요청 실패");
+    const err = new Error(text || "요청 실패");
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 }
@@ -35,6 +37,13 @@ export function getVillagers(params = {}) {
 
 export function updateCatalogState(catalogType, itemId, payload) {
   return postJSON(`/api/catalog/${catalogType}/${itemId}/state`, payload);
+}
+
+export function updateCatalogStateBulk(catalogType, itemIds, owned) {
+  return postJSON(`/api/catalog/${catalogType}/state/bulk`, {
+    item_ids: itemIds,
+    owned: Boolean(owned),
+  });
 }
 
 export function updateCatalogVariationState(catalogType, itemId, variationId, payload) {

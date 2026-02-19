@@ -7,8 +7,8 @@ from functools import lru_cache
 from typing import Any
 from urllib.parse import quote
 
-from app.core.config import CATALOG_SINGLE_PATHS, CATALOG_TYPES
-from app.domain.catalog import category_ko_for, normalize_furniture_category
+from app.core.config import BASE_DIR, CATALOG_SINGLE_PATHS, CATALOG_TYPES
+from app.domain.catalog import category_ko_for, normalize_furniture_category, normalize_recipe_category
 from app.services.mappings import (
     load_catalog_name_maps,
     load_clothing_label_theme_map,
@@ -26,8 +26,69 @@ from app.services.nookipedia_client import (
     load_nookipedia_catalog,
     load_nookipedia_villagers,
 )
-from app.services.source import extract_source_pair
+from app.services.source import extract_source_pair, translate_source_value_to_ko
 from app.utils.text import normalize_name
+
+REACTIONS_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "reactions.json"
+REACTIONS_DATA_PATH_ALT = BASE_DIR / "data" / "norviah-animal-crossing" / "Reactions.json"
+REACTIONS_TRANSLATION_PATH = (
+    BASE_DIR / "data" / "norviah-animal-crossing" / "Reactions-translation.json"
+)
+RECIPES_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "recipes.json"
+
+
+@lru_cache(maxsize=1)
+def load_local_reactions() -> list[dict[str, Any]]:
+    path = REACTIONS_DATA_PATH if REACTIONS_DATA_PATH.exists() else REACTIONS_DATA_PATH_ALT
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    return payload if isinstance(payload, list) else []
+
+
+@lru_cache(maxsize=1)
+def load_local_reaction_translation_map() -> dict[str, str]:
+    if not REACTIONS_TRANSLATION_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(REACTIONS_TRANSLATION_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, list):
+        return {}
+    out: dict[str, str] = {}
+    for row in payload:
+        if not isinstance(row, dict):
+            continue
+        name_en = str(row.get("name") or "").strip()
+        name_ko = str(row.get("korean") or row.get("ko") or "").strip()
+        if name_en and name_ko:
+            out[normalize_name(name_en)] = name_ko
+    return out
+
+
+@lru_cache(maxsize=1)
+def load_local_recipes_by_name() -> dict[str, dict[str, Any]]:
+    if not RECIPES_DATA_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(RECIPES_DATA_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, list):
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for row in payload:
+        if not isinstance(row, dict):
+            continue
+        name_en = str(row.get("name") or "").strip()
+        if not name_en:
+            continue
+        out[normalize_name(name_en)] = row
+    return out
 
 
 @lru_cache(maxsize=1)
@@ -247,9 +308,17 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
     name_maps = load_catalog_name_maps()
     name_ko = name_maps.get(catalog_type, {}).get(normalize_name(name_en), "")
 
+    local_recipe_row: dict[str, Any] | None = None
+    if catalog_type == "recipes":
+        local_recipe_row = load_local_recipes_by_name().get(normalize_name(name_en))
+
     category = str(row.get("category") or "").strip()
+    if catalog_type == "recipes" and not category and isinstance(local_recipe_row, dict):
+        category = str(local_recipe_row.get("category") or "").strip()
     if catalog_type == "furniture":
         category = normalize_furniture_category(category)
+    if catalog_type == "recipes":
+        category = normalize_recipe_category(category)
     extra_filter = ""
     extra_filter_values: list[str] = []
 
@@ -262,12 +331,38 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         extra_filter_values = [str(v) for v in (row.get("styles") or []) if str(v).strip()]
 
     source, source_notes = extract_source_pair(row)
+    if catalog_type == "recipes" and not source and isinstance(local_recipe_row, dict):
+        source, source_notes = extract_source_pair(local_recipe_row)
+
+    if catalog_type == "reactions":
+        trans = row.get("translations") if isinstance(row.get("translations"), dict) else {}
+        kr_name = str(trans.get("kRko") or "").strip()
+        if not kr_name:
+            kr_name = load_local_reaction_translation_map().get(normalize_name(name_en), "")
+        if kr_name:
+            name_ko = kr_name
+        if not category:
+            category = "Reactions"
+        source_notes_raw = row.get("sourceNotes")
+        if isinstance(source_notes_raw, list):
+            source_notes_raw = " / ".join(str(x).strip() for x in source_notes_raw if str(x).strip())
+        row = {
+            **row,
+            "source_notes": str(source_notes_raw or "").strip(),
+            "version": str(row.get("versionAdded") or "").strip(),
+            "event_type": str(row.get("seasonEvent") or "").strip(),
+        }
 
     item = {
         "id": _item_id(catalog_type, row, name_en),
         "name": name_ko or name_en,
         "name_ko": name_ko,
         "name_en": name_en,
+        "number": int(
+            row.get("number")
+            or (row.get("serial_id") if catalog_type == "recipes" else 0)
+            or 0
+        ),
         "url": str(row.get("url") or ""),
         "image_url": _extract_image_url(row),
         "category": category,
@@ -295,6 +390,12 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         origin_key = _event_origin_key(name_en)
         event_country_map = load_event_country_map()
         item["event_country_ko"] = str(event_country_map.get(origin_key, "")).strip()
+    elif catalog_type == "reactions":
+        item["event_type"] = str(row.get("seasonEvent") or "").strip()
+        item["date"] = str(row.get("version") or row.get("versionAdded") or "").strip()
+        item["icon_filename"] = str(row.get("iconFilename") or "").strip()
+        item["season_event_exclusive"] = bool(row.get("seasonEventExclusive"))
+        item["reaction_source"] = translate_source_value_to_ko(row.get("source"))
     elif catalog_type == "art":
         has_fake = _first_bool(row, ["has_fake", "fake_available", "is_fake_available"], False)
         real_info = _art_real_info(row)
@@ -385,7 +486,8 @@ def _find_catalog_row(catalog_type: str, item_id: str) -> dict[str, Any] | None:
 @lru_cache(maxsize=None)
 def _catalog_row_index(catalog_type: str) -> dict[str, dict[str, Any]]:
     index: dict[str, dict[str, Any]] = {}
-    for row in load_nookipedia_catalog(catalog_type):
+    rows = load_local_reactions() if catalog_type == "reactions" else load_nookipedia_catalog(catalog_type)
+    for row in rows:
         if not isinstance(row, dict):
             continue
         if catalog_type == "events":
@@ -581,7 +683,7 @@ def load_catalog(catalog_type: str) -> list[dict[str, Any]]:
     if catalog_type not in CATALOG_TYPES:
         raise KeyError(catalog_type)
 
-    rows = load_nookipedia_catalog(catalog_type)
+    rows = load_local_reactions() if catalog_type == "reactions" else load_nookipedia_catalog(catalog_type)
     items: list[dict[str, Any]] = []
 
     for row in rows:

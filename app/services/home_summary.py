@@ -175,30 +175,128 @@ def upcoming_events(
 
 
 def today_nook_shopping(events: list[dict[str, Any]], now: datetime, hemisphere: str) -> list[dict[str, Any]]:
-    rows = upcoming_events(events, now, hemisphere, max_count=200)
-    result: list[dict[str, Any]] = []
-    for row in rows:
-        name_en = str(row.get("name_en") or "")
-        if int(row.get("delta_days") or 9999) != 0:
-            continue
-        if "nook shopping" not in name_en.lower():
-            continue
-        result.append(row)
-    return result[:6]
+    rows = upcoming_events(events, now, hemisphere, max_count=400)
+    target_rows = [r for r in rows if "nook shopping" in str(r.get("name_en") or "").lower()]
+    if not target_rows:
+        return []
 
+    def month_day(row: dict[str, Any]) -> tuple[int, int] | None:
+        return _parse_event_date(str(row.get("date") or ""))
 
-def seasonal_recipes_now(events: list[dict[str, Any]], now: datetime, hemisphere: str) -> list[dict[str, Any]]:
-    rows = upcoming_events(events, now, hemisphere, max_count=250)
-    result: list[dict[str, Any]] = []
-    for row in rows:
+    def ordinal(md: tuple[int, int]) -> int:
+        m, d = md
+        return m * 32 + d
+
+    # "XXX Nook Shopping event begins/ends" 쌍을 찾아 현재 날짜(now) 기준 진행 중 이벤트를 계산한다.
+    starts: dict[str, list[dict[str, Any]]] = {}
+    ends: dict[str, list[dict[str, Any]]] = {}
+    for row in target_rows:
         name_en = str(row.get("name_en") or "")
         lowered = name_en.lower()
-        if "recipe" not in lowered and "diy" not in lowered:
+        base = re.sub(
+            r"\s+nook shopping event (begins|ends)(?: \((?:Northern|Southern) Hemisphere\))?$",
+            "",
+            name_en,
+            flags=re.IGNORECASE,
+        ).strip()
+        if "begins" in lowered:
+            starts.setdefault(base, []).append(row)
+        elif "ends" in lowered:
+            ends.setdefault(base, []).append(row)
+
+    today_ord = now.month * 32 + now.day
+    active: list[dict[str, Any]] = []
+    for base, start_rows in starts.items():
+        end_rows = ends.get(base) or []
+        for s in start_rows:
+            s_md = month_day(s)
+            if not s_md:
+                continue
+            s_ord = ordinal(s_md)
+            # 종료일이 없으면 시작일부터 당일까지는 진행중으로 본다.
+            if not end_rows:
+                if s_ord <= today_ord:
+                    active.append(s)
+                continue
+            for e in end_rows:
+                e_md = month_day(e)
+                if not e_md:
+                    continue
+                e_ord = ordinal(e_md)
+                if s_ord <= e_ord:
+                    in_range = s_ord <= today_ord <= e_ord
+                else:
+                    # 연말-연초 걸친 범위 (예: 12월 시작, 1월 종료)
+                    in_range = today_ord >= s_ord or today_ord <= e_ord
+                if in_range:
+                    active.append(s)
+                    break
+
+    if active:
+        # 진행 중 이벤트를 우선 노출
+        dedup: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for row in active:
+            key = str(row.get("name_ko") or row.get("name_en") or "").strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            dedup.append(row)
+        return dedup[:6]
+
+    # 진행 중이 없으면 가까운 너굴 쇼핑 이벤트를 대체 노출
+    target_rows.sort(key=lambda r: int(r.get("delta_days") or 9999))
+    return target_rows[:6]
+
+
+def seasonal_recipes_now(now: datetime, hemisphere: str) -> list[str]:
+    month = int(now.month)
+    day = int(now.day)
+
+    if hemisphere == "south":
+        spring_months = {9, 10, 11}
+        summer_months = {12, 1, 2}
+        autumn_months = {3, 4, 5}
+        winter_months = {6, 7, 8}
+        cherry_blossom_month = 10
+        maple_leaf_month = 5
+        festive_month = 6
+    else:
+        spring_months = {3, 4, 5}
+        summer_months = {6, 7, 8}
+        autumn_months = {9, 10, 11}
+        winter_months = {12, 1, 2}
+        cherry_blossom_month = 4
+        maple_leaf_month = 11
+        festive_month = 12
+
+    themes: list[str] = []
+
+    if month in spring_months:
+        themes.append("봄의 대나무 레시피")
+    if month == cherry_blossom_month:
+        themes.append("벚꽃 레시피")
+    if month in summer_months:
+        themes.append("여름 조개 레시피")
+    if month in autumn_months:
+        themes.append("도토리/솔방울 레시피")
+        themes.append("버섯 레시피")
+    if month == maple_leaf_month:
+        themes.append("단풍잎 레시피")
+    if month in winter_months:
+        themes.append("눈꽃 레시피")
+    if month == festive_month and day >= 1:
+        themes.append("장식 오너먼트/크리스마스 레시피")
+
+    # 순서 유지 중복 제거
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for x in themes:
+        if x in seen:
             continue
-        if int(row.get("delta_days") or 9999) > 30:
-            continue
-        result.append(row)
-    return result[:8]
+        seen.add(x)
+        deduped.append(x)
+    return deduped
 
 
 def blooming_shrubs_now(month: int, hemisphere: str) -> list[str]:
@@ -271,7 +369,7 @@ def build_home_summary(profile: dict[str, Any], events: list[dict[str, Any]]) ->
     now = parse_effective_now(profile)
     hemisphere = str(profile.get("hemisphere") or "north")
     shopping_today = today_nook_shopping(events, now, hemisphere)
-    recipes_now = seasonal_recipes_now(events, now, hemisphere)
+    recipes_now = seasonal_recipes_now(now, hemisphere)
     shrubs_now = blooming_shrubs_now(now.month, hemisphere)
     return {
         "effective_datetime": now.strftime("%Y-%m-%dT%H:%M"),

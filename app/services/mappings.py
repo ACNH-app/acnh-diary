@@ -9,15 +9,18 @@ from typing import Any
 from app.core.config import (
     ART_NAME_MAP_PATH,
     BASE_DIR,
+    BUG_NAME_MAP_PATH,
     CATALOG_TYPES,
     CLOTHING_CATEGORY_MAP_PATH,
     CLOTHING_LABEL_THEME_MAP_PATH,
     CLOTHING_STYLE_MAP_PATH,
     EVENT_COUNTRY_MAP_PATH,
+    FISH_NAME_MAP_PATH,
     FOSSIL_NAME_MAP_PATH,
     FURNITURE_NAME_MAP_PATH,
     NAME_MAP_PATH,
     PERSONALITY_MAP_PATH,
+    SEA_NAME_MAP_PATH,
     SPECIES_MAP_PATH,
     VILLAGER_SAYING_MAP_PATH,
 )
@@ -84,6 +87,36 @@ def build_local_name_maps() -> None:
                     if isinstance(row, dict):
                         add_name(fossils_map, row.get("name"))
 
+        def load_critter_map(filename: str) -> dict[str, str]:
+            path = local_base / filename
+            if not path.exists():
+                return {}
+            try:
+                source = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                return {}
+            if not isinstance(source, list):
+                return {}
+            out: dict[str, str] = {}
+            for row in source:
+                if not isinstance(row, dict):
+                    continue
+                name_obj = row.get("name")
+                if not isinstance(name_obj, dict):
+                    continue
+                ko = str(name_obj.get("name-KRko") or "").strip()
+                if not ko:
+                    continue
+                for en_key in ("name-USen", "name-EUen"):
+                    en = str(name_obj.get(en_key) or "").strip()
+                    if en:
+                        out[en] = ko
+            return out
+
+        bug_map = load_critter_map("bug.json")
+        fish_map = load_critter_map("fish.json")
+        sea_map = load_critter_map("sea.json")
+
         def write_if_missing_or_empty(path: Path, data: dict[str, str]) -> None:
             if not data:
                 return
@@ -103,6 +136,9 @@ def build_local_name_maps() -> None:
 
         write_if_missing_or_empty(FURNITURE_NAME_MAP_PATH, furniture_map)
         write_if_missing_or_empty(FOSSIL_NAME_MAP_PATH, fossils_map)
+        write_if_missing_or_empty(BUG_NAME_MAP_PATH, bug_map)
+        write_if_missing_or_empty(FISH_NAME_MAP_PATH, fish_map)
+        write_if_missing_or_empty(SEA_NAME_MAP_PATH, sea_map)
 
 
 def ensure_art_name_map_from_furniture() -> None:

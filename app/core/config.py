@@ -22,10 +22,15 @@ TOOLS_NAME_MAP_PATH = BASE_DIR / "data" / "tools_name_map_ko.json"
 INTERIOR_NAME_MAP_PATH = BASE_DIR / "data" / "interior_name_map_ko.json"
 GYROID_NAME_MAP_PATH = BASE_DIR / "data" / "gyroid_name_map_ko.json"
 FOSSIL_NAME_MAP_PATH = BASE_DIR / "data" / "fossil_name_map_ko.json"
+BUG_NAME_MAP_PATH = BASE_DIR / "data" / "bug_name_map_ko.json"
+FISH_NAME_MAP_PATH = BASE_DIR / "data" / "fish_name_map_ko.json"
+SEA_NAME_MAP_PATH = BASE_DIR / "data" / "sea_name_map_ko.json"
+RECIPE_NAME_MAP_PATH = BASE_DIR / "data" / "recipe_name_map_ko.json"
 EVENT_NAME_MAP_PATH = BASE_DIR / "data" / "event_name_map_ko.json"
 EVENT_COUNTRY_MAP_PATH = BASE_DIR / "data" / "event_country_map_ko.json"
 PHOTO_NAME_MAP_PATH = BASE_DIR / "data" / "photo_name_map_ko.json"
 ART_NAME_MAP_PATH = BASE_DIR / "data" / "art_name_map_ko.json"
+REACTION_NAME_MAP_PATH = BASE_DIR / "data" / "reaction_name_map_ko.json"
 
 DB_PATH = BASE_DIR / "app.db"
 NOOKIPEDIA_BASE_URL = "https://api.nookipedia.com"
@@ -217,6 +222,30 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "name_map_path": FOSSIL_NAME_MAP_PATH,
         "status_label": "보유",
     },
+    "bugs": {
+        "label": "곤충",
+        "nook_path": "/nh/bugs",
+        "name_map_path": BUG_NAME_MAP_PATH,
+        "status_label": "보유",
+    },
+    "fish": {
+        "label": "물고기",
+        "nook_path": "/nh/fish",
+        "name_map_path": FISH_NAME_MAP_PATH,
+        "status_label": "보유",
+    },
+    "sea": {
+        "label": "해산물",
+        "nook_path": "/nh/sea",
+        "name_map_path": SEA_NAME_MAP_PATH,
+        "status_label": "보유",
+    },
+    "recipes": {
+        "label": "레시피",
+        "nook_path": "/nh/recipes",
+        "name_map_path": RECIPE_NAME_MAP_PATH,
+        "status_label": "보유",
+    },
     "events": {
         "label": "이벤트",
         "nook_path": "/nh/events",
@@ -235,6 +264,12 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "name_map_path": ART_NAME_MAP_PATH,
         "status_label": "기증",
     },
+    "reactions": {
+        "label": "리액션",
+        "nook_path": "",
+        "name_map_path": REACTION_NAME_MAP_PATH,
+        "status_label": "습득",
+    },
 }
 
 CATALOG_SINGLE_PATHS: dict[str, str] = {
@@ -245,6 +280,10 @@ CATALOG_SINGLE_PATHS: dict[str, str] = {
     "interior": "/nh/interior/{name}",
     "gyroids": "/nh/gyroids/{name}",
     "fossils": "/nh/fossils/all/{name}",
+    "bugs": "/nh/bugs/{name}",
+    "fish": "/nh/fish/{name}",
+    "sea": "/nh/sea/{name}",
+    "recipes": "/nh/recipes/{name}",
     "events": "/nh/events/{name}",
     "photos": "/nh/photos/{name}",
     "art": "/nh/art/{name}",

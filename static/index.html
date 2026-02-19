@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>모동숲 다이어리</title>
-    <link rel="stylesheet" href="/static/styles.css?v=20260215cq" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260218iosfab3" />
   </head>
   <body>
     <main class="container">
@@ -118,8 +118,12 @@
               <p id="summaryZodiacText">-</p>
             </article>
             <article class="summary-card">
-              <h3>기준 시간</h3>
-              <p id="summaryDateTimeText">-</p>
+              <h3>시즌 레시피</h3>
+              <p id="summarySeasonalRecipesText">-</p>
+            </article>
+            <article class="summary-card">
+              <h3>개화 중 낮은 나무</h3>
+              <p id="summaryBloomingShrubsText">-</p>
             </article>
           </div>
           <h3 class="summary-subtitle">다가오는 이벤트</h3>
@@ -225,8 +229,8 @@
       <section id="villagerPanel">
         <section class="control-groups">
           <div class="control-group">
-            <h2>필터 조건</h2>
-            <div class="controls filter-controls">
+            <h2>필터/정렬</h2>
+            <div class="controls controls-inline">
               <input id="searchInput" type="text" placeholder="주민 이름 검색 (한글/영문)" />
               <select id="personalitySelect">
                 <option value="">성격 전체</option>
@@ -234,12 +238,6 @@
               <select id="speciesSelect">
                 <option value="">종 전체</option>
               </select>
-            </div>
-          </div>
-
-          <div class="control-group">
-            <h2>정렬 조건</h2>
-            <div class="controls sort-controls">
               <select id="sortBySelect">
                 <option value="name">이름순</option>
                 <option value="species">종순</option>
@@ -266,19 +264,14 @@
       <section id="catalogPanel" class="hidden">
         <section class="control-groups">
           <div class="control-group">
-            <h2>필터 조건</h2>
-            <div class="controls catalog-filter-controls">
+            <h2>필터/정렬</h2>
+            <div class="controls controls-inline">
               <input id="catalogSearchInput" type="text" placeholder="이름 검색" />
               <select id="catalogExtraSelect" class="hidden"></select>
               <button id="catalogArtGuideBtn" type="button" class="hidden">진품/가품 특징</button>
-            </div>
-          </div>
-
-          <div class="control-group">
-            <h2>정렬 조건</h2>
-            <div class="controls catalog-sort-controls">
               <select id="catalogSortBySelect">
                 <option value="name">이름순</option>
+                <option value="number">번호순</option>
                 <option value="category">분류순</option>
                 <option value="date">날짜순</option>
               </select>
@@ -286,6 +279,13 @@
                 <option value="asc">오름차순</option>
                 <option value="desc">내림차순</option>
               </select>
+              <button
+                id="catalogToggleAllBtn"
+                type="button"
+                onclick="return window.__acnhToggleAllOwnedInline(event);"
+              >
+                전체
+              </button>
               <button id="catalogResetBtn" type="button">초기화</button>
             </div>
           </div>
@@ -304,6 +304,14 @@
       <div id="loadMoreWrap" class="load-more-wrap hidden">
         <button id="loadMoreBtn" type="button">더보기</button>
       </div>
+      <button
+        id="catalogToggleAllFab"
+        class="catalog-toggle-fab"
+        type="button"
+        onclick="return window.__acnhToggleAllOwnedInline(event);"
+      >
+        전체
+      </button>
     </main>
 
     <section id="detailModal" class="modal hidden" aria-hidden="true">
@@ -391,6 +399,7 @@
           <p class="description"></p>
           <div class="toggles">
             <label><input type="checkbox" class="owned" /> <span class="owned-label">보유</span></label>
+            <label class="donated-wrap hidden"><input type="checkbox" class="donated" /> 박물관 기증</label>
             <label class="owned-qty-wrap hidden">
               개수
               <input type="number" class="owned-qty" min="0" step="1" inputmode="numeric" />
@@ -409,6 +418,98 @@
     ></button>
     <section id="mobileNavSheet" class="mobile-nav-sheet hidden" aria-hidden="true"></section>
 
-    <script type="module" src="/static/app.js?v=20260215cp"></script>
+    <script>
+      (function () {
+        var __acnhLastInlineToggleTs = 0;
+
+        function getCatalogMode() {
+          var list = document.querySelector("#list");
+          if (list && list.dataset && list.dataset.catalogMode) return String(list.dataset.catalogMode).trim();
+          if (document.body && document.body.dataset && document.body.dataset.activeMode) {
+            return String(document.body.dataset.activeMode).trim();
+          }
+          return "";
+        }
+
+        function getOwnedInputs() {
+          return Array.prototype.slice.call(document.querySelectorAll("#list .owned"));
+        }
+
+        function getItemIds(inputs) {
+          var ids = inputs
+            .map(function (el) {
+              if (el && el.dataset && el.dataset.itemId) return String(el.dataset.itemId).trim();
+              var card = el && el.closest ? el.closest(".card") : null;
+              if (card && card.dataset && card.dataset.itemId) return String(card.dataset.itemId).trim();
+              return "";
+            })
+            .filter(Boolean);
+          if (ids.length) return ids;
+          var cards = Array.prototype.slice.call(document.querySelectorAll("#list .card"));
+          return cards
+            .map(function (card) {
+              return card && card.dataset && card.dataset.itemId ? String(card.dataset.itemId).trim() : "";
+            })
+            .filter(Boolean);
+        }
+
+        window.__acnhToggleAllOwnedInline = function (ev) {
+          try {
+            var now = Date.now();
+            if (now - __acnhLastInlineToggleTs < 350) return false;
+            __acnhLastInlineToggleTs = now;
+
+            if (typeof window.__acnhForceBulkToggleVisible === "function") {
+              window.__acnhForceBulkToggleVisible().catch(function (err) {
+                console.error(err);
+              });
+              if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+              }
+              return false;
+            }
+
+            if (typeof window.__acnhHandleToggleAll === "function") {
+              window.__acnhHandleToggleAll(ev);
+            } else if (typeof window.__acnhToggleAllOwned === "function") {
+              window.__acnhToggleAllOwned();
+            } else {
+              var inputs = getOwnedInputs();
+              if (!inputs.length) return false;
+
+              var allOwned = inputs.every(function (el) {
+                return Boolean(el.checked) && !Boolean(el.indeterminate);
+              });
+              var nextOwned = !allOwned;
+              inputs.forEach(function (el) {
+                el.indeterminate = false;
+                el.checked = nextOwned;
+              });
+
+              var mode = getCatalogMode();
+              var ids = getItemIds(inputs);
+              if (mode && ids.length) {
+                fetch("/api/catalog/" + encodeURIComponent(mode) + "/state/bulk", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ item_ids: ids, owned: nextOwned }),
+                }).catch(function (err) {
+                  console.error(err);
+                });
+              }
+            }
+          } catch (err) {
+            console.error(err);
+          }
+          if (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+          return false;
+        };
+      })();
+    </script>
+    <script type="module" src="/static/app.js?v=20260219perf4"></script>
   </body>
 </html>

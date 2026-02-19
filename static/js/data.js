@@ -1,4 +1,4 @@
-import { getJSON, updateCatalogState, updateVillagerState } from "./api.js";
+import { getJSON, updateCatalogState, updateCatalogStateBulk, updateVillagerState } from "./api.js";
 import {
   catalogExtraSelect,
   catalogArtGuideBtn,
@@ -7,6 +7,7 @@ import {
   catalogSortOrderSelect,
   catalogTabs,
   personalitySelect,
+  resultCount,
   searchInput,
   sortBySelect,
   sortOrderSelect,
@@ -31,6 +32,21 @@ import { sortVillagers, toQuery } from "./utils.js";
  */
 export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVillagerDetail } = {}) {
   const villagerQueryCache = new Map();
+  const catalogSortInitialized = new Set();
+  let catalogFetchSeq = 0;
+  let catalogFetchAbortController = null;
+  const getCatalogAllItemsCache = () => {
+    if (!state.catalogAllItemsByMode || typeof state.catalogAllItemsByMode !== "object") {
+      state.catalogAllItemsByMode = {};
+    }
+    return state.catalogAllItemsByMode;
+  };
+  const findCatalogCardById = (itemId) => {
+    const id = String(itemId || "").trim();
+    if (!id) return null;
+    const cards = Array.from(document.querySelectorAll("#list .card"));
+    return cards.find((el) => String(el?.dataset?.itemId || "").trim() === id) || null;
+  };
 
   const safeSyncDetailNav = () => {
     if (onSyncDetailNav) onSyncDetailNav();
@@ -40,6 +56,66 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   };
   const safeOpenVillagerDetail = (villager) => {
     if (onOpenVillagerDetail) onOpenVillagerDetail(villager);
+  };
+  const textKoSort = (a, b) => String(a || "").localeCompare(String(b || ""), "ko");
+  const catalogName = (x) => x?.name_ko || x?.name || x?.name_en || "";
+  const getExtraFilterValue = () => {
+    if (catalogExtraSelect.classList.contains("hidden")) return "";
+    return String(catalogExtraSelect.value || "").trim();
+  };
+  const getActiveOwnedFilter = () => {
+    if (state.activeCatalogTab === "owned") return true;
+    if (state.activeCatalogTab === "unowned") return false;
+    return null;
+  };
+  const upsertCatalogItemCaches = (catalogType, itemId, patch) => {
+    const id = String(itemId || "").trim();
+    if (!id) return;
+    const patchObj = patch && typeof patch === "object" ? patch : {};
+    const applyPatch = (row) => {
+      if (!row || String(row.id || "").trim() !== id) return row;
+      return { ...row, ...patchObj };
+    };
+    state.renderedCatalogItems = (state.renderedCatalogItems || []).map(applyPatch);
+    const allRows = getCatalogAllItemsCache()[catalogType];
+    if (Array.isArray(allRows)) {
+      getCatalogAllItemsCache()[catalogType] = allRows.map(applyPatch);
+    }
+  };
+  const bulkPatchCatalogCache = (catalogType, itemIds, patcher) => {
+    const cache = getCatalogAllItemsCache();
+    const rows = cache[catalogType];
+    if (!Array.isArray(rows) || !rows.length) return;
+    const idSet = new Set((itemIds || []).map((x) => String(x || "").trim()).filter(Boolean));
+    if (!idSet.size) return;
+    cache[catalogType] = rows.map((row) => {
+      const rid = String(row?.id || "").trim();
+      if (!idSet.has(rid)) return row;
+      return patcher(row);
+    });
+  };
+  const sortCatalogLocal = (rows, sortBy, sortOrder) => {
+    const sign = sortOrder === "desc" ? -1 : 1;
+    const safeRows = [...rows];
+    safeRows.sort((a, b) => {
+      if (sortBy === "number") {
+        const an = Number(a?.number ?? Number.MAX_SAFE_INTEGER);
+        const bn = Number(b?.number ?? Number.MAX_SAFE_INTEGER);
+        if (an !== bn) return (an - bn) * sign;
+      } else if (sortBy === "category") {
+        const ac = a?.category_ko || a?.category || "";
+        const bc = b?.category_ko || b?.category || "";
+        const diff = textKoSort(ac, bc);
+        if (diff) return diff * sign;
+      } else if (sortBy === "date") {
+        const ad = String(a?.date || "");
+        const bd = String(b?.date || "");
+        const diff = ad.localeCompare(bd);
+        if (diff) return diff * sign;
+      }
+      return textKoSort(catalogName(a), catalogName(b)) * sign;
+    });
+    return safeRows;
   };
   function needsVillagerReloadAfterToggle(payload) {
     if (!payload || typeof payload !== "object") return false;
@@ -129,6 +205,13 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       catalogExtraSelect.dataset.extraType = "event_type";
       catalogExtraSelect.classList.remove("hidden");
     }
+
+    // 생물도감 + 레시피는 번호순이 기본 정렬.
+    if (["bugs", "fish", "sea", "recipes"].includes(catalogType) && !catalogSortInitialized.has(catalogType)) {
+      catalogSortBySelect.value = "number";
+      catalogSortOrderSelect.value = "asc";
+      catalogSortInitialized.add(catalogType);
+    }
     const ownedTab = catalogTabs.find((el) => el.dataset.tab === "owned");
     if (ownedTab) ownedTab.textContent = `${meta.status_label}만`;
   }
@@ -174,38 +257,105 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     return loadCatalogPage(catalogType, { append: false });
   }
 
+  async function ensureCatalogRows(catalogType) {
+    const cache = getCatalogAllItemsCache();
+    const existing = cache[catalogType];
+    if (Array.isArray(existing) && existing.length) return existing;
+
+    const rows = [];
+    let page = 1;
+    while (true) {
+      const query = toQuery({
+        page,
+        page_size: 200,
+        sort_by: "number",
+        sort_order: "asc",
+      });
+      const chunk = await getJSON(`/api/catalog/${catalogType}?${query}`);
+      const items = Array.isArray(chunk?.items) ? chunk.items : [];
+      rows.push(...items);
+      if (!chunk?.has_more || !items.length) break;
+      page += 1;
+    }
+    cache[catalogType] = rows;
+    return rows;
+  }
+
   /** Fetch and render one catalog page; append if requested. */
   async function loadCatalogPage(catalogType, { append = false } = {}) {
+    const requestSeq = ++catalogFetchSeq;
+    if (!append && catalogFetchAbortController) {
+      try {
+        catalogFetchAbortController.abort();
+      } catch {
+        // ignore
+      }
+    }
+    catalogFetchAbortController = new AbortController();
     await applyCatalogMeta(catalogType);
     const meta = state.catalogMetaCache[catalogType] || { status_label: "보유" };
-    const nextPage = append ? state.catalogPage + 1 : 1;
-
-    const queryParams = {
-      q: catalogSearchInput.value.trim(),
-      category: catalogType === "art" ? "" : state.activeSubCategory,
-      fake_state: catalogType === "art" ? state.activeSubCategory : "",
-      owned: state.activeCatalogTab === "owned" ? true : state.activeCatalogTab === "unowned" ? false : null,
-      sort_by: catalogSortBySelect.value,
-      sort_order: catalogSortOrderSelect.value,
-      page: nextPage,
-      page_size: state.catalogPageSize,
-    };
-
-    const extraType = catalogExtraSelect.dataset.extraType;
-    if (!catalogExtraSelect.classList.contains("hidden") && catalogExtraSelect.value) {
-      queryParams[extraType] = catalogExtraSelect.value;
+    try {
+      await ensureCatalogRows(catalogType);
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      throw err;
     }
+    if (requestSeq !== catalogFetchSeq) return;
 
-    const query = toQuery(queryParams);
-    const data = await getJSON(`/api/catalog/${catalogType}?${query}`);
-    state.catalogPage = Number(data.page || nextPage);
+    const qNorm = String(catalogSearchInput.value || "").trim().toLowerCase();
+    const ownedFilter = getActiveOwnedFilter();
+    const extraType = catalogExtraSelect.dataset.extraType || "";
+    const extraValue = getExtraFilterValue();
+    const subCategory = String(state.activeSubCategory || "");
+    const cache = getCatalogAllItemsCache();
+    const allRows = Array.isArray(cache[catalogType])
+      ? cache[catalogType]
+      : [];
+
+    let filtered = allRows.filter((row) => {
+      if (qNorm) {
+        const hay = `${row?.name_ko || ""} ${row?.name_en || ""} ${row?.name || ""}`.toLowerCase();
+        if (!hay.includes(qNorm)) return false;
+      }
+
+      if (catalogType === "art") {
+        if (subCategory && String(row?.authenticity || "") !== subCategory) return false;
+      } else if (subCategory && String(row?.category || "") !== subCategory) {
+        return false;
+      }
+
+      if (ownedFilter !== null && Boolean(row?.owned) !== ownedFilter) return false;
+
+      if (extraValue) {
+        if (extraType === "style") {
+          const styles = Array.isArray(row?.styles) ? row.styles : [];
+          if (!styles.includes(extraValue)) return false;
+        } else if (extraType === "event_type") {
+          if (String(row?.event_type || "") !== extraValue) return false;
+        }
+      }
+
+      return true;
+    });
+
+    filtered = sortCatalogLocal(
+      filtered,
+      String(catalogSortBySelect.value || "name"),
+      String(catalogSortOrderSelect.value || "asc")
+    );
+
+    const nextPage = append ? state.catalogPage + 1 : 1;
+    const start = (nextPage - 1) * state.catalogPageSize;
+    const end = start + state.catalogPageSize;
+    const items = filtered.slice(start, end);
+    state.catalogPage = nextPage;
     renderCatalog(
-      data.items || [],
+      items,
       meta.status_label || "보유",
       {
         append,
-        totalCount: Number(data.total_count ?? data.count ?? 0),
-        hasMore: Boolean(data.has_more),
+        totalCount: filtered.length,
+        hasMore: end < filtered.length,
       },
       {
         onSyncDetailNav: safeSyncDetailNav,
@@ -221,8 +371,20 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
               target.quantity = extra.quantity;
             }
           }
+          upsertCatalogItemCaches(state.activeMode, itemId, {
+            owned,
+            ...(typeof extra.quantity === "number" ? { quantity: extra.quantity } : {}),
+          });
           if (needsCatalogReloadAfterToggle(owned)) {
-            await loadCurrentModeData();
+            const id = String(itemId || "").trim();
+            const card = findCatalogCardById(id);
+            if (card) card.remove();
+            state.renderedCatalogItems = state.renderedCatalogItems.filter(
+              (x) => String(x?.id || "").trim() !== id
+            );
+            state.activeCatalogItemIds = state.renderedCatalogItems.map((x) => x.id);
+            resultCount.textContent = `${state.renderedCatalogItems.length}개`;
+            scheduleCatalogRefresh(220);
           }
         },
         onUpdateQuantity: async (itemId, quantity) => {
@@ -233,9 +395,26 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
             target.quantity = quantity;
             target.owned = owned;
           }
+          upsertCatalogItemCaches(state.activeMode, itemId, { quantity, owned });
           if (needsCatalogReloadAfterToggle(owned)) {
-            await loadCurrentModeData();
+            const id = String(itemId || "").trim();
+            const card = findCatalogCardById(id);
+            if (card) card.remove();
+            state.renderedCatalogItems = state.renderedCatalogItems.filter(
+              (x) => String(x?.id || "").trim() !== id
+            );
+            state.activeCatalogItemIds = state.renderedCatalogItems.map((x) => x.id);
+            resultCount.textContent = `${state.renderedCatalogItems.length}개`;
+            scheduleCatalogRefresh(220);
           }
+        },
+        onToggleDonated: async (itemId, donated) => {
+          await updateCatalogState(state.activeMode, itemId, { donated });
+          const target = state.renderedCatalogItems.find((x) => x.id === itemId);
+          if (target) {
+            target.donated = donated;
+          }
+          upsertCatalogItemCaches(state.activeMode, itemId, { donated });
         },
         onOpenDetail: (itemId) => {
           safeOpenDetail(itemId);
@@ -252,6 +431,112 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       return;
     }
     await loadCatalog(state.activeMode);
+  }
+
+  /** Set owned state for all currently rendered catalog items (current filtered list/page). */
+  async function setVisibleCatalogOwned(owned) {
+    let catalogMode = String(state.activeMode || "");
+    if (!catalogMode || catalogMode === "home" || catalogMode === "villagers") {
+      catalogMode = String(document.querySelector("#list")?.dataset?.catalogMode || "");
+    }
+    if (catalogMode && catalogMode !== "home" && catalogMode !== "villagers") {
+      state.activeMode = catalogMode;
+    }
+    if (!catalogMode || catalogMode === "home" || catalogMode === "villagers") return;
+    const ownedInputs = Array.from(document.querySelectorAll("#list .owned"));
+    const domItemIds = ownedInputs
+      .map((el) => String(el?.dataset?.itemId || el?.closest?.(".card")?.dataset?.itemId || "").trim())
+      .filter(Boolean);
+    const rows = Array.isArray(state.renderedCatalogItems) ? state.renderedCatalogItems : [];
+    const fallbackIds = rows.map((x) => String(x?.id || "").trim()).filter(Boolean);
+    const activeIds = Array.isArray(state.activeCatalogItemIds)
+      ? state.activeCatalogItemIds.map((x) => String(x || "").trim()).filter(Boolean)
+      : [];
+    const itemIds = Array.from(new Set(domItemIds.length ? domItemIds : fallbackIds.length ? fallbackIds : activeIds));
+    if (!itemIds.length) return;
+
+    const rowById = new Map(rows.map((x) => [String(x.id || ""), x]));
+    const nextOwned = Boolean(owned);
+
+    // 즉시 반영(낙관적 업데이트)
+    itemIds.forEach((itemId) => {
+      const item = rowById.get(itemId);
+      if (!item) return;
+      item.owned = nextOwned;
+      if (catalogMode === "furniture" && Number(item.variation_total || 0) === 0) {
+        const currentQty = Math.max(0, Number(item.quantity || 0));
+        item.quantity = nextOwned ? Math.max(1, currentQty) : 0;
+      }
+    });
+    bulkPatchCatalogCache(catalogMode, itemIds, (row) => {
+      const nextRow = { ...row, owned: nextOwned };
+      if (catalogMode === "furniture" && Number(row?.variation_total || 0) === 0) {
+        const currentQty = Math.max(0, Number(row?.quantity || 0));
+        nextRow.quantity = nextOwned ? Math.max(1, currentQty) : 0;
+      }
+      return nextRow;
+    });
+    ownedInputs.forEach((el) => {
+      const input = /** @type {HTMLInputElement} */ (el);
+      input.indeterminate = false;
+      input.checked = nextOwned;
+    });
+
+    // 보유/미보유 탭에서는 서버 응답을 기다리지 않고 즉시 목록 반영.
+    const shouldPruneNow =
+      (state.activeCatalogTab === "owned" && !nextOwned) ||
+      (state.activeCatalogTab === "unowned" && nextOwned);
+    if (shouldPruneNow) {
+      const idSet = new Set(itemIds.map((x) => String(x)));
+      const cards = Array.from(document.querySelectorAll("#list .card"));
+      cards.forEach((card) => {
+        const id = String(card?.dataset?.itemId || "").trim();
+        if (idSet.has(id)) card.remove();
+      });
+      state.renderedCatalogItems = rows.filter((x) => !idSet.has(String(x?.id || "").trim()));
+      state.activeCatalogItemIds = state.renderedCatalogItems.map((x) => x.id);
+      resultCount.textContent = `${state.renderedCatalogItems.length}개`;
+    }
+
+    const fallbackSingleUpdates = async () => {
+      for (const itemId of itemIds) {
+        const item = rowById.get(itemId);
+        const variationTotal = Number(item?.variation_total || 0);
+        const isFurniture = catalogMode === "furniture";
+        const payload = { owned: nextOwned };
+        if (isFurniture && variationTotal === 0) {
+          const currentQty = Math.max(0, Number(item?.quantity || 0));
+          payload.quantity = nextOwned ? Math.max(1, currentQty) : 0;
+        }
+        try {
+          await updateCatalogState(catalogMode, itemId, payload);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
+
+    try {
+      await updateCatalogStateBulk(catalogMode, itemIds, nextOwned);
+    } catch (err) {
+      console.error(err);
+      const status = Number(err?.status || err?.response?.status || 0);
+      // bulk 미지원 서버에서만 단건 폴백. (요청 폭주 방지)
+      if (status === 404 || status === 405) {
+        await fallbackSingleUpdates();
+      }
+    }
+    // bulk 동기화 이후에는 로컬 캐시가 이미 갱신됐으므로 즉시 재로딩을 생략한다.
+  }
+
+  async function toggleVisibleCatalogOwned() {
+    const ownedInputs = Array.from(document.querySelectorAll("#list .owned"));
+    if (!ownedInputs.length) return;
+    const allOwned = ownedInputs.every((el) => {
+      const input = /** @type {HTMLInputElement} */ (el);
+      return Boolean(input.checked) && !Boolean(input.indeterminate);
+    });
+    await setVisibleCatalogOwned(!allOwned);
   }
 
   /** Debounced loader for text inputs. */
@@ -277,5 +562,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     loadCurrentModeData,
     scheduleCatalogRefresh,
     scheduleLoad,
+    setVisibleCatalogOwned,
+    toggleVisibleCatalogOwned,
   };
 }

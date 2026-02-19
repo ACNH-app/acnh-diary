@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 from app.api.deps import CatalogHandlerDeps, CatalogHandlers
 from app.schemas.state import (
+    CatalogStateBulkIn,
     CatalogStateIn,
     CatalogStateOut,
     CatalogVariationStateBatchIn,
@@ -211,13 +212,21 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
 
         with deps.get_db() as conn:
             existing = conn.execute(
-                "SELECT owned, quantity FROM catalog_state WHERE catalog_type = ? AND item_id = ?",
+                """
+                SELECT owned, donated, quantity
+                FROM catalog_state
+                WHERE catalog_type = ? AND item_id = ?
+                """,
                 (catalog_type, item_id),
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
+            current_donated = bool(existing["donated"]) if existing else False
             current_qty = max(0, int((existing["quantity"] if existing else 0) or 0))
             new_owned = payload.owned if payload.owned is not None else current_owned
+            new_donated = (
+                payload.donated if payload.donated is not None else current_donated
+            )
             new_qty = (
                 max(0, int(payload.quantity))
                 if payload.quantity is not None
@@ -229,17 +238,115 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 item_id,
                 bool(new_owned),
                 int(new_qty),
+                bool(new_donated),
             )
             deps.upsert_all_variation_states(
                 conn, catalog_type, item_id, variation_ids, bool(new_owned)
             )
+        deps.invalidate_catalog_state_caches(catalog_type)
 
         return CatalogStateOut(
             catalog_type=catalog_type,
             item_id=item_id,
             owned=bool(new_owned),
+            donated=bool(new_donated),
             quantity=int(new_qty),
         )
+
+    def update_catalog_state_bulk(
+        catalog_type: str,
+        payload: CatalogStateBulkIn,
+    ) -> dict[str, Any]:
+        if catalog_type not in deps.catalog_types:
+            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
+        item_ids = [str(x).strip() for x in (payload.item_ids or []) if str(x).strip()]
+        if not item_ids:
+            return {"updated": 0, "owned": bool(payload.owned)}
+
+        # 현재 모드 목록에 있는 id만 허용
+        valid_ids = {
+            str(x.get("id") or "")
+            for x in deps.load_catalog(catalog_type)
+            if str(x.get("id") or "")
+        }
+        target_ids = [item_id for item_id in item_ids if item_id in valid_ids]
+        if not target_ids:
+            return {"updated": 0, "owned": bool(payload.owned)}
+
+        deps.init_db()
+        variation_map = {
+            item_id: deps.variation_ids_for_item(catalog_type, item_id)
+            for item_id in target_ids
+        }
+
+        with deps.get_db() as conn:
+            placeholders = ",".join("?" for _ in target_ids)
+            existing_rows = conn.execute(
+                f"""
+                SELECT item_id, donated, quantity
+                FROM catalog_state
+                WHERE catalog_type = ? AND item_id IN ({placeholders})
+                """,
+                (catalog_type, *target_ids),
+            ).fetchall()
+            existing_map = {
+                str(r["item_id"]): {
+                    "donated": bool(r["donated"]),
+                    "quantity": max(0, int(r["quantity"] or 0)),
+                }
+                for r in existing_rows
+            }
+
+            state_rows = []
+            for item_id in target_ids:
+                prev = existing_map.get(item_id, {"donated": False, "quantity": 0})
+                donated = bool(prev["donated"])
+                current_qty = int(prev["quantity"])
+                variation_ids = variation_map[item_id]
+                has_variations = len(variation_ids) > 0
+                if catalog_type == "furniture" and not has_variations:
+                    quantity = max(1, current_qty) if payload.owned else 0
+                else:
+                    quantity = current_qty
+                state_rows.append(
+                    (catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
+                )
+
+            conn.executemany(
+                """
+                INSERT INTO catalog_state (catalog_type, item_id, owned, donated, quantity)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(catalog_type, item_id) DO UPDATE SET
+                    owned = excluded.owned,
+                    donated = excluded.donated,
+                    quantity = excluded.quantity,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                state_rows,
+            )
+
+            variation_rows = []
+            for item_id in target_ids:
+                for variation_id in variation_map[item_id]:
+                    qty = 1 if payload.owned else 0
+                    variation_rows.append(
+                        (catalog_type, item_id, variation_id, int(payload.owned), int(qty))
+                    )
+            if variation_rows:
+                conn.executemany(
+                    """
+                    INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+                        owned = excluded.owned,
+                        quantity = excluded.quantity,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    variation_rows,
+                )
+        deps.invalidate_catalog_state_caches(catalog_type)
+
+        return {"updated": len(target_ids), "owned": bool(payload.owned)}
 
     def update_catalog_variation_state(
         catalog_type: str,
@@ -291,6 +398,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 (catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
             )
             deps.recalc_item_owned_from_variations(conn, catalog_type, item_id, variation_ids)
+        deps.invalidate_catalog_state_caches(catalog_type)
 
         return CatalogVariationStateOut(
             catalog_type=catalog_type,
@@ -345,6 +453,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             item_owned = deps.recalc_item_owned_from_variations(
                 conn, catalog_type, item_id, variation_ids
             )
+        deps.invalidate_catalog_state_caches(catalog_type)
 
         return {"updated": len(payload.items), "item_owned": item_owned}
 
@@ -353,6 +462,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         get_catalog=get_catalog,
         get_catalog_detail=get_catalog_detail,
         update_catalog_state=update_catalog_state,
+        update_catalog_state_bulk=update_catalog_state_bulk,
         update_catalog_variation_state=update_catalog_variation_state,
         update_catalog_variation_state_batch=update_catalog_variation_state_batch,
         get_art_guide=get_art_guide,

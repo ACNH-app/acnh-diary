@@ -99,11 +99,34 @@ function scriptRank(text) {
   return 3;
 }
 
+function parseLeadingNumber(text) {
+  const s = String(text || "").trim();
+  const match = s.match(/^(\d+)(.*)$/);
+  if (!match) return null;
+  const numberValue = Number.parseInt(match[1], 10);
+  if (!Number.isFinite(numberValue)) return null;
+  return {
+    number: numberValue,
+    rest: String(match[2] || "").trim(),
+  };
+}
+
 export function compareNamePriority(aText, bText) {
   const a = String(aText || "").trim();
   const b = String(bText || "").trim();
   const rankDiff = scriptRank(a) - scriptRank(b);
   if (rankDiff !== 0) return rankDiff;
+  if (scriptRank(a) === 0) {
+    const aNum = parseLeadingNumber(a);
+    const bNum = parseLeadingNumber(b);
+    if (aNum && bNum && aNum.number !== bNum.number) {
+      return aNum.number - bNum.number;
+    }
+    if (aNum && bNum) {
+      const restDiff = aNum.rest.localeCompare(bNum.rest, "ko");
+      if (restDiff !== 0) return restDiff;
+    }
+  }
   return a.localeCompare(b, "ko");
 }
 

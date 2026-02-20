@@ -6,6 +6,7 @@ import {
   detailFields,
   detailImage,
   detailModal,
+  detailNotForSaleTag,
   detailNavHint,
   detailNextBtn,
   detailPrevBtn,
@@ -282,6 +283,7 @@ export function createDetailController({
     const detailImageUrl = isArtMode
       ? summary.art_real_image_url || summary.image_url
       : summary.image_url;
+    const isNotForSale = Boolean(summary.not_for_sale);
     detailImage.src = detailImageUrl || "/static/no-image.svg";
     detailImage.onerror = () => {
       detailImage.src = "/static/no-image.svg";
@@ -289,6 +291,9 @@ export function createDetailController({
     detailSourceHint.textContent = payload.from_single_endpoint
       ? "single API 상세 데이터"
       : "목록 API 상세 데이터(대체)";
+    if (detailNotForSaleTag) {
+      detailNotForSaleTag.classList.toggle("hidden", !isNotForSale);
+    }
 
     detailFields.innerHTML = "";
     (payload.fields || []).forEach((field) => {
@@ -483,6 +488,9 @@ export function createDetailController({
       state.activeCatalogItemIds = state.renderedVillagers.map((x) => String(x.id || ""));
     }
     detailTitle.textContent = v.name_ko || v.name_en || "주민 상세 정보";
+    if (detailNotForSaleTag) {
+      detailNotForSaleTag.classList.add("hidden");
+    }
     setVillagerDetailImage(v, currentVillagerId);
     detailSourceHint.textContent = "주민 데이터 상세 정보";
 

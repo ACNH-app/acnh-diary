@@ -98,6 +98,7 @@ export const detailModal = document.getElementById("detailModal");
 export const detailBackdrop = document.getElementById("detailBackdrop");
 export const detailCloseBtn = document.getElementById("detailCloseBtn");
 export const detailTitle = document.getElementById("detailTitle");
+export const detailNotForSaleTag = document.getElementById("detailNotForSaleTag");
 export const detailImage = document.getElementById("detailImage");
 export const detailSourceHint = document.getElementById("detailSourceHint");
 export const detailFields = document.getElementById("detailFields");

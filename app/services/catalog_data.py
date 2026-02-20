@@ -35,6 +35,8 @@ REACTIONS_TRANSLATION_PATH = (
     BASE_DIR / "data" / "norviah-animal-crossing" / "Reactions-translation.json"
 )
 RECIPES_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "recipes.json"
+LOCAL_MUSIC_DATA_PATH = BASE_DIR / "data" / "acnhapi" / "music.json"
+NORVIAH_MUSIC_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "Music.json"
 
 
 @lru_cache(maxsize=1)
@@ -89,6 +91,94 @@ def load_local_recipes_by_name() -> dict[str, dict[str, Any]]:
             continue
         out[normalize_name(name_en)] = row
     return out
+
+
+@lru_cache(maxsize=1)
+def load_local_music_catalog() -> list[dict[str, Any]]:
+    if not LOCAL_MUSIC_DATA_PATH.exists():
+        return []
+    try:
+        payload = json.loads(LOCAL_MUSIC_DATA_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    if not isinstance(payload, dict):
+        return []
+
+    rows: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+    for row in payload.values():
+        if not isinstance(row, dict):
+            continue
+        name_obj = row.get("name") if isinstance(row.get("name"), dict) else {}
+        name_en = str(name_obj.get("name-USen") or name_obj.get("name-EUen") or "").strip()
+        name_ko = str(name_obj.get("name-KRko") or "").strip()
+        if not name_en:
+            continue
+        seen_names.add(normalize_name(name_en))
+        rows.append(
+            {
+                "name": name_en,
+                "name_ko_local": name_ko,
+                "category": "Music",
+                "number": int(row.get("id") or 0),
+                "buy": int(row.get("buy-price") or 0),
+                "sell": int(row.get("sell-price") or 0),
+                "image_url": f"/static/assets/music/{int(row.get('id') or 0)}.png",
+                "icon_url": f"/static/assets/music/{int(row.get('id') or 0)}.png",
+                "framed_image_url": f"/static/assets/music/{int(row.get('id') or 0)}.png",
+                "music_url": "",
+                "is_orderable": bool(row.get("isOrderable")),
+                "file_name": str(row.get("file-name") or ""),
+                "url": "",
+            }
+        )
+
+    # acnhapi 음악 목록(95곡)에 없는 최신/누락곡은 Norviah 데이터로 보강한다.
+    if NORVIAH_MUSIC_DATA_PATH.exists():
+        try:
+            extra_payload = json.loads(NORVIAH_MUSIC_DATA_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            extra_payload = []
+        if isinstance(extra_payload, list):
+            next_number = max([int(r.get("number") or 0) for r in rows] or [0])
+            special_name_map = {
+                "はずれ01": "Extra Song 1",
+                "はずれ02": "Extra Song 2",
+                "はずれ03": "Extra Song 3",
+            }
+            for erow in extra_payload:
+                if not isinstance(erow, dict):
+                    continue
+                raw_name_en = str(erow.get("USen") or "").strip()
+                if not raw_name_en:
+                    continue
+                name_en = special_name_map.get(raw_name_en, raw_name_en)
+                norm = normalize_name(name_en)
+                if norm in seen_names:
+                    continue
+                seen_names.add(norm)
+                next_number += 1
+                name_ko = str(erow.get("KRko") or "").strip()
+                if name_ko in special_name_map:
+                    name_ko = special_name_map[name_ko]
+                rows.append(
+                    {
+                        "name": name_en,
+                        "name_ko_local": name_ko,
+                        "category": "Music",
+                        "number": next_number,
+                        "buy": 0,
+                        "sell": 0,
+                        "image_url": f"/static/assets/music/{next_number}.png",
+                        "icon_url": f"/static/assets/music/{next_number}.png",
+                        "framed_image_url": f"/static/assets/music/{next_number}.png",
+                        "music_url": "",
+                        "is_orderable": False,
+                        "file_name": str(erow.get("Id") or ""),
+                        "url": "",
+                    }
+                )
+    return rows
 
 
 @lru_cache(maxsize=1)
@@ -201,6 +291,7 @@ def _extract_image_url(row: dict[str, Any]) -> str:
     image_url = str(
         row.get("image_url")
         or row.get("icon_url")
+        or row.get("image_uri")
         or row.get("image")
         or row.get("real_image_url")
         or row.get("real_art_url")
@@ -264,6 +355,40 @@ def _first_bool(row: dict[str, Any], keys: list[str], default: bool = False) -> 
     return default
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        try:
+            return int(value)
+        except Exception:
+            return default
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return default
+        try:
+            return int(float(text))
+        except Exception:
+            return default
+    if isinstance(value, list):
+        for item in value:
+            parsed = _safe_int(item, default=None)  # type: ignore[arg-type]
+            if parsed is not None:
+                return parsed
+        return default
+    if isinstance(value, dict):
+        for k in ("buy", "sell", "price", "value", "amount"):
+            if k in value:
+                parsed = _safe_int(value.get(k), default=None)  # type: ignore[arg-type]
+                if parsed is not None:
+                    return parsed
+        return default
+    return default
+
+
 def _art_auth_state(row: dict[str, Any]) -> str:
     has_fake = _first_bool(row, ["has_fake", "fake_available", "is_fake_available"], False)
     return "has_fake" if has_fake else "genuine_only"
@@ -299,6 +424,12 @@ def _event_origin_key(name_en: str) -> str:
 def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any] | None:
     if catalog_type == "events":
         name_en = str(row.get("event") or "").strip()
+    elif catalog_type == "music":
+        raw_name = row.get("name")
+        if isinstance(raw_name, dict):
+            name_en = str(raw_name.get("name-USen") or raw_name.get("name-EUen") or "").strip()
+        else:
+            name_en = str(raw_name or "").strip()
     else:
         name_en = str(row.get("name") or "").strip()
 
@@ -307,6 +438,8 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
 
     name_maps = load_catalog_name_maps()
     name_ko = name_maps.get(catalog_type, {}).get(normalize_name(name_en), "")
+    if catalog_type == "music" and not name_ko:
+        name_ko = str(row.get("name_ko_local") or "").strip()
 
     local_recipe_row: dict[str, Any] | None = None
     if catalog_type == "recipes":
@@ -388,11 +521,19 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         "extra_filter_values": extra_filter_values,
         "date": str(row.get("date") or "").strip(),
         "event_type": str(row.get("type") or "").strip(),
-        "sell": int(row.get("sell") or 0),
+        "buy": _safe_int(row.get("buy"), _safe_int(row.get("buy-price"), 0)),
+        "sell": _safe_int(row.get("sell"), 0),
         "variation_total": int(row.get("variation_total") or 0),
         "source": source,
         "source_notes": source_notes,
     }
+    orderable_value = row.get("is_orderable")
+    if orderable_value is None:
+        orderable_value = row.get("isOrderable")
+    if isinstance(orderable_value, bool):
+        item["is_orderable"] = orderable_value
+    # 목록 카드도 상세와 동일 기준으로 비매품 여부를 계산한다.
+    item["not_for_sale"] = _is_not_for_sale(row, item)
 
     if catalog_type == "clothing":
         styles = [str(v) for v in (row.get("styles") or []) if str(v).strip()]
@@ -503,7 +644,12 @@ def _find_catalog_row(catalog_type: str, item_id: str) -> dict[str, Any] | None:
 @lru_cache(maxsize=None)
 def _catalog_row_index(catalog_type: str) -> dict[str, dict[str, Any]]:
     index: dict[str, dict[str, Any]] = {}
-    rows = load_local_reactions() if catalog_type == "reactions" else load_nookipedia_catalog(catalog_type)
+    if catalog_type == "reactions":
+        rows = load_local_reactions()
+    elif catalog_type == "music":
+        rows = load_local_music_catalog()
+    else:
+        rows = load_nookipedia_catalog(catalog_type)
     for row in rows:
         if not isinstance(row, dict):
             continue
@@ -590,6 +736,55 @@ def _raw_top_level_fields(detail: dict[str, Any]) -> list[dict[str, str]]:
     return rows
 
 
+def _flatten_strings(value: Any) -> list[str]:
+    out: list[str] = []
+    if value is None:
+        return out
+    if isinstance(value, str):
+        s = value.strip()
+        if s:
+            out.append(s)
+        return out
+    if isinstance(value, dict):
+        for v in value.values():
+            out.extend(_flatten_strings(v))
+        return out
+    if isinstance(value, list):
+        for v in value:
+            out.extend(_flatten_strings(v))
+        return out
+    s = str(value).strip()
+    if s:
+        out.append(s)
+    return out
+
+
+def _is_not_for_sale(detail: dict[str, Any], item: dict[str, Any]) -> bool:
+    # 1) 명시 필드 우선 (acnhapi/local music)
+    if "is_orderable" in detail:
+        try:
+            return not bool(detail.get("is_orderable"))
+        except Exception:
+            pass
+    if "isOrderable" in detail:
+        try:
+            return not bool(detail.get("isOrderable"))
+        except Exception:
+            pass
+
+    # 2) source/availability 노트에서 판단
+    haystacks: list[str] = []
+    haystacks.extend(_flatten_strings(detail.get("availability")))
+    haystacks.extend(_flatten_strings(detail.get("source_notes")))
+    haystacks.extend(_flatten_strings(detail.get("source_note")))
+    haystacks.extend(_flatten_strings(detail.get("availability_notes")))
+    haystacks.extend(_flatten_strings(item.get("source_notes")))
+    haystacks.extend(_flatten_strings(item.get("source")))
+
+    joined = " ".join(haystacks).lower()
+    return ("not for sale" in joined) or ("구매가 불가능" in joined) or ("비매품" in joined)
+
+
 def _catalog_detail_payload(
     catalog_type: str,
     item: dict[str, Any],
@@ -601,10 +796,13 @@ def _catalog_detail_payload(
     # summary 블록에서 art 관련 필드를 공통으로 참조하므로 기본값을 먼저 둔다.
     real_info: dict[str, Any] = {}
     fake_info: dict[str, Any] = {}
+    not_for_sale = _is_not_for_sale(detail, item)
     detail_source, detail_source_notes = extract_source_pair(detail)
     common_fields = [
         ("카테고리", category),
+        ("구매가", str(detail.get("buy") or item.get("buy") or "")),
         ("판매가", str(detail.get("sell") or item.get("sell") or "")),
+        ("비매품 여부", "비매품" if not_for_sale else "구매 가능"),
         ("출처", detail_source or str(item.get("source") or "")),
         (
             "출처 상세",
@@ -667,6 +865,7 @@ def _catalog_detail_payload(
             "category": category,
             "event_type": str(detail.get("type") or item.get("event_type") or ""),
             "date": str(detail.get("date") or item.get("date") or ""),
+            "not_for_sale": not_for_sale,
             "variation_total": int(detail.get("variation_total") or item.get("variation_total") or 0),
             "art_has_fake": _first_bool(
                 detail, ["has_fake", "fake_available", "is_fake_available"], False
@@ -700,7 +899,12 @@ def load_catalog(catalog_type: str) -> list[dict[str, Any]]:
     if catalog_type not in CATALOG_TYPES:
         raise KeyError(catalog_type)
 
-    rows = load_local_reactions() if catalog_type == "reactions" else load_nookipedia_catalog(catalog_type)
+    if catalog_type == "reactions":
+        rows = load_local_reactions()
+    elif catalog_type == "music":
+        rows = load_local_music_catalog()
+    else:
+        rows = load_nookipedia_catalog(catalog_type)
     items: list[dict[str, Any]] = []
 
     for row in rows:

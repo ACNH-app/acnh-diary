@@ -36,8 +36,39 @@ export function bindMainEvents({
   updateScrollTopButton,
   detailController,
 }) {
+  let loadingMore = false;
+  const isMobileInfiniteMode = () =>
+    window.matchMedia("(max-width: 768px)").matches &&
+    state.activeMode !== "villagers" &&
+    state.activeMode !== "home";
+
+  const maybeAutoLoadMore = () => {
+    if (!isMobileInfiniteMode() || loadingMore || !state.catalogHasMore) return;
+    const docHeight = document.documentElement.scrollHeight;
+    const viewportBottom = window.innerHeight + window.scrollY;
+    const nearBottom = viewportBottom >= docHeight - 420;
+    const underfilled = docHeight <= window.innerHeight + 24;
+    if (!(nearBottom || underfilled)) return;
+    loadingMore = true;
+    loadCatalogPage(state.activeMode, { append: true })
+      .catch((err) => console.error(err))
+      .finally(() => {
+        loadingMore = false;
+        if (isMobileInfiniteMode() && state.catalogHasMore) {
+          window.setTimeout(maybeAutoLoadMore, 0);
+        }
+      });
+  };
+  window.__acnhAutoInfiniteMaybe = () => {
+    window.setTimeout(maybeAutoLoadMore, 0);
+  };
+
   const runLoad = () => {
-    loadCurrentModeData().catch((err) => console.error(err));
+    loadCurrentModeData()
+      .then(() => {
+        maybeAutoLoadMore();
+      })
+      .catch((err) => console.error(err));
   };
 
   searchInput.addEventListener("input", scheduleLoad);
@@ -136,7 +167,14 @@ export function bindMainEvents({
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
-  window.addEventListener("scroll", updateScrollTopButton, { passive: true });
+  window.addEventListener(
+    "scroll",
+    () => {
+      updateScrollTopButton();
+      maybeAutoLoadMore();
+    },
+    { passive: true }
+  );
 
   detailController.bindEvents();
 }

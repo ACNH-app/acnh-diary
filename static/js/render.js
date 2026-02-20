@@ -45,6 +45,7 @@ function buildNavGroups(modes) {
     "furniture",
     "interior",
     "clothing",
+    "music",
     "items",
     "tools",
     "gyroids",
@@ -500,7 +501,9 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
 
 export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
   const forceFiveCols = ["bugs", "fish", "sea", "recipes"].includes(state.activeMode);
+  const musicMode = state.activeMode === "music";
   list.classList.toggle("grid-five-cols", forceFiveCols);
+  list.classList.toggle("grid-music-cards", musicMode);
   list.dataset.catalogMode = String(state.activeMode || "");
 
   const append = Boolean(options.append);
@@ -537,9 +540,11 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const ownedLabel = fragment.querySelector(".owned-label");
     const qtyWrap = fragment.querySelector(".owned-qty-wrap");
     const qtyInput = fragment.querySelector(".owned-qty");
+    const toggles = fragment.querySelector(".toggles");
     const isArtMode = state.activeMode === "art";
     const isFurnitureMode = state.activeMode === "furniture";
     const isMuseumMode = ["bugs", "fish", "sea"].includes(state.activeMode);
+    const isMusicMode = musicMode;
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.loading = "lazy";
@@ -549,7 +554,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     });
 
     nameKo.textContent = v.name_ko || v.name_en;
-    nameEn.textContent = isArtMode ? "" : v.name_en ? `EN: ${v.name_en}` : "";
+    nameEn.textContent = isArtMode || isMusicMode ? "" : v.name_en ? `EN: ${v.name_en}` : "";
 
     const category = v.category_ko || v.category || "분류 없음";
     const ownedCount = Number(v.variation_owned_count || 0);
@@ -557,13 +562,23 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const variationQtyTotal = Number(v.variation_quantity_total || 0);
     const variationInfo = variationTotal ? ` | 변형: ${ownedCount}/${variationTotal}` : "";
     const authenticityInfo = v.authenticity_ko ? ` | ${v.authenticity_ko}` : "";
-    meta.textContent = isArtMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
+    meta.textContent = isArtMode || isMusicMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
 
     if (isArtMode) {
       desc.textContent = "";
       card.classList.add("art-card");
       icon.classList.add("art-icon");
       nameKo.classList.add("art-title");
+    } else if (isMusicMode) {
+      const buyNum = Number(v.buy || 0);
+      const buyPrice = buyNum > 0 ? buyNum.toLocaleString("ko-KR") : "-";
+      if (v.not_for_sale) {
+        desc.innerHTML = `<span class=\"music-pill-not-sale\">비매품</span>`;
+      } else {
+        desc.textContent = `구매가: ${buyPrice}벨`;
+      }
+      card.classList.add("music-card");
+      icon.classList.add("music-icon");
     } else if (v.event_type || v.date) {
       const parts = [];
       if (v.event_type) parts.push(`타입: ${v.event_type}`);
@@ -610,7 +625,11 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     owned.checked = Boolean(v.owned);
     owned.indeterminate = isPartialOwned;
-    ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
+    if (isMusicMode) {
+      ownedLabel.textContent = owned.checked ? "보유" : "미보유";
+    } else {
+      ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
+    }
     if (donatedWrap) {
       donatedWrap.classList.toggle("hidden", !isMuseumMode);
     }
@@ -634,7 +653,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     }
     owned.addEventListener("change", async () => {
       owned.indeterminate = false;
-      ownedLabel.textContent = statusLabel;
+      ownedLabel.textContent = isMusicMode ? (owned.checked ? "보유" : "미보유") : statusLabel;
       card.classList.remove("partially-owned");
       if (isFurnitureMode && qtyInput && variationTotal === 0) {
         const nextQty = owned.checked ? Math.max(1, Number(qtyInput.value || 0)) : 0;

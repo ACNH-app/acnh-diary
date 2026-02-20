@@ -783,6 +783,12 @@ button {
   gap: 12px;
 }
 
+.grid.grid-music-cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
 .grid.grid-five-cols {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
@@ -829,6 +835,20 @@ button {
   gap: 6px;
 }
 
+.card.music-card {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 10px;
+  align-self: start;
+}
+
+.card.music-card .content {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  align-content: start;
+}
+
 .card.clickable {
   cursor: pointer;
 }
@@ -852,6 +872,26 @@ button {
   height: 220px;
   object-fit: contain;
   border-radius: 12px;
+}
+
+.icon.music-icon {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.music-pill-not-sale {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .name-ko.art-title {
@@ -953,6 +993,30 @@ label {
 .modal-header h2 {
   margin: 0;
   font-size: 1rem;
+}
+
+.detail-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.detail-tag-not-for-sale {
+  color: #9f1239;
+  background: #fff1f2;
+  border-color: #fecdd3;
 }
 
 .modal-close {
@@ -1237,7 +1301,7 @@ label {
   color: var(--text);
   font-size: 1.2rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
-  z-index: 50;
+  z-index: 80;
 }
 
 :focus-visible {
@@ -1260,6 +1324,14 @@ label {
 }
 
 @media (max-width: 768px) {
+  .scroll-top-btn {
+    right: 14px;
+    bottom: calc(136px + env(safe-area-inset-bottom));
+    width: 46px;
+    height: 46px;
+    z-index: 90;
+  }
+
   .container {
     padding-bottom: 96px;
   }
@@ -1414,6 +1486,32 @@ label {
     grid-template-columns: 1fr;
   }
 
+  .controls-inline {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    align-items: stretch;
+    overflow: visible;
+  }
+
+  .controls-inline > input[type="text"] {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+    flex: none;
+  }
+
+  .controls-inline > select,
+  .controls-inline > button {
+    min-width: 0;
+    width: 100%;
+    flex: none;
+  }
+
+  #catalogArtGuideBtn {
+    grid-column: 1 / -1;
+  }
+
   .home-resident-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
@@ -1437,7 +1535,55 @@ label {
   }
 
   .grid.grid-five-cols {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .grid.grid-music-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .grid.grid-five-cols .card {
+    padding: 6px;
+    gap: 4px;
+    border-radius: 8px;
+  }
+
+  .grid.grid-music-cards .card.music-card {
+    padding: 6px;
+    gap: 4px;
+    border-radius: 8px;
+  }
+
+  .grid.grid-five-cols .icon {
+    height: 64px;
+  }
+
+  .grid.grid-music-cards .icon.music-icon {
+    height: 64px;
+  }
+
+  .grid.grid-five-cols .name-ko {
+    font-size: 0.72rem;
+    line-height: 1.15;
+  }
+
+  .grid.grid-music-cards .name-ko {
+    font-size: 0.72rem;
+    line-height: 1.15;
+  }
+
+  .grid.grid-music-cards .description {
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .grid.grid-five-cols .name-en,
+  .grid.grid-five-cols .meta,
+  .grid.grid-five-cols .description {
+    font-size: 0.66rem;
+    line-height: 1.15;
   }
 
   .home-resident-picker-grid {
@@ -1449,7 +1595,23 @@ label {
   }
 
   .summary-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .summary-card {
+    padding: 6px;
+  }
+
+  .summary-card h3 {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  .summary-card p {
+    font-size: 0.68rem;
+    line-height: 1.2;
+    margin-top: 4px;
   }
 
   .modal-panel {
@@ -1468,7 +1630,7 @@ label {
   }
 
   .scroll-top-btn {
-    bottom: calc(84px + env(safe-area-inset-bottom));
+    bottom: calc(136px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1476,6 +1638,11 @@ label {
   :root {
     --space-6: 14px;
     --space-5: 10px;
+  }
+
+  .grid.grid-music-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .container {
@@ -1516,5 +1683,38 @@ label {
 
   .modal-header h2 {
     font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid.grid-music-cards {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .card.music-card {
+    grid-template-columns: 84px 1fr;
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .card.music-card .icon.music-icon {
+    width: 84px;
+    height: 84px;
+  }
+
+  .card.music-card .content {
+    text-align: left;
+    gap: 6px;
+  }
+
+  .card.music-card .name-ko {
+    font-size: 0.9rem;
+    line-height: 1.25;
+  }
+
+  .card.music-card .toggles {
+    margin-top: 2px;
+    gap: 6px;
   }
 }

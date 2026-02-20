@@ -1,0 +1,628 @@
+{
+  "1": {
+    "name": "Agent K.K.",
+    "path": "/static/assets/music/1.png",
+    "status": "cached"
+  },
+  "2": {
+    "name": "Aloha K.K.",
+    "path": "/static/assets/music/2.png",
+    "status": "cached"
+  },
+  "3": {
+    "name": "Animal City",
+    "path": "/static/assets/music/3.png",
+    "status": "cached"
+  },
+  "4": {
+    "name": "Bubblegum K.K.",
+    "path": "/static/assets/music/4.png",
+    "status": "cached"
+  },
+  "5": {
+    "name": "Café K.K.",
+    "path": "/static/assets/music/5.png",
+    "status": "cached"
+  },
+  "6": {
+    "name": "Comrade K.K.",
+    "path": "/static/assets/music/6.png",
+    "status": "cached"
+  },
+  "7": {
+    "name": "DJ K.K.",
+    "path": "/static/assets/music/7.png",
+    "status": "cached"
+  },
+  "8": {
+    "name": "Drivin'",
+    "path": "/static/assets/music/8.png",
+    "status": "cached"
+  },
+  "9": {
+    "name": "Farewell",
+    "path": "/static/assets/music/9.png",
+    "status": "cached"
+  },
+  "10": {
+    "name": "Forest Life",
+    "path": "/static/assets/music/10.png",
+    "status": "cached"
+  },
+  "11": {
+    "name": "Go K.K. Rider",
+    "path": "/static/assets/music/11.png",
+    "status": "cached"
+  },
+  "12": {
+    "name": "Hypno K.K.",
+    "path": "/static/assets/music/12.png",
+    "status": "cached"
+  },
+  "13": {
+    "name": "I Love You",
+    "path": "/static/assets/music/13.png",
+    "status": "cached"
+  },
+  "14": {
+    "name": "Imperial K.K.",
+    "path": "/static/assets/music/14.png",
+    "status": "cached"
+  },
+  "15": {
+    "name": "K.K. Adventure",
+    "path": "/static/assets/music/15.png",
+    "status": "cached"
+  },
+  "16": {
+    "name": "K.K. Aria",
+    "path": "/static/assets/music/16.png",
+    "status": "cached"
+  },
+  "17": {
+    "name": "K.K. Ballad",
+    "path": "/static/assets/music/17.png",
+    "status": "cached"
+  },
+  "18": {
+    "name": "K.K. Bazaar",
+    "path": "/static/assets/music/18.png",
+    "status": "cached"
+  },
+  "19": {
+    "name": "K.K. Birthday",
+    "path": "/static/assets/music/19.png",
+    "status": "cached"
+  },
+  "20": {
+    "name": "K.K. Blues",
+    "path": "/static/assets/music/20.png",
+    "status": "cached"
+  },
+  "21": {
+    "name": "K.K. Bossa",
+    "path": "/static/assets/music/21.png",
+    "status": "cached"
+  },
+  "22": {
+    "name": "K.K. Calypso",
+    "path": "/static/assets/music/22.png",
+    "status": "cached"
+  },
+  "23": {
+    "name": "K.K. Casbah",
+    "path": "/static/assets/music/23.png",
+    "status": "cached"
+  },
+  "24": {
+    "name": "K.K. Chorale",
+    "path": "/static/assets/music/24.png",
+    "status": "cached"
+  },
+  "25": {
+    "name": "K.K. Condor",
+    "path": "/static/assets/music/25.png",
+    "status": "cached"
+  },
+  "26": {
+    "name": "K.K. Country",
+    "path": "/static/assets/music/26.png",
+    "status": "cached"
+  },
+  "27": {
+    "name": "K.K. Cruisin'",
+    "path": "/static/assets/music/27.png",
+    "status": "cached"
+  },
+  "28": {
+    "name": "K.K. D&B",
+    "path": "/static/assets/music/28.png",
+    "status": "cached"
+  },
+  "29": {
+    "name": "K.K. Dirge",
+    "path": "/static/assets/music/29.png",
+    "status": "cached"
+  },
+  "30": {
+    "name": "K.K. Disco",
+    "path": "/static/assets/music/30.png",
+    "status": "cached"
+  },
+  "31": {
+    "name": "K.K. Dixie",
+    "path": "/static/assets/music/31.png",
+    "status": "cached"
+  },
+  "32": {
+    "name": "K.K. Étude",
+    "path": "/static/assets/music/32.png",
+    "status": "cached"
+  },
+  "33": {
+    "name": "K.K. Faire",
+    "path": "/static/assets/music/33.png",
+    "status": "cached"
+  },
+  "34": {
+    "name": "K.K. Flamenco",
+    "path": "/static/assets/music/34.png",
+    "status": "cached"
+  },
+  "35": {
+    "name": "K.K. Folk",
+    "path": "/static/assets/music/35.png",
+    "status": "cached"
+  },
+  "36": {
+    "name": "K.K. Fusion",
+    "path": "/static/assets/music/36.png",
+    "status": "cached"
+  },
+  "37": {
+    "name": "K.K. Groove",
+    "path": "/static/assets/music/37.png",
+    "status": "cached"
+  },
+  "38": {
+    "name": "K.K. Gumbo",
+    "path": "/static/assets/music/38.png",
+    "status": "cached"
+  },
+  "39": {
+    "name": "K.K. House",
+    "path": "/static/assets/music/39.png",
+    "status": "cached"
+  },
+  "40": {
+    "name": "K.K. Island",
+    "path": "/static/assets/music/40.png",
+    "status": "cached"
+  },
+  "41": {
+    "name": "K.K. Jazz",
+    "path": "/static/assets/music/41.png",
+    "status": "cached"
+  },
+  "42": {
+    "name": "K.K. Jongara",
+    "path": "/static/assets/music/42.png",
+    "status": "cached"
+  },
+  "43": {
+    "name": "K.K. Lament",
+    "path": "/static/assets/music/43.png",
+    "status": "cached"
+  },
+  "44": {
+    "name": "K.K. Love Song",
+    "path": "/static/assets/music/44.png",
+    "status": "cached"
+  },
+  "45": {
+    "name": "K.K. Lullaby",
+    "path": "/static/assets/music/45.png",
+    "status": "cached"
+  },
+  "46": {
+    "name": "K.K. Mambo",
+    "path": "/static/assets/music/46.png",
+    "status": "cached"
+  },
+  "47": {
+    "name": "K.K. Marathon",
+    "path": "/static/assets/music/47.png",
+    "status": "cached"
+  },
+  "48": {
+    "name": "K.K. March",
+    "path": "/static/assets/music/48.png",
+    "status": "cached"
+  },
+  "49": {
+    "name": "K.K. Mariachi",
+    "path": "/static/assets/music/49.png",
+    "status": "cached"
+  },
+  "50": {
+    "name": "K.K. Metal",
+    "path": "/static/assets/music/50.png",
+    "status": "downloaded",
+    "folder": "K.K. Metal"
+  },
+  "51": {
+    "name": "K.K. Milonga",
+    "path": "/static/assets/music/51.png",
+    "status": "downloaded",
+    "folder": "K.K. Milonga"
+  },
+  "52": {
+    "name": "K.K. Moody",
+    "path": "/static/assets/music/52.png",
+    "status": "downloaded",
+    "folder": "K.K. Moody"
+  },
+  "53": {
+    "name": "K.K. Oasis",
+    "path": "/static/assets/music/53.png",
+    "status": "downloaded",
+    "folder": "K.K. Oasis"
+  },
+  "54": {
+    "name": "K.K. Parade",
+    "path": "/static/assets/music/54.png",
+    "status": "downloaded",
+    "folder": "K.K. Parade"
+  },
+  "55": {
+    "name": "K.K. Ragtime",
+    "path": "/static/assets/music/55.png",
+    "status": "downloaded",
+    "folder": "K.K. Ragtime"
+  },
+  "56": {
+    "name": "K.K. Rally",
+    "path": "/static/assets/music/56.png",
+    "status": "downloaded",
+    "folder": "K.K. Rally"
+  },
+  "57": {
+    "name": "K.K. Reggae",
+    "path": "/static/assets/music/57.png",
+    "status": "downloaded",
+    "folder": "K.K. Reggae"
+  },
+  "58": {
+    "name": "K.K. Rock",
+    "path": "/static/assets/music/58.png",
+    "status": "downloaded",
+    "folder": "K.K. Rock"
+  },
+  "59": {
+    "name": "K.K. Rockabilly",
+    "path": "/static/assets/music/59.png",
+    "status": "downloaded",
+    "folder": "K.K. Rockabilly"
+  },
+  "60": {
+    "name": "K.K. Safari",
+    "path": "/static/assets/music/60.png",
+    "status": "downloaded",
+    "folder": "K.K. Safari"
+  },
+  "61": {
+    "name": "K.K. Salsa",
+    "path": "/static/assets/music/61.png",
+    "status": "downloaded",
+    "folder": "K.K. Salsa"
+  },
+  "62": {
+    "name": "K.K. Samba",
+    "path": "/static/assets/music/62.png",
+    "status": "downloaded",
+    "folder": "K.K. Samba"
+  },
+  "63": {
+    "name": "K.K. Ska",
+    "path": "/static/assets/music/63.png",
+    "status": "downloaded",
+    "folder": "K.K. Ska"
+  },
+  "64": {
+    "name": "K.K. Sonata",
+    "path": "/static/assets/music/64.png",
+    "status": "downloaded",
+    "folder": "K.K. Sonata"
+  },
+  "65": {
+    "name": "K.K. Song",
+    "path": "/static/assets/music/65.png",
+    "status": "downloaded",
+    "folder": "K.K. Song"
+  },
+  "66": {
+    "name": "K.K. Soul",
+    "path": "/static/assets/music/66.png",
+    "status": "downloaded",
+    "folder": "K.K. Soul"
+  },
+  "67": {
+    "name": "K.K. Steppe",
+    "path": "/static/assets/music/67.png",
+    "status": "downloaded",
+    "folder": "K.K. Steppe"
+  },
+  "68": {
+    "name": "K.K. Stroll",
+    "path": "/static/assets/music/68.png",
+    "status": "downloaded",
+    "folder": "K.K. Stroll"
+  },
+  "69": {
+    "name": "K.K. Swing",
+    "path": "/static/assets/music/69.png",
+    "status": "downloaded",
+    "folder": "K.K. Swing"
+  },
+  "70": {
+    "name": "K.K. Synth",
+    "path": "/static/assets/music/70.png",
+    "status": "downloaded",
+    "folder": "K.K. Synth"
+  },
+  "71": {
+    "name": "K.K. Tango",
+    "path": "/static/assets/music/71.png",
+    "status": "downloaded",
+    "folder": "K.K. Tango"
+  },
+  "72": {
+    "name": "K.K. Technopop",
+    "path": "/static/assets/music/72.png",
+    "status": "downloaded",
+    "folder": "K.K. Technopop"
+  },
+  "73": {
+    "name": "K.K. Waltz",
+    "path": "/static/assets/music/73.png",
+    "status": "downloaded",
+    "folder": "K.K. Waltz"
+  },
+  "74": {
+    "name": "K.K. Western",
+    "path": "/static/assets/music/74.png",
+    "status": "downloaded",
+    "folder": "K.K. Western"
+  },
+  "75": {
+    "name": "King K.K.",
+    "path": "/static/assets/music/75.png",
+    "status": "downloaded",
+    "folder": "King K.K."
+  },
+  "76": {
+    "name": "Lucky K.K.",
+    "path": "/static/assets/music/76.png",
+    "status": "downloaded",
+    "folder": "Lucky K.K."
+  },
+  "77": {
+    "name": "Marine Song 2001",
+    "path": "/static/assets/music/77.png",
+    "status": "downloaded",
+    "folder": "Marine Song 2001"
+  },
+  "78": {
+    "name": "Mountain Song",
+    "path": "/static/assets/music/78.png",
+    "status": "downloaded",
+    "folder": "Mountain Song"
+  },
+  "79": {
+    "name": "Mr. K.K.",
+    "path": "/static/assets/music/79.png",
+    "status": "downloaded",
+    "folder": "Mr. K.K."
+  },
+  "80": {
+    "name": "My Place",
+    "path": "/static/assets/music/80.png",
+    "status": "downloaded",
+    "folder": "My Place"
+  },
+  "81": {
+    "name": "Neapolitan",
+    "path": "/static/assets/music/81.png",
+    "status": "downloaded",
+    "folder": "Neapolitan"
+  },
+  "82": {
+    "name": "Only Me",
+    "path": "/static/assets/music/82.png",
+    "status": "downloaded",
+    "folder": "Only Me"
+  },
+  "83": {
+    "name": "Pondering",
+    "path": "/static/assets/music/83.png",
+    "status": "downloaded",
+    "folder": "Pondering"
+  },
+  "84": {
+    "name": "Rockin' K.K.",
+    "path": "/static/assets/music/84.png",
+    "status": "downloaded",
+    "folder": "Rockin' K.K."
+  },
+  "85": {
+    "name": "Soulful K.K.",
+    "path": "/static/assets/music/85.png",
+    "status": "downloaded",
+    "folder": "Soulful K.K."
+  },
+  "86": {
+    "name": "Space K.K.",
+    "path": "/static/assets/music/86.png",
+    "status": "downloaded",
+    "folder": "Space K.K."
+  },
+  "87": {
+    "name": "Spring Blossoms",
+    "path": "/static/assets/music/87.png",
+    "status": "downloaded",
+    "folder": "Spring Blossoms"
+  },
+  "88": {
+    "name": "Stale Cupcakes",
+    "path": "/static/assets/music/88.png",
+    "status": "downloaded",
+    "folder": "Stale Cupcakes"
+  },
+  "89": {
+    "name": "Steep Hill",
+    "path": "/static/assets/music/89.png",
+    "status": "downloaded",
+    "folder": "Steep Hill"
+  },
+  "90": {
+    "name": "Surfin' K.K.",
+    "path": "/static/assets/music/90.png",
+    "status": "downloaded",
+    "folder": "Surfin' K.K."
+  },
+  "91": {
+    "name": "The K. Funk",
+    "path": "/static/assets/music/91.png",
+    "status": "downloaded",
+    "folder": "The K. Funk"
+  },
+  "92": {
+    "name": "To the Edge",
+    "path": "/static/assets/music/92.png",
+    "status": "downloaded",
+    "folder": "To the Edge"
+  },
+  "93": {
+    "name": "Two Days Ago",
+    "path": "/static/assets/music/93.png",
+    "status": "downloaded",
+    "folder": "Two Days Ago"
+  },
+  "94": {
+    "name": "Wandering",
+    "path": "/static/assets/music/94.png",
+    "status": "downloaded",
+    "folder": "Wandering"
+  },
+  "95": {
+    "name": "Welcome Horizons",
+    "path": "/static/assets/music/95.png",
+    "status": "downloaded",
+    "folder": "Welcome Horizons"
+  },
+  "96": {
+    "name": "K.K. Fugue",
+    "path": "/static/assets/music/96.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/4/4c/K.K._Fugue_NH_Texture.png"
+  },
+  "97": {
+    "name": "K.K. Polka",
+    "path": "/static/assets/music/97.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/a/af/K.K._Polka_NH_Texture.png"
+  },
+  "98": {
+    "name": "K.K. Slack-Key",
+    "path": "/static/assets/music/98.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/5/5a/K.K._Slack-Key_NH_Texture.png"
+  },
+  "99": {
+    "name": "K.K. Chorinho",
+    "path": "/static/assets/music/99.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/2/28/K.K._Chorinho_NH_Texture.png"
+  },
+  "100": {
+    "name": "Chillwave",
+    "path": "/static/assets/music/100.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/a/a2/Chillwave_NH_Texture.png"
+  },
+  "101": {
+    "name": "K.K. Dub",
+    "path": "/static/assets/music/101.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/9/9b/K.K._Dub_NH_Texture.png"
+  },
+  "102": {
+    "name": "K.K. Lovers",
+    "path": "/static/assets/music/102.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/6/62/K.K._Lovers_NH_Texture.png"
+  },
+  "103": {
+    "name": "K.K. Bashment",
+    "path": "/static/assets/music/103.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/b/b9/K.K._Bashment_NH_Texture.png"
+  },
+  "104": {
+    "name": "K.K. Hop",
+    "path": "/static/assets/music/104.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/a/a9/K.K._Hop_NH_Texture.png"
+  },
+  "105": {
+    "name": "K.K. Break",
+    "path": "/static/assets/music/105.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/d/db/K.K._Break_NH_Texture.png"
+  },
+  "106": {
+    "name": "K.K. Khoomei",
+    "path": "/static/assets/music/106.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/8/8d/K.K._Khoomei_NH_Texture.png"
+  },
+  "107": {
+    "name": "K.K. Robot Synth",
+    "path": "/static/assets/music/107.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/8/8e/K.K._Robot_Synth_NH_Texture.png"
+  },
+  "108": {
+    "name": "Extra Song 1",
+    "path": "/static/assets/music/108.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/a/a0/Nintendo_Music_ACNH_Extra_Song_1.jpg"
+  },
+  "109": {
+    "name": "Extra Song 2",
+    "path": "/static/assets/music/109.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/b/be/Nintendo_Music_ACNH_Extra_Song_2.jpg"
+  },
+  "110": {
+    "name": "Extra Song 3",
+    "path": "/static/assets/music/110.png",
+    "status": "downloaded",
+    "source": "nookipedia",
+    "image_url": "https://dodo.ac/np/images/d/db/Nintendo_Music_ACNH_Extra_Song_3.jpg"
+  }
+}

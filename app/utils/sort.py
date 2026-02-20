@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -19,12 +20,26 @@ def _script_rank(text: str) -> int:
     return 3
 
 
+def _leading_number_parts(text: str) -> tuple[int, str] | None:
+    s = (text or "").strip()
+    match = re.match(r"^(\d+)(.*)$", s)
+    if not match:
+        return None
+    return int(match.group(1)), match.group(2).strip().casefold()
+
+
 def sort_catalog_items(items: list[dict[str, Any]], sort_by: str, sort_order: str) -> list[dict[str, Any]]:
     direction = -1 if sort_order == "desc" else 1
 
     def key_name(x: dict[str, Any]) -> Any:
         text = (x.get("name_ko") or x.get("name_en") or "").strip()
-        return (_script_rank(text), text.casefold())
+        rank = _script_rank(text)
+        if rank == 0:
+            parsed = _leading_number_parts(text)
+            if parsed:
+                number_value, rest = parsed
+                return (rank, number_value, rest, text.casefold())
+        return (rank, 10**12, text.casefold(), "")
 
     def key_category(x: dict[str, Any]) -> Any:
         return (x.get("category_ko") or x.get("category") or "").lower()

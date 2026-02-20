@@ -25,6 +25,7 @@ export const state = {
   navGroups: [],
   catalogMetaCache: {},
   catalogAllItemsByMode: {},
+  musicCardMetaCache: {},
   detailCacheByMode: {},
   subCategoryEnabledModes: new Set(["clothing", "items", "interior", "furniture", "recipes", "art"]),
   subCategoryStateByMode: {},

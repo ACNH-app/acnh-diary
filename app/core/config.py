@@ -31,6 +31,7 @@ EVENT_COUNTRY_MAP_PATH = BASE_DIR / "data" / "event_country_map_ko.json"
 PHOTO_NAME_MAP_PATH = BASE_DIR / "data" / "photo_name_map_ko.json"
 ART_NAME_MAP_PATH = BASE_DIR / "data" / "art_name_map_ko.json"
 REACTION_NAME_MAP_PATH = BASE_DIR / "data" / "reaction_name_map_ko.json"
+MUSIC_NAME_MAP_PATH = BASE_DIR / "data" / "music_name_map_ko.json"
 
 DB_PATH = BASE_DIR / "app.db"
 NOOKIPEDIA_BASE_URL = "https://api.nookipedia.com"
@@ -269,6 +270,12 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "nook_path": "",
         "name_map_path": REACTION_NAME_MAP_PATH,
         "status_label": "습득",
+    },
+    "music": {
+        "label": "음악",
+        "nook_path": "",
+        "name_map_path": MUSIC_NAME_MAP_PATH,
+        "status_label": "보유",
     },
 }
 

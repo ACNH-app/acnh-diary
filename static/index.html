@@ -110,19 +110,19 @@
           <h2>오늘의 요약</h2>
           <div class="summary-cards">
             <article class="summary-card">
-              <h3>현재 시즌</h3>
+              <h3>계절</h3>
               <p id="summarySeasonText">-</p>
-            </article>
-            <article class="summary-card">
-              <h3>별자리</h3>
-              <p id="summaryZodiacText">-</p>
             </article>
             <article class="summary-card">
               <h3>시즌 레시피</h3>
               <p id="summarySeasonalRecipesText">-</p>
             </article>
             <article class="summary-card">
-              <h3>개화 중 낮은 나무</h3>
+              <h3>별자리</h3>
+              <p id="summaryZodiacText">-</p>
+            </article>
+            <article class="summary-card">
+              <h3>낮은나무</h3>
               <p id="summaryBloomingShrubsText">-</p>
             </article>
           </div>
@@ -319,7 +319,10 @@
       <article class="modal-panel">
         <header class="modal-header">
           <div class="modal-title-wrap">
-            <h2 id="detailTitle">상세 정보</h2>
+            <div class="detail-title-row">
+              <h2 id="detailTitle">상세 정보</h2>
+              <span id="detailNotForSaleTag" class="detail-tag detail-tag-not-for-sale hidden">비매품</span>
+            </div>
             <span id="detailNavHint" class="detail-nav-hint"></span>
           </div>
           <div class="detail-nav-actions">
@@ -510,6 +513,6 @@
         };
       })();
     </script>
-    <script type="module" src="/static/app.js?v=20260219perf6"></script>
+    <script type="module" src="/static/app.js?v=20260220music6"></script>
   </body>
 </html>

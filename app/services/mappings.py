@@ -18,6 +18,7 @@ from app.core.config import (
     FISH_NAME_MAP_PATH,
     FOSSIL_NAME_MAP_PATH,
     FURNITURE_NAME_MAP_PATH,
+    MUSIC_NAME_MAP_PATH,
     NAME_MAP_PATH,
     PERSONALITY_MAP_PATH,
     SEA_NAME_MAP_PATH,
@@ -116,6 +117,17 @@ def build_local_name_maps() -> None:
         bug_map = load_critter_map("bug.json")
         fish_map = load_critter_map("fish.json")
         sea_map = load_critter_map("sea.json")
+        music_map: dict[str, str] = {}
+        music_path = local_base / "music.json"
+        if music_path.exists():
+            try:
+                music = json.loads(music_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                music = {}
+            if isinstance(music, dict):
+                for row in music.values():
+                    if isinstance(row, dict):
+                        add_name(music_map, row.get("name"))
 
         def write_if_missing_or_empty(path: Path, data: dict[str, str]) -> None:
             if not data:
@@ -139,6 +151,7 @@ def build_local_name_maps() -> None:
         write_if_missing_or_empty(BUG_NAME_MAP_PATH, bug_map)
         write_if_missing_or_empty(FISH_NAME_MAP_PATH, fish_map)
         write_if_missing_or_empty(SEA_NAME_MAP_PATH, sea_map)
+        write_if_missing_or_empty(MUSIC_NAME_MAP_PATH, music_map)
 
 
 def ensure_art_name_map_from_furniture() -> None:

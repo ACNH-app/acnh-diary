@@ -20,7 +20,7 @@ import {
   renderVillagers,
 } from "./render.js";
 import { state } from "./state.js";
-import { sortVillagers, toQuery } from "./utils.js";
+import { compareNamePriority, sortVillagers, toQuery } from "./utils.js";
 
 /**
  * Data loading/orchestration controller for villagers and catalog.
@@ -35,6 +35,12 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   const catalogSortInitialized = new Set();
   let catalogFetchSeq = 0;
   let catalogFetchAbortController = null;
+  const getMusicCardMetaCache = () => {
+    if (!state.musicCardMetaCache || typeof state.musicCardMetaCache !== "object") {
+      state.musicCardMetaCache = {};
+    }
+    return state.musicCardMetaCache;
+  };
   const getCatalogAllItemsCache = () => {
     if (!state.catalogAllItemsByMode || typeof state.catalogAllItemsByMode !== "object") {
       state.catalogAllItemsByMode = {};
@@ -57,13 +63,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   const safeOpenVillagerDetail = (villager) => {
     if (onOpenVillagerDetail) onOpenVillagerDetail(villager);
   };
-  const textKoSort = (a, b) => {
-    const sa = String(a || "").normalize("NFKC").toLowerCase();
-    const sb = String(b || "").normalize("NFKC").toLowerCase();
-    if (sa < sb) return -1;
-    if (sa > sb) return 1;
-    return 0;
-  };
+  const textKoSort = (a, b) => compareNamePriority(a, b);
   const catalogName = (x) => x?.name_ko || x?.name || x?.name_en || "";
   const getExtraFilterValue = () => {
     if (catalogExtraSelect.classList.contains("hidden")) return "";
@@ -125,6 +125,70 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     });
     return safeRows;
   };
+
+  async function enrichMusicCardRows(rows) {
+    const cache = getMusicCardMetaCache();
+    const targets = rows.filter((row) => {
+      const id = String(row?.id || "").trim();
+      return id && !cache[id];
+    });
+
+    await Promise.all(
+      targets.map(async (row) => {
+        const id = String(row?.id || "").trim();
+        if (!id) return;
+        try {
+          const payload = await getJSON(`/api/catalog/music/${id}/detail`);
+          const fields = Array.isArray(payload?.fields) ? payload.fields : [];
+          const rawFields = Array.isArray(payload?.raw_fields) ? payload.raw_fields : [];
+          const buyField = fields.find((f) => String(f?.label || "").trim() === "구매가");
+          const saleField = fields.find((f) => String(f?.label || "").trim() === "비매품 여부");
+          const patch = {};
+          const buyRaw = String(buyField?.value || "").trim();
+          if (buyRaw) {
+            patch.buy = Number(buyRaw.replace(/[^\d]/g, "")) || 0;
+          } else {
+            const rawBuy = rawFields.find((f) => {
+              const key = String(f?.key || "").toLowerCase();
+              return key === "buy" || key === "buy-price";
+            });
+            const rawBuyText = String(rawBuy?.value || "").trim();
+            if (rawBuyText) {
+              patch.buy = Number(rawBuyText.replace(/[^\d]/g, "")) || 0;
+            }
+          }
+          const saleText = String(saleField?.value || "").trim();
+          if (saleText) {
+            patch.not_for_sale = saleText === "비매품";
+          } else if (typeof payload?.summary?.not_for_sale === "boolean") {
+            patch.not_for_sale = Boolean(payload.summary.not_for_sale);
+          } else {
+            const rawOrderable = rawFields.find((f) => {
+              const key = String(f?.key || "").toLowerCase();
+              return key === "is_orderable" || key === "isorderable";
+            });
+            const rawOrderableText = String(rawOrderable?.value || "").trim().toLowerCase();
+            if (rawOrderableText === "true") patch.not_for_sale = false;
+            if (rawOrderableText === "false") patch.not_for_sale = true;
+          }
+          if (patch.not_for_sale === false && (patch.buy === undefined || patch.buy <= 0)) {
+            // K.K. 노래는 구매 가능한 경우 기본 구매가가 3,200벨이다.
+            patch.buy = 3200;
+          }
+          cache[id] = patch;
+        } catch (err) {
+          console.error(err);
+          cache[id] = {};
+        }
+      })
+    );
+
+    return rows.map((row) => {
+      const id = String(row?.id || "").trim();
+      const patch = cache[id] || {};
+      return { ...row, ...patch };
+    });
+  }
   function needsVillagerReloadAfterToggle(payload) {
     if (!payload || typeof payload !== "object") return false;
     if (state.activeVillagerTab === "liked" && payload.liked === false) return true;
@@ -362,8 +426,19 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     const items = filtered.slice(start, end);
     state.catalogPage = targetPage;
     state.catalogLoadedPages = targetPage;
+    let renderItems = items;
+    if (catalogType === "music" && renderItems.length) {
+      renderItems = await enrichMusicCardRows(renderItems);
+      const cache = getCatalogAllItemsCache();
+      const byId = new Map(renderItems.map((x) => [String(x.id || ""), x]));
+      cache[catalogType] = (cache[catalogType] || []).map((row) => {
+        const id = String(row?.id || "");
+        return byId.has(id) ? byId.get(id) : row;
+      });
+    }
+
     renderCatalog(
-      items,
+      renderItems,
       meta.status_label || "보유",
       {
         append,
@@ -434,6 +509,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
         },
       }
     );
+    if (typeof window.__acnhAutoInfiniteMaybe === "function") {
+      window.__acnhAutoInfiniteMaybe();
+    }
   }
 
   /** Dispatch loading based on current active mode (villagers/catalog). */

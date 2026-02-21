@@ -21,6 +21,8 @@ const CALENDAR_NPC_OPTIONS = [
   { name: "여울", night: false },
   { name: "고숙이", night: false },
   { name: "무파니", night: false },
+  { name: "죠니", night: false },
+  { name: "해적 죠니", night: false },
   { name: "K.K.", night: false },
   { name: "부옥", night: true },
   { name: "깨빈", night: true },

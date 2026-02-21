@@ -3,17 +3,19 @@
 이 문서는 현재 웹앱이 **어떤 데이터를 어디서 가져오고**, **어디에 저장하며**, **이미지를 어디서 불러오는지**를 코드 기준으로 정리한 문서입니다.
 
 ## 1) 전체 구조 요약
-- 정적 데이터(아이템 메타)는 주로 `app/services/catalog_data.py`에서 로드
+- 정적 데이터(아이템 메타)는 `content.db`를 우선 사용
 - 원본 소스
   - Nookipedia API (`https://api.nookipedia.com`)
   - 로컬 JSON (`data/acnhapi`, `data/norviah-animal-crossing`)
+- `content.db`는 빌드 스크립트로 생성됨:
+  - `scripts/build_content_db.py`
 - 사용자 상태 데이터(보유/미보유, 수량, 프로필 등)는 SQLite(`app.db`) 저장
 - 프론트는 FastAPI `/api/*` 엔드포인트만 호출하고, 외부 API를 직접 호출하지 않음
 
 ## 2) 카탈로그/주민 데이터 출처
 
-### 2.1 Nookipedia API 기반
-아래 카테고리는 기본적으로 Nookipedia를 통해 가져옵니다. (`app/core/config.py`의 `CATALOG_TYPES`)
+### 2.1 source loader 기준 데이터 원천
+아래 카테고리는 source loader 기준으로 Nookipedia에서 가져옵니다. (`app/core/config.py`의 `CATALOG_TYPES`)
 
 - clothing: `/nh/clothing`
 - furniture: `/nh/furniture`
@@ -35,6 +37,12 @@
 - `app/services/nookipedia_client.py`
 - `app/services/catalog_data.py`
 - `app/core/config.py`
+
+### 2.1.1 content.db 사용 모드
+- 환경변수 `USE_CONTENT_DB`가 `1` 또는 `auto`(파일 존재)일 때
+  - 카탈로그/주민 조회는 `content.db`에서 읽음
+  - 상세 변형 정보도 `catalog_variations`에서 fallback 가능
+- 환경변수 `USE_CONTENT_DB=0`이면 source loader 경로를 사용
 
 ### 2.2 로컬 JSON 기반(직접 로드)
 아래는 현재 로컬 JSON을 직접 읽어 구성합니다.
@@ -134,6 +142,13 @@ DB 파일:
 관련 코드:
 - `static/js/data.js`
 
+## 6.4 content.db 빌드/검증 스크립트
+- 빌드: `scripts/build_content_db.py`
+- 건수 비교: `scripts/compare_content_counts.py`
+- 쿼리 회귀: `scripts/compare_catalog_queries.py`
+- 성능 측정: `scripts/benchmark_catalog_latency.py`
+- 통합 헬스체크: `scripts/content_db_healthcheck.py`
+
 ## 7) 앱 시작 시 동작
 1. `.env`/환경변수에서 API 키 로드 (`NOOKIPEDIA_API_KEY`)
 2. 매핑 파일 존재 보장 및 자동 생성
@@ -144,7 +159,7 @@ DB 파일:
 - `app/main.py` `on_startup`
 
 ## 8) 요약 (한 줄)
-- **데이터 본문**: Nookipedia + 일부 로컬 JSON 혼합
+- **데이터 본문**: 운영 시 `content.db` 우선, 필요 시 source loader fallback
 - **한글화**: 로컬 매핑 JSON
 - **사용자 체크 상태**: SQLite
 - **이미지**: API 원본 URL(카테고리별 보정) + 일부 로컬 정의(Norviah) + no-image 폴백

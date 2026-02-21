@@ -34,6 +34,7 @@ REACTION_NAME_MAP_PATH = BASE_DIR / "data" / "reaction_name_map_ko.json"
 MUSIC_NAME_MAP_PATH = BASE_DIR / "data" / "music_name_map_ko.json"
 
 DB_PATH = BASE_DIR / "app.db"
+CONTENT_DB_PATH = BASE_DIR / "content.db"
 NOOKIPEDIA_BASE_URL = "https://api.nookipedia.com"
 
 _DOTENV_CACHE: dict[str, str] | None = None
@@ -77,6 +78,11 @@ def get_api_key() -> str:
 
 def get_db_path() -> Path:
     raw = _env("DB_PATH", str(DB_PATH))
+    return Path(raw).expanduser()
+
+
+def get_content_db_path() -> Path:
+    raw = _env("CONTENT_DB_PATH", str(CONTENT_DB_PATH))
     return Path(raw).expanduser()
 
 
@@ -275,6 +281,12 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "label": "음악",
         "nook_path": "",
         "name_map_path": MUSIC_NAME_MAP_PATH,
+        "status_label": "보유",
+    },
+    "special_items": {
+        "label": "특수 아이템",
+        "nook_path": "",
+        "name_map_path": ITEMS_NAME_MAP_PATH,
         "status_label": "보유",
     },
 }

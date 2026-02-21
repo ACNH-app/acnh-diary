@@ -18,8 +18,12 @@ venv/
 app.db
 app.db-shm
 app.db-wal
+content.db
+content.db-shm
+content.db-wal
 *.log
 data/.cache/
+data/content_full_snapshot.json
 
 # macOS
 .DS_Store

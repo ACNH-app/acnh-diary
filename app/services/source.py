@@ -38,6 +38,32 @@ FROM_MAP_KO = {
     "smug villagers": "느끼함 주민",
     "snooty villagers": "성숙함 주민",
     "viva festivale reaction set": "비바 카니발 리액션 세트",
+    "festive wrapping paper": "축제 포장지",
+    "golden watering can": "황금 물뿌리개",
+    "any villager": "아무 주민",
+    "archipelago": "군도",
+    "boat tour": "보트 투어",
+    "bells": "벨",
+    "birthday": "생일",
+    "ground": "지면",
+    "rock": "바위",
+    "tree": "나무",
+    "breeding": "교배",
+    "catching": "포획",
+    "cooking": "요리",
+    "crafting": "제작",
+    "diving": "잠수",
+    "dig spot": "땅파기 지점",
+    "fishing": "낚시",
+    "friendship": "친밀도",
+    "island evaluation": "섬 평가",
+    "lost item": "분실물",
+    "money tree": "돈나무",
+    "quest item": "퀘스트 아이템",
+    "recycle box": "재활용함",
+    "slumber island": "꿈섬",
+    "turnips": "무",
+    "unobtainable": "획득 불가",
 }
 
 NOTE_MAP_KO = {
@@ -50,6 +76,157 @@ NOTE_MAP_KO = {
     "requires a high level of friendship": "주민과의 친밀도가 높아야 획득할 수 있습니다.",
 }
 
+NPC_SOURCE_MAP_KO = {
+    "blathers": "부엉",
+    "brewster": "마스터",
+    "c.j.": "저스틴",
+    "celeste": "부옥",
+    "cornimer": "콘키",
+    "cyrus": "리사이클 상점 리포",
+    "daisy mae": "무파니",
+    "dodo airlines": "도도항공",
+    "flick": "레온",
+    "franklin": "칠면조 프랭클린",
+    "happy home academy": "해피홈 아카데미",
+    "harvey": "파니엘",
+    "isabelle": "여울",
+    "jingle": "징글",
+    "label": "케이트",
+    "lloid": "토용이",
+    "lottie": "니코",
+    "luna": "몽셰르",
+    "mabel": "고순",
+    "mom": "엄마",
+    "niko": "니코",
+    "nintendo": "닌텐도",
+    "pascal": "해탈한",
+    "pavé": "무지개새",
+    "reese": "리포",
+    "resetti": "리셋씨",
+    "rover": "모리",
+    "snowboy": "눈사람",
+    "timmy": "콩돌",
+    "tom nook": "너굴",
+    "tommy": "밤돌",
+    "wardell": "워델",
+    "zipper": "토빗",
+}
+
+TOKEN_MAP_KO = {
+    "apple": "사과",
+    "bamboo": "대나무",
+    "beach": "해변",
+    "black": "검은",
+    "blue": "파란",
+    "bokjumeoni": "복주머니",
+    "camellia": "동백",
+    "carrot": "당근",
+    "cedar": "삼나무",
+    "cherry": "체리",
+    "coconut": "코코넛",
+    "communicator": "통신기",
+    "communicator part": "통신기 부품",
+    "cosmos": "코스모스",
+    "envelope": "봉투",
+    "festive": "축제",
+    "firework": "불꽃",
+    "fountain": "분수",
+    "gold": "황금",
+    "golden": "황금",
+    "green": "초록",
+    "hibiscus": "무궁화",
+    "holly": "호랑가시나무",
+    "hydrangea": "수국",
+    "hyacinth": "히아신스",
+    "jolly": "유쾌한",
+    "lily": "백합",
+    "lucky": "행운",
+    "mum": "국화",
+    "orange": "주황",
+    "otoshidama": "오토시다마",
+    "olive": "올리브",
+    "pansy": "팬지",
+    "part": "부품",
+    "peach": "복숭아",
+    "pear": "배",
+    "pink": "분홍",
+    "plumeria": "플루메리아",
+    "potato": "감자",
+    "pumpkin": "호박",
+    "pouch": "주머니",
+    "purple": "보라",
+    "red": "빨간",
+    "ripe": "익은",
+    "rose": "장미",
+    "sapling": "묘목",
+    "seed": "씨앗",
+    "shoot": "죽순",
+    "start": "모종",
+    "sugarcane": "사탕수수",
+    "tea": "차",
+    "tomato": "토마토",
+    "treasure": "보물",
+    "trawler": "트롤러",
+    "tulip": "튤립",
+    "watering": "물뿌리개",
+    "wheat": "밀",
+    "white": "하얀",
+    "windflower": "아네모네",
+    "wrapping": "포장",
+    "yellow": "노란",
+    "azalea": "철쭉",
+}
+
+
+def _translate_compound_to_ko(value: str) -> str:
+    text = value.strip().lower()
+    if not text:
+        return ""
+    if text in TOKEN_MAP_KO:
+        return TOKEN_MAP_KO[text]
+    parts = [p for p in text.replace("_", "-").replace(" ", "-").split("-") if p]
+    if not parts:
+        return ""
+    mapped = [TOKEN_MAP_KO.get(p, p) for p in parts]
+    return " ".join(mapped)
+
+
+def _fallback_translate_from_to_ko(value: str) -> str:
+    raw = value.strip()
+    lowered = raw.lower()
+    if not raw:
+        return ""
+
+    if lowered in NPC_SOURCE_MAP_KO:
+        return NPC_SOURCE_MAP_KO[lowered]
+
+    # "ripe orange-pumpkin plant" 같은 패턴
+    if lowered.startswith("ripe ") and lowered.endswith(" plant"):
+        inner = lowered[len("ripe ") : -len(" plant")].strip()
+        inner_ko = _translate_compound_to_ko(inner)
+        return f"익은 {inner_ko} 식물" if inner_ko else "익은 식물"
+
+    suffix_map = {
+        " plant": "식물",
+        " bag": "씨앗 봉지",
+        " start": "모종",
+        " tree": "나무",
+        " sapling": "묘목",
+        " shoot": "죽순",
+        " envelope": "봉투",
+    }
+    for suffix_en, suffix_ko in suffix_map.items():
+        if lowered.endswith(suffix_en):
+            head = lowered[: -len(suffix_en)].strip()
+            head_ko = _translate_compound_to_ko(head)
+            return f"{head_ko} {suffix_ko}".strip() if head_ko else suffix_ko
+
+    compound = _translate_compound_to_ko(lowered)
+    if compound and compound != lowered:
+        return compound
+
+    return raw
+
 
 def _translate_from_to_ko(value: str) -> str:
     text = value.strip()
@@ -59,7 +236,7 @@ def _translate_from_to_ko(value: str) -> str:
     for en, ko in FROM_MAP_KO.items():
         if en in lowered:
             return ko
-    return text
+    return _fallback_translate_from_to_ko(text)
 
 
 def translate_source_value_to_ko(value: Any) -> str:
@@ -73,7 +250,15 @@ def translate_source_value_to_ko(value: Any) -> str:
         return ", ".join(dict.fromkeys(translated))
     if value is None:
         return ""
-    return _translate_from_to_ko(str(value).strip())
+    text = str(value).strip()
+    if not text:
+        return ""
+    # "A, B, C" 형태의 원문은 각각 번역한 뒤 다시 결합한다.
+    if "," in text:
+        parts = [p.strip() for p in text.split(",") if p.strip()]
+        translated = [_translate_from_to_ko(p) for p in parts]
+        return ", ".join(dict.fromkeys(translated))
+    return _translate_from_to_ko(text)
 
 
 def _translate_note_to_ko(value: str) -> str:

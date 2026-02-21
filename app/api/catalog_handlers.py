@@ -16,6 +16,39 @@ from app.schemas.state import (
 
 
 def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
+    def _is_special_items_mode(catalog_type: str) -> bool:
+        return catalog_type == "special_items"
+
+    def _special_item_rows_by_id() -> dict[str, dict[str, Any]]:
+        rows = deps.load_catalog("special_items")
+        return {str(x.get("id") or ""): x for x in rows if str(x.get("id") or "")}
+
+    def _resolve_state_catalog_type(catalog_type: str, item_id: str) -> str:
+        if not _is_special_items_mode(catalog_type):
+            return catalog_type
+        item = _special_item_rows_by_id().get(item_id)
+        origin = str((item or {}).get("origin_catalog_type") or "").strip()
+        return origin if origin in deps.catalog_types else catalog_type
+
+    def _merge_state_for_special_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for item in items:
+            origin = str(item.get("origin_catalog_type") or "").strip()
+            if not origin:
+                continue
+            grouped.setdefault(origin, []).append(item)
+
+        merged_by_id: dict[str, dict[str, Any]] = {}
+        for origin, rows in grouped.items():
+            rows_with_state = deps.with_catalog_state(origin, rows)
+            rows_with_counts = deps.with_catalog_variation_counts(origin, rows_with_state)
+            for row in rows_with_counts:
+                row_id = str(row.get("id") or "")
+                if row_id:
+                    merged_by_id[row_id] = row
+
+        return [merged_by_id.get(str(item.get("id") or ""), item) for item in items]
+
     def get_catalog_meta(catalog_type: str) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
             raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
@@ -87,6 +120,8 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 if q_norm in x["name"].lower()
                 or q_norm in x["name_ko"].lower()
                 or q_norm in x["name_en"].lower()
+                or q_norm in str(x.get("source") or "").lower()
+                or q_norm in str(x.get("source_notes") or "").lower()
             ]
 
         if category:
@@ -100,8 +135,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         if fake_state:
             items = [x for x in items if x.get("authenticity") == fake_state]
 
-        items = deps.with_catalog_state(catalog_type, items)
-        items = deps.with_catalog_variation_counts(catalog_type, items)
+        if _is_special_items_mode(catalog_type):
+            items = _merge_state_for_special_items(items)
+        else:
+            items = deps.with_catalog_state(catalog_type, items)
+            items = deps.with_catalog_variation_counts(catalog_type, items)
 
         if owned is not None:
             items = [x for x in items if x["owned"] is owned]
@@ -170,6 +208,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         item = next((x for x in deps.load_catalog(catalog_type) if x["id"] == item_id), None)
         if not item:
             raise HTTPException(status_code=404, detail="아이템을 찾을 수 없습니다.")
+        state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
 
         base_row = deps.find_catalog_row(catalog_type, item_id)
         if not base_row:
@@ -179,20 +218,20 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         from_single = False
         # art는 목록 응답에 real_info/fake_info가 충분히 포함되므로
         # single endpoint 추가 호출을 생략해 상세 열기 속도를 개선한다.
-        should_fetch_single = catalog_type != "art" and len(deps.build_variations(base_row)) == 0
+        should_fetch_single = state_catalog_type != "art" and len(deps.build_variations(base_row)) == 0
         if should_fetch_single:
             name_en = str(base_row.get("event") or base_row.get("name") or "").strip()
             try:
-                single_row = deps.fetch_single_catalog_row(catalog_type, name_en)
+                single_row = deps.fetch_single_catalog_row(state_catalog_type, name_en)
                 if single_row:
                     detail_row = single_row
                     from_single = True
             except Exception:
                 from_single = False
 
-        variation_state_map = deps.get_catalog_variation_state_map(catalog_type, item_id)
+        variation_state_map = deps.get_catalog_variation_state_map(state_catalog_type, item_id)
         return deps.catalog_detail_payload(
-            catalog_type=catalog_type,
+            catalog_type=state_catalog_type,
             item=item,
             detail=detail_row,
             from_single=from_single,
@@ -205,10 +244,12 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         if catalog_type not in deps.catalog_types:
             raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
 
+        state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
+
         deps.init_db()
         if not deps.find_catalog_row(catalog_type, item_id):
             raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
-        variation_ids = deps.variation_ids_for_item(catalog_type, item_id)
+        variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
 
         with deps.get_db() as conn:
             existing = conn.execute(
@@ -217,7 +258,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 FROM catalog_state
                 WHERE catalog_type = ? AND item_id = ?
                 """,
-                (catalog_type, item_id),
+                (state_catalog_type, item_id),
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
@@ -234,16 +275,18 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             )
             deps.upsert_catalog_state(
                 conn,
-                catalog_type,
+                state_catalog_type,
                 item_id,
                 bool(new_owned),
                 int(new_qty),
                 bool(new_donated),
             )
             deps.upsert_all_variation_states(
-                conn, catalog_type, item_id, variation_ids, bool(new_owned)
+                conn, state_catalog_type, item_id, variation_ids, bool(new_owned)
             )
-        deps.invalidate_catalog_state_caches(catalog_type)
+        deps.invalidate_catalog_state_caches(state_catalog_type)
+        if _is_special_items_mode(catalog_type):
+            deps.invalidate_catalog_state_caches(catalog_type)
 
         return CatalogStateOut(
             catalog_type=catalog_type,
@@ -264,20 +307,96 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             return {"updated": 0, "owned": bool(payload.owned)}
 
         # 현재 모드 목록에 있는 id만 허용
-        valid_ids = {
-            str(x.get("id") or "")
-            for x in deps.load_catalog(catalog_type)
-            if str(x.get("id") or "")
-        }
+        loaded_rows = deps.load_catalog(catalog_type)
+        valid_ids = {str(x.get("id") or "") for x in loaded_rows if str(x.get("id") or "")}
         target_ids = [item_id for item_id in item_ids if item_id in valid_ids]
         if not target_ids:
             return {"updated": 0, "owned": bool(payload.owned)}
 
         deps.init_db()
+        state_type_map = {
+            item_id: _resolve_state_catalog_type(catalog_type, item_id) for item_id in target_ids
+        }
         variation_map = {
-            item_id: deps.variation_ids_for_item(catalog_type, item_id)
+            item_id: deps.variation_ids_for_item(state_type_map[item_id], item_id)
             for item_id in target_ids
         }
+
+        if _is_special_items_mode(catalog_type):
+            groups: dict[str, list[str]] = {}
+            for item_id in target_ids:
+                groups.setdefault(state_type_map[item_id], []).append(item_id)
+            updated_total = 0
+            for state_catalog_type, grouped_item_ids in groups.items():
+                with deps.get_db() as conn:
+                    placeholders = ",".join("?" for _ in grouped_item_ids)
+                    existing_rows = conn.execute(
+                        f"""
+                        SELECT item_id, donated, quantity
+                        FROM catalog_state
+                        WHERE catalog_type = ? AND item_id IN ({placeholders})
+                        """,
+                        (state_catalog_type, *grouped_item_ids),
+                    ).fetchall()
+                    existing_map = {
+                        str(r["item_id"]): {
+                            "donated": bool(r["donated"]),
+                            "quantity": max(0, int(r["quantity"] or 0)),
+                        }
+                        for r in existing_rows
+                    }
+
+                    state_rows = []
+                    for item_id in grouped_item_ids:
+                        prev = existing_map.get(item_id, {"donated": False, "quantity": 0})
+                        donated = bool(prev["donated"])
+                        current_qty = int(prev["quantity"])
+                        variation_ids = variation_map[item_id]
+                        has_variations = len(variation_ids) > 0
+                        if state_catalog_type == "furniture" and not has_variations:
+                            quantity = max(1, current_qty) if payload.owned else 0
+                        else:
+                            quantity = current_qty
+                        state_rows.append(
+                            (state_catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
+                        )
+
+                    conn.executemany(
+                        """
+                        INSERT INTO catalog_state (catalog_type, item_id, owned, donated, quantity)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(catalog_type, item_id) DO UPDATE SET
+                            owned = excluded.owned,
+                            donated = excluded.donated,
+                            quantity = excluded.quantity,
+                            updated_at = CURRENT_TIMESTAMP
+                        """,
+                        state_rows,
+                    )
+
+                    variation_rows = []
+                    for item_id in grouped_item_ids:
+                        for variation_id in variation_map[item_id]:
+                            qty = 1 if payload.owned else 0
+                            variation_rows.append(
+                                (state_catalog_type, item_id, variation_id, int(payload.owned), int(qty))
+                            )
+                    if variation_rows:
+                        conn.executemany(
+                            """
+                            INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
+                            VALUES (?, ?, ?, ?, ?)
+                            ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+                                owned = excluded.owned,
+                                quantity = excluded.quantity,
+                                updated_at = CURRENT_TIMESTAMP
+                            """,
+                            variation_rows,
+                        )
+                deps.invalidate_catalog_state_caches(state_catalog_type)
+                updated_total += len(grouped_item_ids)
+            deps.invalidate_catalog_state_caches(catalog_type)
+            return {"updated": updated_total, "owned": bool(payload.owned)}
 
         with deps.get_db() as conn:
             placeholders = ",".join("?" for _ in target_ids)
@@ -357,9 +476,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         if catalog_type not in deps.catalog_types:
             raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
 
+        state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
+
         if not deps.find_catalog_row(catalog_type, item_id):
             raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
-        variation_ids = deps.variation_ids_for_item(catalog_type, item_id)
+        variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
         variation_id_set = set(variation_ids)
         if variation_id not in variation_id_set:
             raise HTTPException(status_code=404, detail="변형을 찾을 수 없습니다.")
@@ -372,7 +493,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 FROM catalog_variation_state
                 WHERE catalog_type = ? AND item_id = ? AND variation_id = ?
                 """,
-                (catalog_type, item_id, variation_id),
+                (state_catalog_type, item_id, variation_id),
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
@@ -395,10 +516,12 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                     quantity = excluded.quantity,
                     updated_at = CURRENT_TIMESTAMP
                 """,
-                (catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
+                (state_catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
             )
-            deps.recalc_item_owned_from_variations(conn, catalog_type, item_id, variation_ids)
-        deps.invalidate_catalog_state_caches(catalog_type)
+            deps.recalc_item_owned_from_variations(conn, state_catalog_type, item_id, variation_ids)
+        deps.invalidate_catalog_state_caches(state_catalog_type)
+        if _is_special_items_mode(catalog_type):
+            deps.invalidate_catalog_state_caches(catalog_type)
 
         return CatalogVariationStateOut(
             catalog_type=catalog_type,
@@ -418,9 +541,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         if not payload.items:
             return {"updated": 0}
 
+        state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
+
         if not deps.find_catalog_row(catalog_type, item_id):
             raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
-        variation_ids = deps.variation_ids_for_item(catalog_type, item_id)
+        variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
         variation_id_set = set(variation_ids)
         for row in payload.items:
             if row.variation_id not in variation_id_set:
@@ -441,7 +566,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 """,
                 [
                     (
-                        catalog_type,
+                        state_catalog_type,
                         item_id,
                         row.variation_id,
                         int((max(0, int(row.quantity)) > 0) if row.quantity is not None else row.owned),
@@ -451,9 +576,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 ],
             )
             item_owned = deps.recalc_item_owned_from_variations(
-                conn, catalog_type, item_id, variation_ids
+                conn, state_catalog_type, item_id, variation_ids
             )
-        deps.invalidate_catalog_state_caches(catalog_type)
+        deps.invalidate_catalog_state_caches(state_catalog_type)
+        if _is_special_items_mode(catalog_type):
+            deps.invalidate_catalog_state_caches(catalog_type)
 
         return {"updated": len(payload.items), "item_owned": item_owned}
 

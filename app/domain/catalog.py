@@ -43,6 +43,46 @@ RECIPE_CATEGORY_ORDER = [
     "Sweet",
 ]
 
+SPECIAL_SOURCE_KO_MAP = {
+    "gulliver": "죠니",
+    "gullivarr": "해적 죠니",
+    "flick_bug_off": "레온(곤충대회)",
+    "flick": "레온",
+    "cj_fishing_tourney": "저스틴(낚시대회)",
+    "cj": "저스틴",
+    "recycle_box": "재활용함",
+    "mom": "엄마",
+    "birthday": "생일",
+    "jingle": "루돌",
+    "festivale": "카니발",
+    "wedding_season": "웨딩 시즌",
+    "pascal": "해탈한",
+    "halloween": "할로윈",
+    "turkey_day": "추수감사절",
+    "fireworks": "불꽃놀이",
+    "other": "기타",
+}
+
+SPECIAL_SOURCE_ORDER = [
+    "gulliver",
+    "gullivarr",
+    "flick_bug_off",
+    "flick",
+    "cj_fishing_tourney",
+    "cj",
+    "recycle_box",
+    "mom",
+    "birthday",
+    "jingle",
+    "festivale",
+    "wedding_season",
+    "pascal",
+    "halloween",
+    "turkey_day",
+    "fireworks",
+    "other",
+]
+
 CLOTHING_CATEGORY_ORDER = [
     "Tops",
     "Bottoms",
@@ -63,6 +103,8 @@ def category_ko_for(catalog_type: str, category: str) -> str:
         return FURNITURE_CATEGORY_KO_MAP.get(category, category)
     if catalog_type == "recipes":
         return RECIPE_CATEGORY_KO_MAP.get(category, category)
+    if catalog_type == "special_items":
+        return SPECIAL_SOURCE_KO_MAP.get(category, category)
     return category
 
 
@@ -105,6 +147,8 @@ def order_categories(catalog_type: str, categories: list[str]) -> list[str]:
         preferred = CLOTHING_CATEGORY_ORDER
     elif catalog_type == "recipes":
         preferred = RECIPE_CATEGORY_ORDER
+    elif catalog_type == "special_items":
+        preferred = SPECIAL_SOURCE_ORDER
     else:
         return sorted(categories)
 

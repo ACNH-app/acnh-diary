@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from functools import lru_cache
 from typing import Any
 from urllib.parse import quote
 
-from app.core.config import BASE_DIR, CATALOG_SINGLE_PATHS, CATALOG_TYPES
+from app.core.config import BASE_DIR, CATALOG_SINGLE_PATHS, CATALOG_TYPES, get_content_db_path
+from app.core.content_db import get_content_db
 from app.domain.catalog import category_ko_for, normalize_furniture_category, normalize_recipe_category
 from app.services.mappings import (
     load_catalog_name_maps,
@@ -37,6 +39,83 @@ REACTIONS_TRANSLATION_PATH = (
 RECIPES_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "recipes.json"
 LOCAL_MUSIC_DATA_PATH = BASE_DIR / "data" / "acnhapi" / "music.json"
 NORVIAH_MUSIC_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "Music.json"
+
+
+def _use_content_db_mode() -> bool:
+    raw = os.environ.get("USE_CONTENT_DB", "auto").strip().lower()
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    path = get_content_db_path()
+    if raw in {"1", "true", "yes", "on"}:
+        return path.exists()
+    # auto
+    return path.exists() and path.is_file()
+
+
+@lru_cache(maxsize=None)
+def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    if not _use_content_db_mode():
+        return ([], {})
+    items: list[dict[str, Any]] = []
+    row_index: dict[str, dict[str, Any]] = {}
+    try:
+        with get_content_db() as conn:
+            rows = conn.execute(
+                """
+                SELECT item_id, item_json, raw_json
+                FROM catalog_items
+                WHERE catalog_type = ?
+                """,
+                (catalog_type,),
+            ).fetchall()
+    except Exception:
+        return ([], {})
+
+    for row in rows:
+        item_id = str(row["item_id"] or "").strip()
+        if not item_id:
+            continue
+        item_raw = str(row["item_json"] or "").strip()
+        raw_raw = str(row["raw_json"] or "").strip()
+        try:
+            item = json.loads(item_raw) if item_raw else {}
+        except Exception:
+            item = {}
+        try:
+            raw = json.loads(raw_raw) if raw_raw else {}
+        except Exception:
+            raw = {}
+        if not isinstance(item, dict):
+            item = {}
+        if not isinstance(raw, dict):
+            raw = {}
+        item["id"] = item_id
+        items.append(item)
+        row_index[item_id] = raw
+    return (items, row_index)
+
+
+@lru_cache(maxsize=1)
+def _content_db_villagers() -> list[dict[str, Any]]:
+    if not _use_content_db_mode():
+        return []
+    out: list[dict[str, Any]] = []
+    try:
+        with get_content_db() as conn:
+            rows = conn.execute("SELECT raw_json FROM villagers").fetchall()
+    except Exception:
+        return []
+    for row in rows:
+        raw = str(row["raw_json"] or "").strip()
+        if not raw:
+            continue
+        try:
+            v = json.loads(raw)
+        except Exception:
+            continue
+        if isinstance(v, dict):
+            out.append(v)
+    return out
 
 
 @lru_cache(maxsize=1)
@@ -183,6 +262,11 @@ def load_local_music_catalog() -> list[dict[str, Any]]:
 
 @lru_cache(maxsize=1)
 def load_villagers() -> list[dict[str, Any]]:
+    villagers_from_db = _content_db_villagers()
+    if villagers_from_db:
+        villagers_from_db.sort(key=lambda v: (str(v.get("name_ko") or v.get("name_en") or "")).lower())
+        return villagers_from_db
+
     ko_name_map = load_korean_name_map()
     saying_ko_map = load_villager_saying_map()
     catchphrase_ko_map = load_local_villager_catchphrase_ko_map()
@@ -283,7 +367,12 @@ def load_villagers() -> list[dict[str, Any]]:
 
 def _item_id(catalog_type: str, row: dict[str, Any], name_en: str) -> str:
     url = str(row.get("url") or "").strip()
-    key = f"{catalog_type}:{url or name_en}".lower().encode("utf-8")
+    key_base = f"{catalog_type}:{name_en}:{url}"
+    if catalog_type == "events":
+        key_base = (
+            f"{key_base}:{str(row.get('date') or '').strip()}:{str(row.get('type') or '').strip()}"
+        )
+    key = key_base.lower().encode("utf-8")
     return hashlib.sha1(key).hexdigest()[:16]
 
 
@@ -637,17 +726,168 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
     return item
 
 
+SPECIAL_ITEM_SOURCE_TYPES = [
+    "furniture",
+    "items",
+    "tools",
+    "interior",
+    "clothing",
+    "recipes",
+]
+
+SPECIAL_SOURCE_KEYWORDS = [
+    # requested sources
+    "gulliver",
+    "gullivarr",
+    "flick",
+    "c.j.",
+    "cj",
+    "recycle box",
+    "mom",
+    "birthday",
+    "jingle",
+    "festivale",
+    "wedding season",
+    "pascal",
+    "halloween",
+    "jack",
+    "turkey day",
+    "franklin",
+    "fireworks",
+    "redd's raffle",
+    # ko aliases
+    "죠니",
+    "해적 죠니",
+    "레온",
+    "저스틴",
+    "재활용함",
+    "엄마",
+    "생일",
+    "루돌",
+    "카니발",
+    "웨딩 시즌",
+    "웨딩시즌",
+    "해탈한",
+    "할로윈",
+    "추수감사절",
+    "불꽃놀이",
+]
+
+SPECIAL_SOURCE_GROUP_RULES = [
+    ("gullivarr", ["gullivarr", "해적 죠니", "해적 걸리버"]),
+    ("gulliver", ["gulliver", "죠니", "걸리버"]),
+    ("flick_bug_off", ["bug-off", "곤충채집대회", "곤충대회"]),
+    ("flick", ["flick", "레온"]),
+    ("cj_fishing_tourney", ["fishing tourney", "낚시대회"]),
+    ("cj", ["c.j.", " cj ", " 저스틴", "저스틴"]),
+    ("recycle_box", ["recycle box", "재활용함"]),
+    ("mom", ["mom", "엄마"]),
+    ("birthday", ["birthday", "생일"]),
+    ("jingle", ["jingle", "루돌"]),
+    ("festivale", ["festivale", "카니발"]),
+    ("wedding_season", ["wedding season", "웨딩 시즌", "웨딩시즌"]),
+    ("pascal", ["pascal", "해탈한"]),
+    ("halloween", ["halloween", "jack", "할로윈"]),
+    ("turkey_day", ["turkey day", "franklin", "추수감사절"]),
+    ("fireworks", ["fireworks", "redd's raffle", "불꽃놀이"]),
+]
+
+
+def _special_source_group(row: dict[str, Any]) -> str:
+    haystacks: list[str] = []
+    source, source_notes = extract_source_pair(row)
+    haystacks.extend(_flatten_strings(source))
+    haystacks.extend(_flatten_strings(source_notes))
+    haystacks.extend(_flatten_strings(row.get("source")))
+    haystacks.extend(_flatten_strings(row.get("source_note")))
+    haystacks.extend(_flatten_strings(row.get("source_notes")))
+    haystacks.extend(_flatten_strings(row.get("availability")))
+    haystacks.extend(_flatten_strings(row.get("availability_notes")))
+    variations = row.get("variations")
+    if isinstance(variations, list):
+        for variation in variations:
+            if not isinstance(variation, dict):
+                continue
+            haystacks.extend(_flatten_strings(variation.get("source")))
+            haystacks.extend(_flatten_strings(variation.get("source_note")))
+            haystacks.extend(_flatten_strings(variation.get("source_notes")))
+            haystacks.extend(_flatten_strings(variation.get("availability")))
+            haystacks.extend(_flatten_strings(variation.get("availability_notes")))
+    joined = f" {' '.join(haystacks).lower()} "
+    for group_key, patterns in SPECIAL_SOURCE_GROUP_RULES:
+        if any(p in joined for p in patterns):
+            return group_key
+    return "other"
+
+
+def _is_special_source_item(row: dict[str, Any]) -> bool:
+    haystacks: list[str] = []
+    source, source_notes = extract_source_pair(row)
+    haystacks.extend(_flatten_strings(source))
+    haystacks.extend(_flatten_strings(source_notes))
+    haystacks.extend(_flatten_strings(row.get("source")))
+    haystacks.extend(_flatten_strings(row.get("source_note")))
+    haystacks.extend(_flatten_strings(row.get("source_notes")))
+    haystacks.extend(_flatten_strings(row.get("availability")))
+    haystacks.extend(_flatten_strings(row.get("availability_notes")))
+    variations = row.get("variations")
+    if isinstance(variations, list):
+        for variation in variations:
+            if not isinstance(variation, dict):
+                continue
+            haystacks.extend(_flatten_strings(variation.get("source")))
+            haystacks.extend(_flatten_strings(variation.get("source_note")))
+            haystacks.extend(_flatten_strings(variation.get("source_notes")))
+            haystacks.extend(_flatten_strings(variation.get("availability")))
+            haystacks.extend(_flatten_strings(variation.get("availability_notes")))
+    joined = " ".join(haystacks).lower()
+    return any(keyword in joined for keyword in SPECIAL_SOURCE_KEYWORDS)
+
+
+@lru_cache(maxsize=None)
+def _special_catalog_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for origin_type in SPECIAL_ITEM_SOURCE_TYPES:
+        source_rows = (
+            list(_catalog_row_index(origin_type).values())
+            if _use_content_db_mode()
+            else load_nookipedia_catalog(origin_type)
+        )
+        for row in source_rows:
+            if not isinstance(row, dict):
+                continue
+            if not _is_special_source_item(row):
+                continue
+            name_en = str(row.get("event") or row.get("name") or "").strip()
+            if not name_en:
+                continue
+            url = str(row.get("url") or "").strip()
+            dedupe_key = (origin_type, name_en.casefold(), url.casefold())
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            rows.append({**row, "__origin_catalog_type": origin_type})
+    return rows
+
+
 def _find_catalog_row(catalog_type: str, item_id: str) -> dict[str, Any] | None:
     return _catalog_row_index(catalog_type).get(item_id)
 
 
 @lru_cache(maxsize=None)
 def _catalog_row_index(catalog_type: str) -> dict[str, dict[str, Any]]:
+    items_from_db, rows_from_db = _content_db_catalog_bundle(catalog_type)
+    if items_from_db and rows_from_db:
+        return rows_from_db
+
     index: dict[str, dict[str, Any]] = {}
     if catalog_type == "reactions":
         rows = load_local_reactions()
     elif catalog_type == "music":
         rows = load_local_music_catalog()
+    elif catalog_type == "special_items":
+        rows = _special_catalog_rows()
     else:
         rows = load_nookipedia_catalog(catalog_type)
     for row in rows:
@@ -655,16 +895,27 @@ def _catalog_row_index(catalog_type: str) -> dict[str, dict[str, Any]]:
             continue
         if catalog_type == "events":
             name_en = str(row.get("event") or "").strip()
+        elif catalog_type == "special_items":
+            name_en = str(row.get("event") or row.get("name") or "").strip()
         else:
             name_en = str(row.get("name") or "").strip()
         if not name_en:
             continue
-        index[_item_id(catalog_type, row, name_en)] = row
+        if catalog_type == "special_items":
+            origin_type = str(row.get("__origin_catalog_type") or "").strip()
+            if not origin_type:
+                continue
+            index[_item_id(origin_type, row, name_en)] = row
+        else:
+            index[_item_id(catalog_type, row, name_en)] = row
     return index
 
 
 @lru_cache(maxsize=4096)
 def _fetch_single_catalog_row(catalog_type: str, name_en: str) -> dict[str, Any] | None:
+    # content.db 모드에서는 외부 single endpoint 호출을 막는다.
+    if _use_content_db_mode():
+        return None
     pattern = CATALOG_SINGLE_PATHS.get(catalog_type)
     if not pattern or not name_en:
         return None
@@ -699,6 +950,61 @@ def _build_variations(detail: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+@lru_cache(maxsize=16384)
+def _content_db_variations(catalog_type: str, item_id: str) -> list[dict[str, Any]]:
+    if not _use_content_db_mode():
+        return []
+    if not catalog_type or not item_id:
+        return []
+    try:
+        with get_content_db() as conn:
+            rows = conn.execute(
+                """
+                SELECT variation_id, raw_json, label, image_url, color1, color2, pattern,
+                       source, source_notes, price
+                FROM catalog_variations
+                WHERE catalog_type = ? AND item_id = ?
+                ORDER BY variation_id ASC
+                """,
+                (catalog_type, item_id),
+            ).fetchall()
+    except Exception:
+        return []
+
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        raw_payload = str(row["raw_json"] or "").strip()
+        raw_obj: dict[str, Any] = {}
+        if raw_payload:
+            try:
+                parsed = json.loads(raw_payload)
+            except Exception:
+                parsed = {}
+            if isinstance(parsed, dict):
+                raw_obj = parsed
+
+        variation_id = str(row["variation_id"] or "").strip()
+        if not variation_id:
+            variation_id = str(raw_obj.get("internal_id") or "").strip()
+        if not variation_id:
+            continue
+
+        out.append(
+            {
+                "id": variation_id,
+                "label": str(row["label"] or raw_obj.get("variation") or raw_obj.get("name") or ""),
+                "image_url": str(row["image_url"] or raw_obj.get("image_url") or raw_obj.get("icon_url") or ""),
+                "color1": str(row["color1"] or raw_obj.get("color_1") or raw_obj.get("color1") or ""),
+                "color2": str(row["color2"] or raw_obj.get("color_2") or raw_obj.get("color2") or ""),
+                "pattern": str(row["pattern"] or raw_obj.get("pattern") or ""),
+                "source": str(row["source"] or raw_obj.get("source") or ""),
+                "source_notes": str(row["source_notes"] or raw_obj.get("source_notes") or ""),
+                "price": _safe_int(row["price"], _safe_int(raw_obj.get("buy"), _safe_int(raw_obj.get("sell"), 0))),
+            }
+        )
+    return out
+
+
 @lru_cache(maxsize=8192)
 def _variation_ids_for_item(catalog_type: str, item_id: str) -> list[str]:
     base_row = _find_catalog_row(catalog_type, item_id)
@@ -708,6 +1014,9 @@ def _variation_ids_for_item(catalog_type: str, item_id: str) -> list[str]:
     variation_ids = [v["id"] for v in _build_variations(base_row)]
     if variation_ids:
         return variation_ids
+    variation_ids_from_db = [v["id"] for v in _content_db_variations(catalog_type, item_id)]
+    if variation_ids_from_db:
+        return variation_ids_from_db
 
     name_en = str(base_row.get("event") or base_row.get("name") or "").strip()
     if not name_en:
@@ -848,6 +1157,8 @@ def _catalog_detail_payload(
         )
 
     variations = _build_variations(detail)
+    if not variations:
+        variations = _content_db_variations(catalog_type, str(item.get("id") or ""))
     if variation_state_map:
         variations = [
             {**v, **variation_state_map.get(v["id"], {"owned": False, "quantity": 0})}
@@ -899,10 +1210,18 @@ def load_catalog(catalog_type: str) -> list[dict[str, Any]]:
     if catalog_type not in CATALOG_TYPES:
         raise KeyError(catalog_type)
 
+    items_from_db, _rows_from_db = _content_db_catalog_bundle(catalog_type)
+    if items_from_db:
+        items = [x for x in items_from_db if isinstance(x, dict)]
+        items.sort(key=lambda x: (x.get("name_ko") or x.get("name_en") or "").lower())
+        return items
+
     if catalog_type == "reactions":
         rows = load_local_reactions()
     elif catalog_type == "music":
         rows = load_local_music_catalog()
+    elif catalog_type == "special_items":
+        rows = _special_catalog_rows()
     else:
         rows = load_nookipedia_catalog(catalog_type)
     items: list[dict[str, Any]] = []
@@ -910,8 +1229,20 @@ def load_catalog(catalog_type: str) -> list[dict[str, Any]]:
     for row in rows:
         if not isinstance(row, dict):
             continue
-        item = _make_catalog_item(catalog_type, row)
+        actual_catalog_type = catalog_type
+        if catalog_type == "special_items":
+            actual_catalog_type = str(row.get("__origin_catalog_type") or "").strip()
+            if actual_catalog_type not in CATALOG_TYPES:
+                continue
+        item = _make_catalog_item(actual_catalog_type, row)
         if item:
+            if catalog_type == "special_items":
+                name_en = str(row.get("event") or row.get("name") or "").strip()
+                item["id"] = _item_id(actual_catalog_type, row, name_en)
+                special_group = _special_source_group(row)
+                item["category"] = special_group
+                item["category_ko"] = category_ko_for("special_items", special_group)
+                item["origin_catalog_type"] = actual_catalog_type
             items.append(item)
 
     items.sort(key=lambda x: (x["name_ko"] or x["name_en"]).lower())

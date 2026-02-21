@@ -48,6 +48,7 @@ function buildNavGroups(modes) {
     "music",
     "items",
     "tools",
+    "special_items",
     "gyroids",
     "photos",
     "recipes",
@@ -619,6 +620,15 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       desc.textContent = `스타일: ${v.styles_ko.join(", ")} | 라벨: ${labelThemes}`;
     } else {
       desc.textContent = v.sell ? `판매가: ${v.sell}` : "";
+    }
+    if (v.not_for_sale && !isMusicMode) {
+      const tag = document.createElement("span");
+      tag.className = "music-pill-not-sale";
+      tag.textContent = "비매품";
+      if (desc.firstChild) {
+        desc.insertBefore(document.createTextNode(" "), desc.firstChild);
+      }
+      desc.insertBefore(tag, desc.firstChild);
     }
 
     const isPartialOwned = variationTotal > 0 && ownedCount > 0 && ownedCount < variationTotal;

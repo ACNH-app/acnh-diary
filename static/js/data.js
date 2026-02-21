@@ -100,6 +100,15 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       return patcher(row);
     });
   };
+  const invalidateDetailCacheItem = (mode, itemId) => {
+    const key = String(mode || "").trim();
+    const id = String(itemId || "").trim();
+    if (!key || !id) return;
+    const cache = state.detailCacheByMode?.[key];
+    if (cache && typeof cache.delete === "function") {
+      cache.delete(id);
+    }
+  };
   const sortCatalogLocal = (rows, sortBy, sortOrder) => {
     const sign = sortOrder === "desc" ? -1 : 1;
     const safeRows = [...rows];
@@ -237,7 +246,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   /** Apply catalog metadata to filter controls and sub-category tabs. */
   async function applyCatalogMeta(catalogType) {
     const meta = await ensureCatalogMeta(catalogType);
-    catalogSearchInput.placeholder = `${meta.label} 이름 검색 (한글/영문)`;
+    catalogSearchInput.placeholder = `${meta.label} 이름/출처 검색 (한글/영문)`;
     const prevExtraValue = catalogExtraSelect.value;
     const prevExtraType = catalogExtraSelect.dataset.extraType || "";
     const subCategoryRows =
@@ -386,7 +395,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
 
     let filtered = allRows.filter((row) => {
       if (qNorm) {
-        const hay = `${row?.name_ko || ""} ${row?.name_en || ""} ${row?.name || ""}`.toLowerCase();
+        const hay = `${row?.name_ko || ""} ${row?.name_en || ""} ${row?.name || ""} ${row?.source || ""} ${row?.source_notes || ""}`.toLowerCase();
         if (!hay.includes(qNorm)) return false;
       }
 
@@ -452,6 +461,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
             owned,
             quantity: extra.quantity,
           });
+          invalidateDetailCacheItem(state.activeMode, itemId);
           const target = state.renderedCatalogItems.find((x) => x.id === itemId);
           if (target) {
             target.owned = owned;
@@ -478,6 +488,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
         onUpdateQuantity: async (itemId, quantity) => {
           const owned = quantity > 0;
           await updateCatalogState(state.activeMode, itemId, { owned, quantity });
+          invalidateDetailCacheItem(state.activeMode, itemId);
           const target = state.renderedCatalogItems.find((x) => x.id === itemId);
           if (target) {
             target.quantity = quantity;
@@ -498,6 +509,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
         },
         onToggleDonated: async (itemId, donated) => {
           await updateCatalogState(state.activeMode, itemId, { donated });
+          invalidateDetailCacheItem(state.activeMode, itemId);
           const target = state.renderedCatalogItems.find((x) => x.id === itemId);
           if (target) {
             target.donated = donated;
@@ -545,6 +557,10 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       : [];
     const itemIds = Array.from(new Set(domItemIds.length ? domItemIds : fallbackIds.length ? fallbackIds : activeIds));
     if (!itemIds.length) return;
+    if (state.detailCacheByMode && state.detailCacheByMode[catalogMode]) {
+      // 대량 토글 시에는 항목별 delete보다 모드 캐시를 비우는 편이 안전하다.
+      state.detailCacheByMode[catalogMode] = new Map();
+    }
 
     const rowById = new Map(rows.map((x) => [String(x.id || ""), x]));
     const nextOwned = Boolean(owned);

@@ -54,9 +54,13 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
 
         rows = deps.load_catalog(catalog_type)
-        categories = deps.order_categories(
-            catalog_type, list({x["category"] for x in rows if x["category"]})
-        )
+        category_values = {x["category"] for x in rows if x["category"]}
+        if catalog_type == "recipes":
+            for row in rows:
+                filters = row.get("recipe_filters")
+                if isinstance(filters, list):
+                    category_values.update(str(v).strip() for v in filters if str(v).strip())
+        categories = deps.order_categories(catalog_type, list(category_values))
         category_rows = [
             {"en": c, "ko": deps.category_ko_for(catalog_type, c)} for c in categories
         ]
@@ -125,7 +129,18 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             ]
 
         if category:
-            items = [x for x in items if x["category"] == category]
+            if catalog_type == "recipes" and (
+                category.startswith("season:")
+                or category.startswith("event:")
+                or category.startswith("npc:")
+            ):
+                items = [
+                    x
+                    for x in items
+                    if category in (x.get("recipe_filters") or [])
+                ]
+            else:
+                items = [x for x in items if x["category"] == category]
         if style:
             items = [x for x in items if style in x.get("styles", [])]
         if label_theme:

@@ -37,6 +37,7 @@ export const state = {
     "special_items",
   ]),
   subCategoryStateByMode: {},
+  sourceFilterByMode: {},
   catalogPage: 1,
   catalogLoadedPages: 1,
   catalogPageSize: 60,

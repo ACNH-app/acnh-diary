@@ -43,6 +43,48 @@ RECIPE_CATEGORY_ORDER = [
     "Sweet",
 ]
 
+RECIPE_SEASON_FACET_KO_MAP = {
+    "season:young_spring_bamboo": "봄: 봄의 대나무",
+    "season:cherry_blossom": "봄: 벚꽃",
+    "season:summer_shell": "여름: 여름 조개",
+    "season:mushroom": "가을: 버섯",
+    "season:maple_leaf": "가을: 단풍잎",
+    "season:tree_bounty": "가을: 도토리/솔방울",
+    "season:winter_snowflake": "겨울: 눈의 결정",
+    "season:christmas_ornament": "겨울: 크리스마스 오너먼트",
+}
+
+RECIPE_EVENT_FACET_KO_MAP = {
+    "event:bunny_day": "이벤트: 토빗 데이",
+    "event:festivale": "이벤트: 카니발",
+    "event:wedding_season": "이벤트: 웨딩 시즌",
+    "event:halloween": "이벤트: 할로윈",
+    "event:turkey_day": "이벤트: 추수감사절",
+}
+
+RECIPE_NPC_FACET_KO_MAP = {
+    "npc:celeste": "부옥 레시피",
+    "npc:pascal": "해탈한 레시피",
+}
+
+RECIPE_FACET_ORDER = [
+    "season:young_spring_bamboo",
+    "season:cherry_blossom",
+    "season:summer_shell",
+    "season:mushroom",
+    "season:maple_leaf",
+    "season:tree_bounty",
+    "season:winter_snowflake",
+    "season:christmas_ornament",
+    "event:bunny_day",
+    "event:festivale",
+    "event:wedding_season",
+    "event:halloween",
+    "event:turkey_day",
+    "npc:celeste",
+    "npc:pascal",
+]
+
 SPECIAL_SOURCE_KO_MAP = {
     "gulliver": "죠니",
     "gullivarr": "해적 죠니",
@@ -102,6 +144,12 @@ def category_ko_for(catalog_type: str, category: str) -> str:
     if catalog_type == "furniture":
         return FURNITURE_CATEGORY_KO_MAP.get(category, category)
     if catalog_type == "recipes":
+        if category in RECIPE_SEASON_FACET_KO_MAP:
+            return RECIPE_SEASON_FACET_KO_MAP[category]
+        if category in RECIPE_EVENT_FACET_KO_MAP:
+            return RECIPE_EVENT_FACET_KO_MAP[category]
+        if category in RECIPE_NPC_FACET_KO_MAP:
+            return RECIPE_NPC_FACET_KO_MAP[category]
         return RECIPE_CATEGORY_KO_MAP.get(category, category)
     if catalog_type == "special_items":
         return SPECIAL_SOURCE_KO_MAP.get(category, category)
@@ -146,7 +194,7 @@ def order_categories(catalog_type: str, categories: list[str]) -> list[str]:
     elif catalog_type == "clothing":
         preferred = CLOTHING_CATEGORY_ORDER
     elif catalog_type == "recipes":
-        preferred = RECIPE_CATEGORY_ORDER
+        preferred = [*RECIPE_CATEGORY_ORDER, *RECIPE_FACET_ORDER]
     elif catalog_type == "special_items":
         preferred = SPECIAL_SOURCE_ORDER
     else:

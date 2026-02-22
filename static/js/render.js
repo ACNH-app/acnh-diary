@@ -503,6 +503,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
 export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
   const forceFiveCols = ["bugs", "fish", "sea", "recipes"].includes(state.activeMode);
   const musicMode = state.activeMode === "music";
+  const activeSourceFilter = String(state.sourceFilterByMode?.[state.activeMode] || "").trim();
   list.classList.toggle("grid-five-cols", forceFiveCols);
   list.classList.toggle("grid-music-cards", musicMode);
   list.dataset.catalogMode = String(state.activeMode || "");
@@ -594,9 +595,35 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       state.activeMode === "recipes"
     ) {
       desc.innerHTML = "";
-      const base = document.createElement("span");
-      base.textContent = v.source ? `획득처: ${v.source}` : "획득처 정보 없음";
-      desc.appendChild(base);
+      if (state.activeMode === "recipes" && v.source) {
+        const label = document.createElement("span");
+        label.textContent = "획득처: ";
+        desc.appendChild(label);
+        const sources = String(v.source || "")
+          .split(",")
+          .map((x) => String(x || "").trim())
+          .filter(Boolean);
+        sources.forEach((src, idx) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = `source-chip ${activeSourceFilter === src ? "active" : ""}`;
+          chip.textContent = src;
+          chip.addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!handlers.onFilterBySource) return;
+            await handlers.onFilterBySource(src);
+          });
+          desc.appendChild(chip);
+          if (idx < sources.length - 1) {
+            desc.appendChild(document.createTextNode(", "));
+          }
+        });
+      } else {
+        const base = document.createElement("span");
+        base.textContent = v.source ? `획득처: ${v.source}` : "획득처 정보 없음";
+        desc.appendChild(base);
+      }
       if (v.source_notes) {
         const note = document.createElement("span");
         note.className = "note-hint";
@@ -732,6 +759,10 @@ export function renderSubCategoryTabs(catalogType, categories, { onCategoryChang
   const enabled = state.subCategoryEnabledModes.has(catalogType);
   subCategoryTabs.innerHTML = "";
   subCategoryTabs.classList.toggle("hidden", !enabled);
+  subCategoryTabs.classList.toggle(
+    "is-slider",
+    catalogType === "recipes" || catalogType === "special_items"
+  );
   if (!enabled) {
     state.activeSubCategory = "";
     return;
@@ -751,6 +782,9 @@ export function renderSubCategoryTabs(catalogType, categories, { onCategoryChang
     btn.addEventListener("click", () => {
       state.activeSubCategory = row.en;
       state.subCategoryStateByMode[catalogType] = row.en;
+      if (catalogType === "recipes" && state.sourceFilterByMode) {
+        state.sourceFilterByMode[catalogType] = "";
+      }
       Array.from(subCategoryTabs.querySelectorAll(".tab")).forEach((el) => {
         el.classList.toggle("active", el === btn);
       });

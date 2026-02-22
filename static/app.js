@@ -50,6 +50,9 @@ let calendarLoadDay = null;
 async function navigateToMode(mode) {
   const target = String(mode || "").trim();
   if (!target) return;
+  if (state.activeMode === "recipes" && target !== "recipes" && state.sourceFilterByMode) {
+    state.sourceFilterByMode.recipes = "";
+  }
   const hit = (state.navModes || []).find((m) => m.key === target);
   if (!hit) return;
   state.activeMode = target;
@@ -57,6 +60,9 @@ async function navigateToMode(mode) {
   updatePanels();
   renderNav({
     onModeChange: async (nextMode) => {
+      if (state.activeMode === "recipes" && nextMode !== "recipes" && state.sourceFilterByMode) {
+        state.sourceFilterByMode.recipes = "";
+      }
       state.activeMode = nextMode;
       window.__acnhCurrentMode = state.activeMode;
       updatePanels();
@@ -239,6 +245,9 @@ if (brandHomeBtn) {
 
     renderNav({
       onModeChange: () => {
+        if (state.activeMode !== "recipes" && state.sourceFilterByMode) {
+          state.sourceFilterByMode.recipes = "";
+        }
         window.__acnhCurrentMode = state.activeMode;
         updatePanels();
         if (state.activeMode === "home") {

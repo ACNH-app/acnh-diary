@@ -40,6 +40,49 @@ RECIPES_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "recipes.jso
 LOCAL_MUSIC_DATA_PATH = BASE_DIR / "data" / "acnhapi" / "music.json"
 NORVIAH_MUSIC_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "Music.json"
 
+RECIPE_SEASON_RULES: list[tuple[str, tuple[str, ...]]] = [
+    (
+        "season:young_spring_bamboo",
+        (
+            "young spring bamboo",
+            "spring bamboo",
+            "bamboo season",
+            "봄의 대나무",
+            "steamer-basket set",
+            "basket pack",
+            "green-leaf pile",
+            "pan flute",
+            "나무 찜통",
+            "바구니 가방",
+            "초록 낙엽",
+            "팬파이프",
+        ),
+    ),
+    ("season:cherry_blossom", ("cherry blossom", "cherry-blossom", "벚꽃")),
+    ("season:summer_shell", ("summer shell", "여름 조개")),
+    ("season:mushroom", ("mushroom season", "mush", "버섯")),
+    ("season:maple_leaf", ("maple leaf", "maple-leaf", "단풍잎")),
+    ("season:tree_bounty", ("tree's bounty", "trees bounty", "acorn", "pine cone", "pinecone", "도토리", "솔방울")),
+    ("season:winter_snowflake", ("snowflake", "frozen", "ice", "눈송이", "얼음", "빙")),
+    (
+        "season:christmas_ornament",
+        ("festive season", "toy day", "jingle", "루돌", "장식볼", "토이데이"),
+    ),
+]
+
+RECIPE_EVENT_RULES: list[tuple[str, tuple[str, ...]]] = [
+    ("event:bunny_day", ("bunny day", "bunny-day", "토빗 데이", "이스터")),
+    ("event:festivale", ("festivale", "카니발")),
+    ("event:wedding_season", ("wedding season", "웨딩 시즌")),
+    ("event:halloween", ("halloween", "jack", "할로윈")),
+    ("event:turkey_day", ("turkey day", "thanksgiving", "franklin", "추수감사절")),
+]
+
+RECIPE_NPC_RULES: list[tuple[str, tuple[str, ...]]] = [
+    ("npc:celeste", ("celeste", "부옥")),
+    ("npc:pascal", ("pascal", "해탈한")),
+]
+
 
 def _use_content_db_mode() -> bool:
     raw = os.environ.get("USE_CONTENT_DB", "auto").strip().lower()
@@ -90,6 +133,11 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
         if not isinstance(raw, dict):
             raw = {}
         item["id"] = item_id
+        if catalog_type == "recipes":
+            # DB에 저장된 과거 recipe_filters 포맷과 무관하게 항상 최신 규칙으로 재계산한다.
+            source_ref = str(item.get("source") or "")
+            notes_ref = str(item.get("source_notes") or "")
+            item["recipe_filters"] = _recipe_filter_keys(raw, source_ref, notes_ref)
         items.append(item)
         row_index[item_id] = raw
     return (items, row_index)
@@ -444,6 +492,50 @@ def _first_bool(row: dict[str, Any], keys: list[str], default: bool = False) -> 
     return default
 
 
+def _recipe_filter_keys(row: dict[str, Any], source: str, source_notes: str) -> list[str]:
+    haystacks: list[str] = []
+    haystacks.extend(_flatten_strings(row.get("name")))
+    haystacks.extend(_flatten_strings(row.get("availability")))
+    haystacks.extend(_flatten_strings(source))
+    haystacks.extend(_flatten_strings(source_notes))
+    hay = " ".join(haystacks).lower()
+    out: list[str] = []
+    def _contains_keyword(text: str, keyword: str) -> bool:
+        kw = str(keyword or "").strip().lower()
+        if not kw:
+            return False
+        # 한글 키워드는 부분 일치, 영문 키워드는 단어 경계 기준으로 매칭.
+        if re.search(r"[가-힣]", kw):
+            return kw in text
+        pattern = rf"(^|[^a-z0-9]){re.escape(kw)}([^a-z0-9]|$)"
+        return re.search(pattern, text) is not None
+
+    for key, keywords in RECIPE_SEASON_RULES:
+        if any(_contains_keyword(hay, kw) for kw in keywords):
+            out.append(key)
+    for key, keywords in RECIPE_EVENT_RULES:
+        if any(_contains_keyword(hay, kw) for kw in keywords):
+            out.append(key)
+    for key, keywords in RECIPE_NPC_RULES:
+        if any(_contains_keyword(hay, kw) for kw in keywords):
+            out.append(key)
+
+    # 일부 레시피는 계절명이 source/note에 직접 없어서 이름+시즌 단서로 보정한다.
+    name_hay = " ".join(_flatten_strings(row.get("name"))).lower()
+    if "season:young_spring_bamboo" not in out:
+        if ("bamboo" in name_hay or "죽순" in name_hay) and (
+            " spring " in f" {hay} " or "봄" in hay
+        ):
+            out.append("season:young_spring_bamboo")
+    if "season:summer_shell" not in out:
+        if ("shell" in name_hay or "조개" in name_hay) and (
+            " summer " in f" {hay} " or "여름" in hay
+        ):
+            out.append("season:summer_shell")
+
+    return list(dict.fromkeys(out))
+
+
 def _safe_int(value: Any, default: int = 0) -> int:
     if value is None:
         return default
@@ -555,6 +647,21 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
     source, source_notes = extract_source_pair(row)
     if catalog_type == "recipes" and not source and isinstance(local_recipe_row, dict):
         source, source_notes = extract_source_pair(local_recipe_row)
+    recipe_filters: list[str] = []
+    if catalog_type == "recipes":
+        source_ref = source
+        notes_ref = source_notes
+        if isinstance(local_recipe_row, dict):
+            local_source, local_notes = extract_source_pair(local_recipe_row)
+            if not source_ref:
+                source_ref = local_source
+            if not notes_ref:
+                notes_ref = local_notes
+        recipe_filters = _recipe_filter_keys(
+            row if isinstance(row, dict) else {},
+            source_ref,
+            notes_ref,
+        )
 
     if catalog_type == "reactions":
         trans = row.get("translations") if isinstance(row.get("translations"), dict) else {}
@@ -722,6 +829,8 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
                         single_row,
                         ["fake_image_url", "fake_art_url", "forgery_image_url", "fake_texture_url"],
                     )
+    elif catalog_type == "recipes":
+        item["recipe_filters"] = recipe_filters
 
     return item
 

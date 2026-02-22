@@ -74,6 +74,13 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     if (state.activeCatalogTab === "unowned") return false;
     return null;
   };
+  const getActiveSourceFilter = (catalogType) => {
+    if (!catalogType || catalogType !== "recipes") return "";
+    const map = state.sourceFilterByMode && typeof state.sourceFilterByMode === "object"
+      ? state.sourceFilterByMode
+      : {};
+    return String(map[catalogType] || "").trim();
+  };
   const upsertCatalogItemCaches = (catalogType, itemId, patch) => {
     const id = String(itemId || "").trim();
     if (!id) return;
@@ -388,6 +395,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     const extraType = catalogExtraSelect.dataset.extraType || "";
     const extraValue = getExtraFilterValue();
     const subCategory = String(state.activeSubCategory || "");
+    const sourceFilter = getActiveSourceFilter(catalogType);
     const cache = getCatalogAllItemsCache();
     const allRows = Array.isArray(cache[catalogType])
       ? cache[catalogType]
@@ -401,11 +409,32 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
 
       if (catalogType === "art") {
         if (subCategory && String(row?.authenticity || "") !== subCategory) return false;
+      } else if (
+        catalogType === "recipes"
+        && subCategory
+        && (
+          subCategory.startsWith("season:")
+          || subCategory.startsWith("event:")
+          || subCategory.startsWith("npc:")
+        )
+      ) {
+        const recipeFilters = Array.isArray(row?.recipe_filters) ? row.recipe_filters : [];
+        if (!recipeFilters.includes(subCategory)) return false;
       } else if (subCategory && String(row?.category || "") !== subCategory) {
         return false;
       }
 
       if (ownedFilter !== null && Boolean(row?.owned) !== ownedFilter) return false;
+
+      if (sourceFilter) {
+        const source = String(row?.source || "").trim();
+        if (!source) return false;
+        const tokens = source
+          .split(",")
+          .map((x) => String(x || "").trim())
+          .filter(Boolean);
+        if (!tokens.includes(sourceFilter)) return false;
+      }
 
       if (extraValue) {
         if (extraType === "style") {
@@ -518,6 +547,16 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
         },
         onOpenDetail: (itemId) => {
           safeOpenDetail(itemId);
+        },
+        onFilterBySource: async (source) => {
+          if (catalogType !== "recipes") return;
+          const next = String(source || "").trim();
+          if (!state.sourceFilterByMode || typeof state.sourceFilterByMode !== "object") {
+            state.sourceFilterByMode = {};
+          }
+          const current = String(state.sourceFilterByMode[catalogType] || "").trim();
+          state.sourceFilterByMode[catalogType] = current === next ? "" : next;
+          await loadCatalog(catalogType, { preserveVisible: false });
         },
       }
     );

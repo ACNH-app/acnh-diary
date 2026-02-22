@@ -777,6 +777,33 @@ button {
   flex-wrap: wrap;
 }
 
+.sub-category-tabs.is-slider {
+  display: flex;
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f7fbf6;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sub-category-tabs.is-slider .tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+
+.sub-category-tabs.is-slider::-webkit-scrollbar {
+  display: none;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1185,6 +1212,23 @@ label {
   cursor: help;
   font-weight: 700;
   user-select: none;
+}
+
+.source-chip {
+  border: 1px solid var(--line-soft);
+  background: #fff;
+  color: var(--text-strong);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.source-chip.active {
+  border-color: var(--primary-500);
+  color: var(--primary-700);
+  background: var(--primary-50);
 }
 
 .note-hint:hover::after,

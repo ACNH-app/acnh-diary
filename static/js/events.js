@@ -104,6 +104,9 @@ export function bindMainEvents({
   catalogTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       state.activeCatalogTab = tab.dataset.tab || "all";
+      if (state.activeMode === "recipes" && state.sourceFilterByMode) {
+        state.sourceFilterByMode[state.activeMode] = "";
+      }
       catalogTabs.forEach((el) => el.classList.toggle("active", el === tab));
       runLoad();
     });
@@ -112,6 +115,10 @@ export function bindMainEvents({
   catalogResetBtn.addEventListener("click", () => {
     catalogSearchInput.value = "";
     catalogExtraSelect.value = "";
+    if (!state.sourceFilterByMode || typeof state.sourceFilterByMode !== "object") {
+      state.sourceFilterByMode = {};
+    }
+    if (state.activeMode) state.sourceFilterByMode[state.activeMode] = "";
     state.activeSubCategory = "";
     if (state.activeMode) state.subCategoryStateByMode[state.activeMode] = "";
     if (state.activeMode === "events") {

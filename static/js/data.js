@@ -3,10 +3,20 @@ import {
   catalogExtraSelect,
   catalogArtGuideBtn,
   catalogSearchInput,
-  catalogSortBySelect,
   catalogSortOrderSelect,
+  catalogSortBySelect,
   catalogTabs,
   personalitySelect,
+  recipeTagActiveBar,
+  recipeTagApplyBtn,
+  recipeTagCloseBtn,
+  recipeTagList,
+  recipeTagMatchModeBtn,
+  recipeTagModal,
+  recipeTagModalBackdrop,
+  recipeTagPickerBtn,
+  recipeTagResetBtn,
+  recipeTagStatus,
   resultCount,
   searchInput,
   subtypeSelect,
@@ -84,6 +94,47 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       : {};
     return String(map[catalogType] || "").trim();
   };
+  const getRecipeTagSelection = (catalogType) => {
+    const map = state.recipeTagSelectionByMode && typeof state.recipeTagSelectionByMode === "object"
+      ? state.recipeTagSelectionByMode
+      : {};
+    const rows = Array.isArray(map[catalogType]) ? map[catalogType] : [];
+    return rows
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+  };
+  const setRecipeTagSelection = (catalogType, selection) => {
+    if (!state.recipeTagSelectionByMode || typeof state.recipeTagSelectionByMode !== "object") {
+      state.recipeTagSelectionByMode = {};
+    }
+    const rows = Array.isArray(selection) ? selection : [];
+    state.recipeTagSelectionByMode[catalogType] = rows
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+  };
+  const getRecipeTagMatchMode = (catalogType) => {
+    const map = state.recipeTagMatchModeByMode && typeof state.recipeTagMatchModeByMode === "object"
+      ? state.recipeTagMatchModeByMode
+      : {};
+    const mode = String(map[catalogType] || "and").toLowerCase();
+    return mode === "or" ? "or" : "and";
+  };
+  const setRecipeTagMatchMode = (catalogType, mode) => {
+    if (!state.recipeTagMatchModeByMode || typeof state.recipeTagMatchModeByMode !== "object") {
+      state.recipeTagMatchModeByMode = {};
+    }
+    state.recipeTagMatchModeByMode[catalogType] = String(mode || "and").toLowerCase() === "or" ? "or" : "and";
+  };
+  const closeRecipeTagModal = () => {
+    if (!recipeTagModal) return;
+    recipeTagModal.classList.add("hidden");
+    recipeTagModal.setAttribute("aria-hidden", "true");
+  };
+  const openRecipeTagModal = () => {
+    if (!recipeTagModal) return;
+    recipeTagModal.classList.remove("hidden");
+    recipeTagModal.setAttribute("aria-hidden", "false");
+  };
   const upsertCatalogItemCaches = (catalogType, itemId, patch) => {
     const id = String(itemId || "").trim();
     if (!id) return;
@@ -144,6 +195,143 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     });
     return safeRows;
   };
+  let recipeTagDraftSelection = [];
+  let recipeTagDraftMatchMode = "and";
+  let recipeTagModalBound = false;
+
+  async function ensureRecipeTagMeta(catalogType) {
+    if (catalogType !== "recipes") return [];
+    if (!state.recipeTagMetaByMode || typeof state.recipeTagMetaByMode !== "object") {
+      state.recipeTagMetaByMode = {};
+    }
+    const cached = state.recipeTagMetaByMode[catalogType];
+    if (Array.isArray(cached) && cached.length) return cached;
+    const payload = await getJSON(`/api/catalog/${catalogType}/tags`);
+    const items = Array.isArray(payload?.items) ? payload.items : [];
+    const normalized = items
+      .map((row) => ({
+        tag_key: String(row?.tag_key || "").trim(),
+        tag_type: String(row?.tag_type || "").trim(),
+        name_ko: String(row?.name_ko || row?.tag_key || "").trim(),
+        name_en: String(row?.name_en || row?.tag_key || "").trim(),
+        recipe_count: Number(row?.recipe_count || 0),
+        sort_order: Number(row?.sort_order || 0),
+      }))
+      .filter((row) => row.tag_key)
+      .sort((a, b) => {
+        const ad = Number(a.sort_order || 0);
+        const bd = Number(b.sort_order || 0);
+        if (ad !== bd) return ad - bd;
+        return textKoSort(a.name_ko || a.tag_key, b.name_ko || b.tag_key);
+      });
+    state.recipeTagMetaByMode[catalogType] = normalized;
+    return normalized;
+  }
+
+  function renderRecipeTagActiveBar(catalogType) {
+    if (!recipeTagActiveBar) return;
+    if (catalogType !== "recipes") {
+      recipeTagActiveBar.classList.add("hidden");
+      recipeTagActiveBar.innerHTML = "";
+      return;
+    }
+    const selected = getRecipeTagSelection(catalogType);
+    if (!selected.length) {
+      recipeTagActiveBar.classList.add("hidden");
+      recipeTagActiveBar.innerHTML = "";
+      return;
+    }
+    const map = new Map(
+      (state.recipeTagMetaByMode?.[catalogType] || []).map((row) => [row.tag_key, row])
+    );
+    const mode = getRecipeTagMatchMode(catalogType);
+    const chips = selected.map((key) => {
+      const row = map.get(key);
+      const label = String(row?.name_ko || row?.name_en || key);
+      return `<button type="button" class="recipe-tag-chip active" data-tag-key="${key}" title="태그 해제">${label} ×</button>`;
+    });
+    recipeTagActiveBar.innerHTML = `<span class="recipe-tag-match-pill">태그 ${mode.toUpperCase()}</span>${chips.join("")}`;
+    recipeTagActiveBar.classList.remove("hidden");
+  }
+
+  function renderRecipeTagModalList(catalogType) {
+    if (!recipeTagList) return;
+    const meta = Array.isArray(state.recipeTagMetaByMode?.[catalogType]) ? state.recipeTagMetaByMode[catalogType] : [];
+    const selectedSet = new Set(recipeTagDraftSelection);
+    recipeTagList.innerHTML = meta
+      .map((row) => {
+        const active = selectedSet.has(row.tag_key);
+        const label = row.name_ko || row.name_en || row.tag_key;
+        const count = Number(row.recipe_count || 0);
+        return `<button type="button" class="recipe-tag-option ${active ? "active" : ""}" data-tag-key="${row.tag_key}">${label}<span class="recipe-tag-count">${count}</span></button>`;
+      })
+      .join("");
+    if (recipeTagStatus) {
+      recipeTagStatus.textContent = `${recipeTagDraftSelection.length}개 선택됨`;
+    }
+    if (recipeTagMatchModeBtn) {
+      recipeTagMatchModeBtn.textContent = `매칭: ${recipeTagDraftMatchMode.toUpperCase()}`;
+    }
+  }
+
+  function bindRecipeTagModalEvents() {
+    if (recipeTagModalBound) return;
+    recipeTagModalBound = true;
+    recipeTagPickerBtn?.addEventListener("click", async () => {
+      if (state.activeMode !== "recipes") return;
+      try {
+        await ensureRecipeTagMeta("recipes");
+      } catch (err) {
+        console.error(err);
+      }
+      recipeTagDraftSelection = getRecipeTagSelection("recipes");
+      recipeTagDraftMatchMode = getRecipeTagMatchMode("recipes");
+      renderRecipeTagModalList("recipes");
+      openRecipeTagModal();
+    });
+    recipeTagCloseBtn?.addEventListener("click", () => closeRecipeTagModal());
+    recipeTagModalBackdrop?.addEventListener("click", () => closeRecipeTagModal());
+    recipeTagMatchModeBtn?.addEventListener("click", () => {
+      recipeTagDraftMatchMode = recipeTagDraftMatchMode === "and" ? "or" : "and";
+      renderRecipeTagModalList("recipes");
+    });
+    recipeTagResetBtn?.addEventListener("click", () => {
+      recipeTagDraftSelection = [];
+      recipeTagDraftMatchMode = "and";
+      renderRecipeTagModalList("recipes");
+    });
+    recipeTagApplyBtn?.addEventListener("click", async () => {
+      setRecipeTagSelection("recipes", recipeTagDraftSelection);
+      setRecipeTagMatchMode("recipes", recipeTagDraftMatchMode);
+      renderRecipeTagActiveBar("recipes");
+      closeRecipeTagModal();
+      await loadCatalog("recipes", { preserveVisible: false });
+    });
+    recipeTagList?.addEventListener("click", (e) => {
+      const button = e.target && e.target.closest("button[data-tag-key]");
+      if (!button) return;
+      const key = String(button.dataset.tagKey || "").trim();
+      if (!key) return;
+      const set = new Set(recipeTagDraftSelection);
+      if (set.has(key)) {
+        set.delete(key);
+      } else {
+        set.add(key);
+      }
+      recipeTagDraftSelection = Array.from(set);
+      renderRecipeTagModalList("recipes");
+    });
+    recipeTagActiveBar?.addEventListener("click", async (e) => {
+      const button = e.target && e.target.closest("button[data-tag-key]");
+      if (!button) return;
+      const key = String(button.dataset.tagKey || "").trim();
+      if (!key) return;
+      const next = getRecipeTagSelection("recipes").filter((x) => x !== key);
+      setRecipeTagSelection("recipes", next);
+      renderRecipeTagActiveBar("recipes");
+      await loadCatalog("recipes", { preserveVisible: false });
+    });
+  }
 
   async function enrichMusicCardRows(rows) {
     const cache = getMusicCardMetaCache();
@@ -397,6 +585,17 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       catalogExtraSelect.classList.remove("hidden");
     }
 
+    bindRecipeTagModalEvents();
+    if (catalogType === "recipes") {
+      recipeTagPickerBtn?.classList.remove("hidden");
+      await ensureRecipeTagMeta(catalogType);
+      renderRecipeTagActiveBar(catalogType);
+    } else {
+      recipeTagPickerBtn?.classList.add("hidden");
+      renderRecipeTagActiveBar("");
+      closeRecipeTagModal();
+    }
+
     // 생물도감 + 레시피는 번호순이 기본 정렬.
     if (["bugs", "fish", "sea", "recipes"].includes(catalogType) && !catalogSortInitialized.has(catalogType)) {
       catalogSortBySelect.value = "number";
@@ -509,6 +708,8 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     const extraValue = getExtraFilterValue();
     const subCategory = String(state.activeSubCategory || "");
     const sourceFilter = getActiveSourceFilter(catalogType);
+    const selectedRecipeTags = catalogType === "recipes" ? getRecipeTagSelection(catalogType) : [];
+    const recipeTagMatchMode = getRecipeTagMatchMode(catalogType);
     const cache = getCatalogAllItemsCache();
     const allRows = Array.isArray(cache[catalogType])
       ? cache[catalogType]
@@ -529,12 +730,25 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
           subCategory.startsWith("season:")
           || subCategory.startsWith("event:")
           || subCategory.startsWith("npc:")
+          || subCategory.startsWith("ingredient:")
         )
       ) {
         const recipeFilters = Array.isArray(row?.recipe_filters) ? row.recipe_filters : [];
         if (!recipeFilters.includes(subCategory)) return false;
       } else if (subCategory && String(row?.category || "") !== subCategory) {
         return false;
+      }
+
+      if (catalogType === "recipes" && selectedRecipeTags.length) {
+        const recipeFilters = Array.isArray(row?.recipe_filters) ? row.recipe_filters : [];
+        const filterSet = new Set(recipeFilters.map((x) => String(x || "").trim()).filter(Boolean));
+        if (recipeTagMatchMode === "or") {
+          const hit = selectedRecipeTags.some((tag) => filterSet.has(tag));
+          if (!hit) return false;
+        } else {
+          const hit = selectedRecipeTags.every((tag) => filterSet.has(tag));
+          if (!hit) return false;
+        }
       }
 
       if (ownedFilter !== null && Boolean(row?.owned) !== ownedFilter) return false;

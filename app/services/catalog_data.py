@@ -48,6 +48,22 @@ RECIPE_SEASON_RULES: list[tuple[str, tuple[str, ...]]] = [
             "spring bamboo",
             "bamboo season",
             "봄의 대나무",
+            "bamboo-grove wall",
+            "bamboo noodle slide",
+            "bamboo doll",
+            "bamboo wand",
+            "light bamboo bath mat",
+            "light bamboo rug",
+            "yellow bamboo mat",
+            "green-leaf pile",
+            "bamboo-shoot lamp",
+            "대나무 숲 벽",
+            "흐르는 국수 장치",
+            "대나무 깜짝 상자",
+            "대나무 지팡이",
+            "라이트 대나무 욕실 매트",
+            "밝은 대나무 러그",
+            "노란색 대나무 깔개",
             "steamer-basket set",
             "basket pack",
             "green-leaf pile",
@@ -83,6 +99,61 @@ RECIPE_NPC_RULES: list[tuple[str, tuple[str, ...]]] = [
     ("npc:pascal", ("pascal", "해탈한")),
 ]
 
+RECIPE_INGREDIENT_RULES: list[tuple[str, tuple[str, ...]]] = [
+    (
+        "ingredient:fruit",
+        ("apple", "pear", "peach", "orange", "cherry", "coconut", "사과", "배", "복숭아", "오렌지", "체리", "코코넛"),
+    ),
+    (
+        "ingredient:flower",
+        ("rose", "lily", "mum", "cosmos", "hyacinth", "tulip", "windflower", "pansy", "장미", "백합", "국화", "코스모스", "히아신스", "튤립", "아네모네", "팬지"),
+    ),
+    (
+        "ingredient:shell_non_mermaid",
+        ("venus comb", "conch", "coral", "cowrie", "giant clam", "sand dollar", "sea snail", "shell", "조개"),
+    ),
+    (
+        "ingredient:vine_moss",
+        ("vine", "glowing moss", "덩굴", "빛이끼"),
+    ),
+]
+
+RECIPE_FRUIT_MATERIALS = {
+    "apple",
+    "pear",
+    "peach",
+    "orange",
+    "cherry",
+    "coconut",
+}
+
+RECIPE_FLOWER_BASE_MATERIALS = {
+    "rose",
+    "lily",
+    "mum",
+    "cosmos",
+    "hyacinth",
+    "tulip",
+    "windflower",
+    "pansy",
+}
+
+RECIPE_SHELL_MATERIALS = {
+    "venus comb",
+    "conch",
+    "coral",
+    "cowrie",
+    "giant clam",
+    "sand dollar",
+    "sea snail",
+    "summer shell",
+}
+
+RECIPE_VINE_MOSS_MATERIALS = {
+    "vine",
+    "glowing moss",
+}
+
 
 def _use_content_db_mode() -> bool:
     raw = os.environ.get("USE_CONTENT_DB", "auto").strip().lower()
@@ -103,14 +174,41 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
     row_index: dict[str, dict[str, Any]] = {}
     try:
         with get_content_db() as conn:
+            item_cols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_items)").fetchall()}
+            has_source_ko = "source_ko" in item_cols
+            has_source_notes_ko = "source_notes_ko" in item_cols
+            select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
+            select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
             rows = conn.execute(
-                """
-                SELECT item_id, item_json, raw_json
+                f"""
+                SELECT item_id, item_json, raw_json, source, {select_source_ko}, source_notes, {select_source_notes_ko}
                 FROM catalog_items
                 WHERE catalog_type = ?
                 """,
                 (catalog_type,),
             ).fetchall()
+            recipe_tag_map: dict[str, list[str]] = {}
+            if catalog_type == "recipes":
+                tbls = {
+                    str(r["name"])
+                    for r in conn.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table'"
+                    ).fetchall()
+                }
+                if "recipe_tag_links" in tbls:
+                    tag_rows = conn.execute(
+                        """
+                        SELECT recipe_item_id, tag_key
+                        FROM recipe_tag_links
+                        ORDER BY recipe_item_id, tag_key
+                        """
+                    ).fetchall()
+                    for tr in tag_rows:
+                        rid = str(tr["recipe_item_id"] or "").strip()
+                        tkey = str(tr["tag_key"] or "").strip()
+                        if not rid or not tkey:
+                            continue
+                        recipe_tag_map.setdefault(rid, []).append(tkey)
     except Exception:
         return ([], {})
 
@@ -133,14 +231,99 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
         if not isinstance(raw, dict):
             raw = {}
         item["id"] = item_id
+        source_ko = str(row["source_ko"] or "").strip()
+        source_notes_ko = str(row["source_notes_ko"] or "").strip()
+        source_raw = str(row["source"] or "").strip()
+        source_notes_raw = str(row["source_notes"] or "").strip()
+        # content.db에서는 분리 한글 출처 필드를 우선 사용한다.
+        item["source_ko"] = source_ko
+        item["source_notes_ko"] = source_notes_ko
+        item["source"] = source_ko or str(item.get("source") or source_raw or "")
+        item["source_notes"] = source_notes_ko or str(item.get("source_notes") or source_notes_raw or "")
+        # DB에 저장된 과거 not_for_sale 값과 무관하게 현재 규칙으로 재계산한다.
+        item["not_for_sale"] = _is_not_for_sale(raw, item)
         if catalog_type == "recipes":
-            # DB에 저장된 과거 recipe_filters 포맷과 무관하게 항상 최신 규칙으로 재계산한다.
-            source_ref = str(item.get("source") or "")
-            notes_ref = str(item.get("source_notes") or "")
-            item["recipe_filters"] = _recipe_filter_keys(raw, source_ref, notes_ref)
+            # 태그 테이블이 있으면 우선 사용하고, 없으면 기존 규칙으로 계산한다.
+            tag_keys = recipe_tag_map.get(item_id, [])
+            if tag_keys:
+                item["recipe_filters"] = list(dict.fromkeys(tag_keys))
+            else:
+                source_ref = str(item.get("source") or "")
+                notes_ref = str(item.get("source_notes") or "")
+                item["recipe_filters"] = _recipe_filter_keys(raw, source_ref, notes_ref)
+            item["materials_preview"] = ", ".join(_recipe_material_rows(raw, include_en=False))
         items.append(item)
         row_index[item_id] = raw
     return (items, row_index)
+
+
+@lru_cache(maxsize=1)
+def load_recipe_tags() -> list[dict[str, Any]]:
+    if not _use_content_db_mode():
+        # fallback: runtime 계산 기반 태그 집계
+        rows = load_catalog("recipes")
+        counts: dict[str, int] = {}
+        for row in rows:
+            for tag in row.get("recipe_filters") or []:
+                key = str(tag or "").strip()
+                if not key:
+                    continue
+                counts[key] = counts.get(key, 0) + 1
+        out = []
+        for idx, key in enumerate(sorted(counts.keys())):
+            tag_type = key.split(":", 1)[0] if ":" in key else "custom"
+            out.append(
+                {
+                    "tag_key": key,
+                    "tag_type": tag_type,
+                    "name_ko": str(category_ko_for("recipes", key) or key),
+                    "name_en": key.split(":", 1)[1] if ":" in key else key,
+                    "sort_order": idx + 1,
+                    "recipe_count": int(counts.get(key) or 0),
+                }
+            )
+        return out
+
+    try:
+        with get_content_db() as conn:
+            tbls = {
+                str(r["name"])
+                for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+            }
+            if "recipe_tags" not in tbls or "recipe_tag_links" not in tbls:
+                return []
+            rows = conn.execute(
+                """
+                SELECT
+                    t.tag_key,
+                    t.tag_type,
+                    t.name_ko,
+                    t.name_en,
+                    t.sort_order,
+                    COUNT(l.recipe_item_id) AS recipe_count
+                FROM recipe_tags t
+                LEFT JOIN recipe_tag_links l
+                  ON l.tag_key = t.tag_key
+                GROUP BY t.tag_key, t.tag_type, t.name_ko, t.name_en, t.sort_order
+                ORDER BY t.sort_order ASC, t.tag_key ASC
+                """
+            ).fetchall()
+    except Exception:
+        return []
+
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        out.append(
+            {
+                "tag_key": str(r["tag_key"] or "").strip(),
+                "tag_type": str(r["tag_type"] or "").strip(),
+                "name_ko": str(r["name_ko"] or "").strip(),
+                "name_en": str(r["name_en"] or "").strip(),
+                "sort_order": int(r["sort_order"] or 0),
+                "recipe_count": int(r["recipe_count"] or 0),
+            }
+        )
+    return out
 
 
 @lru_cache(maxsize=1)
@@ -496,6 +679,8 @@ def _recipe_filter_keys(row: dict[str, Any], source: str, source_notes: str) -> 
     haystacks: list[str] = []
     haystacks.extend(_flatten_strings(row.get("name")))
     haystacks.extend(_flatten_strings(row.get("availability")))
+    # 시즌/이벤트 레시피는 재료 키워드(예: summer shell)로도 분류해야 누락이 없다.
+    haystacks.extend(_flatten_strings(row.get("materials")))
     haystacks.extend(_flatten_strings(source))
     haystacks.extend(_flatten_strings(source_notes))
     hay = " ".join(haystacks).lower()
@@ -519,6 +704,31 @@ def _recipe_filter_keys(row: dict[str, Any], source: str, source_notes: str) -> 
     for key, keywords in RECIPE_NPC_RULES:
         if any(_contains_keyword(hay, kw) for kw in keywords):
             out.append(key)
+    material_names: list[str] = []
+    for mat in row.get("materials") or []:
+        if not isinstance(mat, dict):
+            continue
+        n = str(mat.get("name") or "").strip().lower().replace("_", " ").replace("-", " ")
+        n = " ".join(n.split())
+        if n:
+            material_names.append(n)
+
+    if any(n in RECIPE_FRUIT_MATERIALS for n in material_names):
+        out.append("ingredient:fruit")
+
+    def _is_flower_material(name: str) -> bool:
+        if name in RECIPE_FLOWER_BASE_MATERIALS:
+            return True
+        return any(name.endswith(f" {base}") for base in RECIPE_FLOWER_BASE_MATERIALS)
+
+    if any(_is_flower_material(n) for n in material_names):
+        out.append("ingredient:flower")
+
+    if any(n in RECIPE_SHELL_MATERIALS for n in material_names):
+        out.append("ingredient:shell_non_mermaid")
+
+    if any(n in RECIPE_VINE_MOSS_MATERIALS for n in material_names):
+        out.append("ingredient:vine_moss")
 
     # 일부 레시피는 계절명이 source/note에 직접 없어서 이름+시즌 단서로 보정한다.
     name_hay = " ".join(_flatten_strings(row.get("name"))).lower()
@@ -532,6 +742,32 @@ def _recipe_filter_keys(row: dict[str, Any], source: str, source_notes: str) -> 
             " summer " in f" {hay} " or "여름" in hay
         ):
             out.append("season:summer_shell")
+
+    # 분재 진열대는 벚꽃 재료를 사용하지만 벚꽃 시즌 레시피로 분류하지 않는다.
+    name_ko_hay = " ".join(_flatten_strings(row.get("name-KRko"))).lower()
+    if "season:cherry_blossom" in out and (
+        "bonsai shelf" in name_hay or "분재 진열대" in name_ko_hay
+    ):
+        out = [x for x in out if x != "season:cherry_blossom"]
+
+    # 조개 재료 분류에서는 머메이드(해탈한) 레시피를 제외한다.
+    if "ingredient:shell_non_mermaid" in out:
+        raw_name = str(row.get("name") or "").strip().lower()
+        source_hay = " ".join(_flatten_strings(row.get("availability"))).lower()
+        materials_hay = " ".join(material_names)
+        if (
+            "mermaid" in raw_name
+            or "pascal" in source_hay
+            or "해탈한" in source_hay
+            or "머메이드" in source_hay
+        ):
+            out = [x for x in out if x != "ingredient:shell_non_mermaid"]
+        # 여름 조개껍데기 재료 사용 레시피는 별도(여름 조개껍데기) 탭으로만 본다.
+        if "summer shell" in materials_hay or "여름 조개" in materials_hay:
+            out = [x for x in out if x != "ingredient:shell_non_mermaid"]
+        # 이스터(토빗 데이) 계열 레시피는 조개 재료 탭에서 제외한다.
+        if "event:bunny_day" in out or "bunny day" in source_hay or "이스터" in source_hay or "토빗" in source_hay:
+            out = [x for x in out if x != "ingredient:shell_non_mermaid"]
 
     return list(dict.fromkeys(out))
 
@@ -831,6 +1067,10 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
                     )
     elif catalog_type == "recipes":
         item["recipe_filters"] = recipe_filters
+        recipe_detail_ref = local_recipe_row if isinstance(local_recipe_row, dict) else row
+        item["materials_preview"] = ", ".join(
+            _recipe_material_rows(recipe_detail_ref if isinstance(recipe_detail_ref, dict) else {}, include_en=False)
+        )
 
     return item
 
@@ -1067,10 +1307,15 @@ def _content_db_variations(catalog_type: str, item_id: str) -> list[dict[str, An
         return []
     try:
         with get_content_db() as conn:
+            vcols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_variations)").fetchall()}
+            has_source_ko = "source_ko" in vcols
+            has_source_notes_ko = "source_notes_ko" in vcols
+            select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
+            select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
             rows = conn.execute(
-                """
+                f"""
                 SELECT variation_id, raw_json, label, image_url, color1, color2, pattern,
-                       source, source_notes, price
+                       source, {select_source_ko}, source_notes, {select_source_notes_ko}, price
                 FROM catalog_variations
                 WHERE catalog_type = ? AND item_id = ?
                 ORDER BY variation_id ASC
@@ -1106,8 +1351,10 @@ def _content_db_variations(catalog_type: str, item_id: str) -> list[dict[str, An
                 "color1": str(row["color1"] or raw_obj.get("color_1") or raw_obj.get("color1") or ""),
                 "color2": str(row["color2"] or raw_obj.get("color_2") or raw_obj.get("color2") or ""),
                 "pattern": str(row["pattern"] or raw_obj.get("pattern") or ""),
-                "source": str(row["source"] or raw_obj.get("source") or ""),
-                "source_notes": str(row["source_notes"] or raw_obj.get("source_notes") or ""),
+                "source_ko": str(row["source_ko"] or ""),
+                "source_notes_ko": str(row["source_notes_ko"] or ""),
+                "source": str(row["source_ko"] or row["source"] or raw_obj.get("source") or ""),
+                "source_notes": str(row["source_notes_ko"] or row["source_notes"] or raw_obj.get("source_notes") or ""),
                 "price": _safe_int(row["price"], _safe_int(raw_obj.get("buy"), _safe_int(raw_obj.get("sell"), 0))),
             }
         )
@@ -1177,8 +1424,50 @@ def _flatten_strings(value: Any) -> list[str]:
     return out
 
 
+def _recipe_material_rows(detail: dict[str, Any], include_en: bool = True) -> list[str]:
+    materials = detail.get("materials")
+    if not isinstance(materials, list):
+        return []
+
+    name_maps = load_catalog_name_maps()
+
+    def _to_ko_name(name_en: str) -> str:
+        key = normalize_name(name_en)
+        for catalog_type, mapping in name_maps.items():
+            if not isinstance(mapping, dict):
+                continue
+            mapped = str(mapping.get(key) or "").strip()
+            if mapped:
+                return mapped
+        return ""
+
+    rows: list[str] = []
+    for mat in materials:
+        if not isinstance(mat, dict):
+            continue
+        raw_name = str(mat.get("name") or mat.get("item") or mat.get("material") or "").strip()
+        if not raw_name:
+            continue
+        count = _safe_int(mat.get("count"), 0)
+        name_ko = _to_ko_name(raw_name)
+        if name_ko and name_ko != raw_name:
+            display_name = f"{name_ko} ({raw_name})" if include_en else name_ko
+        else:
+            display_name = name_ko or raw_name
+        rows.append(f"{display_name} x{count if count > 0 else 1}")
+    return rows
+
+
 def _is_not_for_sale(detail: dict[str, Any], item: dict[str, Any]) -> bool:
-    # 1) 명시 필드 우선 (acnhapi/local music)
+    # 1) buy/buy-price가 비어 있거나 0이면 비매품으로 본다.
+    buy_value = _safe_int(
+        detail.get("buy"),
+        _safe_int(detail.get("buy-price"), _safe_int(item.get("buy"), 0)),
+    )
+    if buy_value <= 0:
+        return True
+
+    # 2) 명시 필드 우선 (acnhapi/local music)
     if "is_orderable" in detail:
         try:
             return not bool(detail.get("is_orderable"))
@@ -1190,7 +1479,7 @@ def _is_not_for_sale(detail: dict[str, Any], item: dict[str, Any]) -> bool:
         except Exception:
             pass
 
-    # 2) source/availability 노트에서 판단
+    # 3) source/availability 노트에서 판단
     haystacks: list[str] = []
     haystacks.extend(_flatten_strings(detail.get("availability")))
     haystacks.extend(_flatten_strings(detail.get("source_notes")))
@@ -1211,13 +1500,14 @@ def _catalog_detail_payload(
     variation_state_map: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     category = str(detail.get("category") or item.get("category") or "")
+    category_ko = category_ko_for(catalog_type, category)
     # summary 블록에서 art 관련 필드를 공통으로 참조하므로 기본값을 먼저 둔다.
     real_info: dict[str, Any] = {}
     fake_info: dict[str, Any] = {}
     not_for_sale = _is_not_for_sale(detail, item)
     detail_source, detail_source_notes = extract_source_pair(detail)
     common_fields = [
-        ("카테고리", category),
+        ("카테고리", category_ko or category),
         ("구매가", str(detail.get("buy") or item.get("buy") or "")),
         ("판매가", str(detail.get("sell") or item.get("sell") or "")),
         ("비매품 여부", "비매품" if not_for_sale else "구매 가능"),
@@ -1230,6 +1520,10 @@ def _catalog_detail_payload(
         ("URL", str(detail.get("url") or item.get("url") or "")),
     ]
     fields = [{"label": k, "value": v} for k, v in common_fields if v]
+    if catalog_type == "recipes":
+        material_rows = _recipe_material_rows(detail)
+        if material_rows:
+            fields.append({"label": "재료", "value": " / ".join(material_rows)})
 
     if catalog_type == "art":
         real_info = _art_real_info(detail)

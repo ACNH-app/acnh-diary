@@ -287,6 +287,7 @@
                 <option value="desc">내림차순</option>
               </select>
               <button id="catalogSortOrderToggleBtn" type="button" aria-label="오름차순 정렬">↑</button>
+              <button id="recipeTagPickerBtn" type="button" class="hidden">태그 선택</button>
               <button
                 id="catalogToggleAllBtn"
                 type="button"
@@ -301,10 +302,11 @@
 
         <section class="tabs" id="catalogTabs">
           <button type="button" class="tab active" data-tab="all">전체</button>
-          <span id="subCategoryTabs" class="sub-category-tabs hidden"></span>
           <button type="button" class="tab" data-tab="owned">보유/완료</button>
           <button type="button" class="tab" data-tab="unowned">미보유</button>
         </section>
+        <section id="recipeTagActiveBar" class="recipe-tag-active-bar hidden"></section>
+        <section id="subCategoryTabs" class="sub-category-tabs hidden"></section>
       </section>
 
       <p id="resultCount">0개</p>
@@ -362,6 +364,25 @@
             <summary>원문(raw) 필드 보기</summary>
             <div id="detailRawFields" class="raw-fields"></div>
           </details>
+        </div>
+      </article>
+    </section>
+
+    <section id="recipeTagModal" class="modal hidden" aria-hidden="true">
+      <div id="recipeTagModalBackdrop" class="modal-backdrop"></div>
+      <article class="modal-panel recipe-tag-modal-panel">
+        <header class="modal-header">
+          <h2>레시피 태그 선택</h2>
+          <div class="detail-nav-actions">
+            <button id="recipeTagMatchModeBtn" type="button">매칭: AND</button>
+            <button id="recipeTagResetBtn" type="button">선택 초기화</button>
+            <button id="recipeTagApplyBtn" type="button">적용</button>
+            <button id="recipeTagCloseBtn" type="button" class="modal-close">닫기</button>
+          </div>
+        </header>
+        <div class="modal-body">
+          <p id="recipeTagStatus" class="detail-source">0개 선택됨</p>
+          <div id="recipeTagList" class="recipe-tag-list"></div>
         </div>
       </article>
     </section>

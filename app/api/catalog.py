@@ -18,6 +18,7 @@ from app.schemas.state import (
 def create_catalog_router(
     *,
     get_catalog_meta_handler: Callable[..., dict[str, Any]],
+    get_recipe_tags_handler: Callable[..., dict[str, Any]],
     get_catalog_handler: Callable[..., dict[str, Any]],
     get_catalog_detail_handler: Callable[..., dict[str, Any]],
     get_art_guide_handler: Callable[..., dict[str, Any]],
@@ -31,6 +32,10 @@ def create_catalog_router(
     @router.get("/api/catalog/{catalog_type}/meta")
     def get_catalog_meta(catalog_type: str) -> dict[str, Any]:
         return get_catalog_meta_handler(catalog_type=catalog_type)
+
+    @router.get("/api/catalog/{catalog_type}/tags")
+    def get_recipe_tags(catalog_type: str) -> dict[str, Any]:
+        return get_recipe_tags_handler(catalog_type=catalog_type)
 
     @router.get("/api/catalog/{catalog_type}")
     def get_catalog(

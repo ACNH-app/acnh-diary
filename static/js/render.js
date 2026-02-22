@@ -558,6 +558,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const donated = fragment.querySelector(".donated");
     const donatedWrap = fragment.querySelector(".donated-wrap");
     const ownedLabel = fragment.querySelector(".owned-label");
+    const ownedWrapLabel = owned ? owned.closest("label") : null;
     const qtyWrap = fragment.querySelector(".owned-qty-wrap");
     const qtyInput = fragment.querySelector(".owned-qty");
     const toggles = fragment.querySelector(".toggles");
@@ -565,6 +566,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const isFurnitureMode = state.activeMode === "furniture";
     const isMuseumMode = ["bugs", "fish", "sea"].includes(state.activeMode);
     const isMusicMode = musicMode;
+    const isRecipeMode = state.activeMode === "recipes";
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.loading = "lazy";
@@ -574,7 +576,12 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     });
 
     nameKo.textContent = v.name_ko || v.name_en;
-    nameEn.textContent = isArtMode || isMusicMode ? "" : v.name_en ? `EN: ${v.name_en}` : "";
+    nameEn.textContent =
+      isArtMode || isMusicMode || state.activeMode === "recipes"
+        ? ""
+        : v.name_en
+          ? `EN: ${v.name_en}`
+          : "";
 
     const category = v.category_ko || v.category || "분류 없음";
     const ownedCount = Number(v.variation_owned_count || 0);
@@ -653,6 +660,13 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         note.addEventListener("click", (e) => e.stopPropagation());
         desc.appendChild(note);
       }
+      if (isRecipeMode && v.materials_preview) {
+        const mat = document.createElement("div");
+        mat.className = "recipe-materials";
+        mat.textContent = `재료: ${v.materials_preview}`;
+        desc.appendChild(document.createElement("br"));
+        desc.appendChild(mat);
+      }
     } else if (state.activeMode === "reactions") {
       const src = v.reaction_source || v.source || "획득처 정보 없음";
       const parts = [`획득처: ${src}`];
@@ -666,7 +680,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     } else {
       desc.textContent = v.sell ? `판매가: ${v.sell}` : "";
     }
-    if (v.not_for_sale && !isMusicMode) {
+    if (v.not_for_sale && !isMusicMode && state.activeMode !== "recipes") {
       const tag = document.createElement("span");
       tag.className = "music-pill-not-sale";
       tag.textContent = "비매품";
@@ -680,10 +694,23 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     owned.checked = Boolean(v.owned);
     owned.indeterminate = isPartialOwned;
+    if (isRecipeMode) {
+      card.classList.add("recipe-card");
+      if (ownedWrapLabel) {
+        ownedWrapLabel.classList.add("owned-overlay");
+        ownedWrapLabel.classList.toggle("checked", owned.checked);
+      }
+      if (ownedLabel) {
+        ownedLabel.textContent = "✓";
+      }
+    }
     if (isMusicMode) {
       ownedLabel.textContent = owned.checked ? "보유" : "미보유";
     } else {
       ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
+      if (isRecipeMode && ownedLabel) {
+        ownedLabel.textContent = "✓";
+      }
     }
     if (donatedWrap) {
       donatedWrap.classList.toggle("hidden", !isMuseumMode);
@@ -709,6 +736,12 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     owned.addEventListener("change", async () => {
       owned.indeterminate = false;
       ownedLabel.textContent = isMusicMode ? (owned.checked ? "보유" : "미보유") : statusLabel;
+      if (isRecipeMode && ownedWrapLabel) {
+        ownedWrapLabel.classList.toggle("checked", owned.checked);
+      }
+      if (isRecipeMode && ownedLabel) {
+        ownedLabel.textContent = "✓";
+      }
       card.classList.remove("partially-owned");
       if (isFurnitureMode && qtyInput && variationTotal === 0) {
         const nextQty = owned.checked ? Math.max(1, Number(qtyInput.value || 0)) : 0;

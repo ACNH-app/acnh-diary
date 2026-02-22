@@ -6,6 +6,7 @@ import {
   catalogSortOrderSelect,
   catalogSortOrderToggleBtn,
   catalogTabs,
+  recipeTagModal,
   loadMoreBtn,
   personalitySelect,
   resetBtn,
@@ -165,6 +166,16 @@ export function bindMainEvents({
       state.sourceFilterByMode = {};
     }
     if (state.activeMode) state.sourceFilterByMode[state.activeMode] = "";
+    if (!state.recipeTagSelectionByMode || typeof state.recipeTagSelectionByMode !== "object") {
+      state.recipeTagSelectionByMode = {};
+    }
+    if (!state.recipeTagMatchModeByMode || typeof state.recipeTagMatchModeByMode !== "object") {
+      state.recipeTagMatchModeByMode = {};
+    }
+    if (state.activeMode) {
+      state.recipeTagSelectionByMode[state.activeMode] = [];
+      state.recipeTagMatchModeByMode[state.activeMode] = "and";
+    }
     state.activeSubCategory = "";
     if (state.activeMode) state.subCategoryStateByMode[state.activeMode] = "";
     if (state.activeMode === "events") {
@@ -179,6 +190,15 @@ export function bindMainEvents({
     state.activeCatalogTab = "all";
     catalogTabs.forEach((el) => el.classList.toggle("active", el.dataset.tab === "all"));
     runLoad();
+  });
+
+  catalogTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      if (recipeTagModal) {
+        recipeTagModal.classList.add("hidden");
+        recipeTagModal.setAttribute("aria-hidden", "true");
+      }
+    });
   });
 
   loadMoreBtn.addEventListener("click", () => {

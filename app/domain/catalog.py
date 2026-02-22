@@ -44,27 +44,34 @@ RECIPE_CATEGORY_ORDER = [
 ]
 
 RECIPE_SEASON_FACET_KO_MAP = {
-    "season:young_spring_bamboo": "봄: 봄의 대나무",
-    "season:cherry_blossom": "봄: 벚꽃",
-    "season:summer_shell": "여름: 여름 조개",
-    "season:mushroom": "가을: 버섯",
-    "season:maple_leaf": "가을: 단풍잎",
-    "season:tree_bounty": "가을: 도토리/솔방울",
-    "season:winter_snowflake": "겨울: 눈의 결정",
-    "season:christmas_ornament": "겨울: 크리스마스 오너먼트",
+    "season:young_spring_bamboo": "봄: 봄의 대나무 12종",
+    "season:cherry_blossom": "봄: 벚꽃 15종",
+    "season:summer_shell": "여름: 여름 조개껍데기 9종",
+    "season:mushroom": "가을: 버섯 12종",
+    "season:maple_leaf": "가을: 단풍잎 10종",
+    "season:tree_bounty": "가을: 도토리/솔방울 12종",
+    "season:winter_snowflake": "겨울: 눈의 결정 26종",
+    "season:christmas_ornament": "겨울: 크리스마스 오너먼트 20종",
 }
 
 RECIPE_EVENT_FACET_KO_MAP = {
-    "event:bunny_day": "이벤트: 토빗 데이",
+    "event:bunny_day": "이벤트: 이스터 40종",
     "event:festivale": "이벤트: 카니발",
     "event:wedding_season": "이벤트: 웨딩 시즌",
-    "event:halloween": "이벤트: 할로윈",
-    "event:turkey_day": "이벤트: 추수감사절",
+    "event:halloween": "이벤트: 할로윈 18종",
+    "event:turkey_day": "이벤트: 추수감사절 12종",
 }
 
 RECIPE_NPC_FACET_KO_MAP = {
-    "npc:celeste": "부옥 레시피",
-    "npc:pascal": "해탈한 레시피",
+    "npc:celeste": "부옥 레시피 49종",
+    "npc:pascal": "머메이드 레시피 15종",
+}
+
+RECIPE_INGREDIENT_FACET_KO_MAP = {
+    "ingredient:fruit": "재료: 과일",
+    "ingredient:flower": "재료: 꽃",
+    "ingredient:shell_non_mermaid": "재료: 조개(머메이드 제외)",
+    "ingredient:vine_moss": "재료: 덩굴/빛이끼",
 }
 
 RECIPE_FACET_ORDER = [
@@ -83,6 +90,10 @@ RECIPE_FACET_ORDER = [
     "event:turkey_day",
     "npc:celeste",
     "npc:pascal",
+    "ingredient:fruit",
+    "ingredient:flower",
+    "ingredient:shell_non_mermaid",
+    "ingredient:vine_moss",
 ]
 
 SPECIAL_SOURCE_KO_MAP = {
@@ -150,6 +161,8 @@ def category_ko_for(catalog_type: str, category: str) -> str:
             return RECIPE_EVENT_FACET_KO_MAP[category]
         if category in RECIPE_NPC_FACET_KO_MAP:
             return RECIPE_NPC_FACET_KO_MAP[category]
+        if category in RECIPE_INGREDIENT_FACET_KO_MAP:
+            return RECIPE_INGREDIENT_FACET_KO_MAP[category]
         return RECIPE_CATEGORY_KO_MAP.get(category, category)
     if catalog_type == "special_items":
         return SPECIAL_SOURCE_KO_MAP.get(category, category)

@@ -75,6 +75,7 @@ from app.services.catalog_data import (
     _find_catalog_row,
     _variation_ids_for_item,
     load_catalog,
+    load_recipe_tags,
     load_villagers,
 )
 from app.services.mappings import (
@@ -221,6 +222,7 @@ handlers = create_handlers(
             invalidate_catalog_state_caches=invalidate_catalog_state_caches,
             init_db=init_db,
             get_db=get_db,
+            load_recipe_tags=load_recipe_tags,
         ),
     )
 )
@@ -256,6 +258,7 @@ app.include_router(
 app.include_router(
     create_catalog_router(
         get_catalog_meta_handler=handlers.catalog.get_catalog_meta,
+        get_recipe_tags_handler=handlers.catalog.get_recipe_tags,
         get_catalog_handler=handlers.catalog.get_catalog,
         get_catalog_detail_handler=handlers.catalog.get_catalog_detail,
         get_art_guide_handler=handlers.catalog.get_art_guide,

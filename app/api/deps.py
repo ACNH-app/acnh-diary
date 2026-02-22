@@ -57,6 +57,7 @@ class CatalogHandlerDeps:
     invalidate_catalog_state_caches: Callable[[str | None], None]
     init_db: Callable[[], None]
     get_db: Callable[..., Any]
+    load_recipe_tags: Callable[[], list[dict[str, Any]]]
 
 
 @dataclass(frozen=True)
@@ -103,6 +104,7 @@ class CatalogHandlers:
     update_catalog_variation_state: Callable[..., Any]
     update_catalog_variation_state_batch: Callable[..., dict[str, Any]]
     get_art_guide: Callable[..., dict[str, Any]]
+    get_recipe_tags: Callable[..., dict[str, Any]]
 
 
 @dataclass(frozen=True)

@@ -278,7 +278,13 @@ export function createDetailController({
     state.activeDetailType = "catalog";
     state.activeDetailPayload = payload;
     const summary = payload.summary || {};
-    detailTitle.textContent = summary.name_en || payload.item?.name_en || "상세 정보";
+    const nameKo = String(payload.item?.name_ko || payload.item?.name || "").trim();
+    const nameEn = String(summary.name_en || payload.item?.name_en || "").trim();
+    if (nameKo && nameEn && nameKo !== nameEn) {
+      detailTitle.textContent = `${nameKo} (${nameEn})`;
+    } else {
+      detailTitle.textContent = nameKo || nameEn || "상세 정보";
+    }
     const isArtMode = state.activeMode === "art";
     const detailImageUrl = isArtMode
       ? summary.art_real_image_url || summary.image_url

@@ -92,6 +92,15 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
 
         return response
 
+    def get_recipe_tags(catalog_type: str) -> dict[str, Any]:
+        if catalog_type != "recipes":
+            raise HTTPException(status_code=404, detail="레시피 태그는 recipes 카탈로그에서만 지원합니다.")
+        rows = deps.load_recipe_tags() or []
+        return {
+            "count": len(rows),
+            "items": rows,
+        }
+
     def get_catalog(
         catalog_type: str,
         q: str = "",
@@ -133,6 +142,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 category.startswith("season:")
                 or category.startswith("event:")
                 or category.startswith("npc:")
+                or category.startswith("ingredient:")
             ):
                 items = [
                     x
@@ -603,6 +613,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         get_catalog_meta=get_catalog_meta,
         get_catalog=get_catalog,
         get_catalog_detail=get_catalog_detail,
+        get_recipe_tags=get_recipe_tags,
         update_catalog_state=update_catalog_state,
         update_catalog_state_bulk=update_catalog_state_bulk,
         update_catalog_variation_state=update_catalog_variation_state,

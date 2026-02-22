@@ -804,6 +804,32 @@ button {
   display: none;
 }
 
+.villager-species-tabs {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.villager-subtype-tabs-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin: 0;
+  min-width: max-content;
+}
+
+.villager-subtype-tabs-inline .tab {
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.villager-subtype-tabs-inline .tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -946,6 +972,34 @@ button {
   gap: 12px;
   margin-top: 8px;
   flex-wrap: wrap;
+}
+
+.villager-toggle-set {
+  gap: 8px;
+}
+
+.villager-toggle-btn {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: grayscale(1) saturate(0.2);
+  opacity: 0.72;
+  transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease, border-color 120ms ease;
+}
+
+.villager-toggle-btn.active {
+  filter: none;
+  opacity: 1;
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .owned-qty-wrap {

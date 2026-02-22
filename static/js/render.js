@@ -450,9 +450,9 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
       const nameEn = node.querySelector(".name-en");
       const meta = node.querySelector(".meta");
       const birthday = node.querySelector(".birthday");
-      const liked = node.querySelector(".liked");
-      const onIsland = node.querySelector(".on-island");
-      const formerResident = node.querySelector(".former-resident");
+      const likedBtn = node.querySelector(".liked");
+      const onIslandBtn = node.querySelector(".on-island");
+      const formerResidentBtn = node.querySelector(".former-resident");
 
       icon.loading = "lazy";
       icon.decoding = "async";
@@ -462,25 +462,43 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
       });
 
       nameKo.textContent = v.name_ko || v.name_en;
-      nameEn.textContent = v.name_en ? `EN: ${v.name_en}` : "";
-      meta.textContent = `${v.species_ko} | ${v.personality_ko}`;
+      nameEn.textContent = "";
+      const subtype = String(v.sub_personality || "").trim();
+      meta.textContent = subtype
+        ? `${v.species_ko} | ${v.personality_ko} | 서브타입: ${subtype}`
+        : `${v.species_ko} | ${v.personality_ko}`;
       birthday.textContent = v.birthday ? `생일: ${v.birthday}` : "";
 
-      liked.checked = Boolean(v.liked);
-      onIsland.checked = Boolean(v.on_island);
-      formerResident.checked = Boolean(v.former_resident);
+      const syncVillagerToggleButtons = () => {
+        if (likedBtn) likedBtn.classList.toggle("active", Boolean(v.liked));
+        if (onIslandBtn) onIslandBtn.classList.toggle("active", Boolean(v.on_island));
+        if (formerResidentBtn) formerResidentBtn.classList.toggle("active", Boolean(v.former_resident));
+      };
+      syncVillagerToggleButtons();
 
-      liked.addEventListener("change", async () => {
+      likedBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!onToggleState) return;
-        await onToggleState(v.id, { liked: liked.checked });
+        v.liked = !Boolean(v.liked);
+        syncVillagerToggleButtons();
+        await onToggleState(v.id, { liked: Boolean(v.liked) });
       });
-      onIsland.addEventListener("change", async () => {
+      onIslandBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!onToggleState) return;
-        await onToggleState(v.id, { on_island: onIsland.checked });
+        v.on_island = !Boolean(v.on_island);
+        syncVillagerToggleButtons();
+        await onToggleState(v.id, { on_island: Boolean(v.on_island) });
       });
-      formerResident.addEventListener("change", async () => {
+      formerResidentBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!onToggleState) return;
-        await onToggleState(v.id, { former_resident: formerResident.checked });
+        v.former_resident = !Boolean(v.former_resident);
+        syncVillagerToggleButtons();
+        await onToggleState(v.id, { former_resident: Boolean(v.former_resident) });
       });
 
       card.addEventListener("click", (e) => {

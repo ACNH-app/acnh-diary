@@ -235,7 +235,11 @@
               <select id="personalitySelect">
                 <option value="">성격 전체</option>
               </select>
-              <select id="speciesSelect">
+              <section id="villagerSubtypeTabs" class="sub-category-tabs villager-subtype-tabs-inline"></section>
+              <select id="subtypeSelect" class="hidden" aria-hidden="true" tabindex="-1">
+                <option value="">서브타입 전체</option>
+              </select>
+              <select id="speciesSelect" class="hidden" aria-hidden="true" tabindex="-1">
                 <option value="">종 전체</option>
               </select>
               <select id="sortBySelect">
@@ -244,10 +248,11 @@
                 <option value="birthday">생일순</option>
                 <option value="personality">성격순</option>
               </select>
-              <select id="sortOrderSelect">
+              <select id="sortOrderSelect" class="hidden" aria-hidden="true" tabindex="-1">
                 <option value="asc">오름차순</option>
                 <option value="desc">내림차순</option>
               </select>
+              <button id="sortOrderToggleBtn" type="button" aria-label="오름차순 정렬">↑</button>
               <button id="resetBtn" type="button">초기화</button>
             </div>
           </div>
@@ -255,10 +260,12 @@
 
         <section class="tabs" id="villagerTabs">
           <button type="button" class="tab active" data-tab="all">전체 주민</button>
-          <button type="button" class="tab" data-tab="liked">좋아하는 주민</button>
-          <button type="button" class="tab" data-tab="island">우리 섬 주민</button>
-          <button type="button" class="tab" data-tab="former">과거 주민</button>
+          <button type="button" class="tab" data-tab="liked">❤️ 좋아하는 주민</button>
+          <button type="button" class="tab" data-tab="island">🏠 우리 섬 주민</button>
+          <button type="button" class="tab" data-tab="not_island">✈️ 섬 외 주민</button>
+          <button type="button" class="tab" data-tab="former">📦 과거 주민</button>
         </section>
+        <section id="villagerSpeciesTabs" class="sub-category-tabs is-slider villager-species-tabs"></section>
       </section>
 
       <section id="catalogPanel" class="hidden">
@@ -275,10 +282,11 @@
                 <option value="category">분류순</option>
                 <option value="date">날짜순</option>
               </select>
-              <select id="catalogSortOrderSelect">
+              <select id="catalogSortOrderSelect" class="hidden" aria-hidden="true" tabindex="-1">
                 <option value="asc">오름차순</option>
                 <option value="desc">내림차순</option>
               </select>
+              <button id="catalogSortOrderToggleBtn" type="button" aria-label="오름차순 정렬">↑</button>
               <button
                 id="catalogToggleAllBtn"
                 type="button"
@@ -383,10 +391,10 @@
           <p class="name-en"></p>
           <p class="meta"></p>
           <p class="birthday"></p>
-          <div class="toggles">
-            <label><input type="checkbox" class="liked" /> 좋아하는 주민</label>
-            <label><input type="checkbox" class="on-island" /> 우리 섬 주민</label>
-            <label><input type="checkbox" class="former-resident" /> 과거 주민</label>
+          <div class="toggles villager-toggle-set">
+            <button type="button" class="villager-toggle-btn liked" data-role="liked" aria-label="좋아하는 주민">❤️</button>
+            <button type="button" class="villager-toggle-btn on-island" data-role="on_island" aria-label="우리 섬 주민">🏠</button>
+            <button type="button" class="villager-toggle-btn former-resident" data-role="former_resident" aria-label="과거 주민">📦</button>
           </div>
         </div>
       </article>

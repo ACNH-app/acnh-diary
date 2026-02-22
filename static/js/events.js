@@ -4,14 +4,17 @@ import {
   catalogSearchInput,
   catalogSortBySelect,
   catalogSortOrderSelect,
+  catalogSortOrderToggleBtn,
   catalogTabs,
   loadMoreBtn,
   personalitySelect,
   resetBtn,
   scrollTopBtn,
   searchInput,
+  subtypeSelect,
   sortBySelect,
   sortOrderSelect,
+  sortOrderToggleBtn,
   speciesSelect,
   villagerTabs,
 } from "./dom.js";
@@ -70,12 +73,37 @@ export function bindMainEvents({
       })
       .catch((err) => console.error(err));
   };
+  const syncSortOrderToggle = () => {
+    if (!sortOrderToggleBtn) return;
+    const isDesc = String(sortOrderSelect.value || "asc") === "desc";
+    sortOrderToggleBtn.textContent = isDesc ? "↓" : "↑";
+    sortOrderToggleBtn.setAttribute("aria-label", isDesc ? "내림차순 정렬" : "오름차순 정렬");
+  };
+  const syncCatalogSortOrderToggle = () => {
+    if (!catalogSortOrderToggleBtn) return;
+    const isDesc = String(catalogSortOrderSelect.value || "asc") === "desc";
+    catalogSortOrderToggleBtn.textContent = isDesc ? "↓" : "↑";
+    catalogSortOrderToggleBtn.setAttribute("aria-label", isDesc ? "내림차순 정렬" : "오름차순 정렬");
+  };
 
   searchInput.addEventListener("input", scheduleLoad);
   personalitySelect.addEventListener("change", runLoad);
+  subtypeSelect.addEventListener("change", runLoad);
   speciesSelect.addEventListener("change", runLoad);
   sortBySelect.addEventListener("change", runLoad);
-  sortOrderSelect.addEventListener("change", runLoad);
+  sortOrderSelect.addEventListener("change", () => {
+    syncSortOrderToggle();
+    runLoad();
+  });
+  if (sortOrderToggleBtn) {
+    sortOrderToggleBtn.addEventListener("click", () => {
+      const isDesc = String(sortOrderSelect.value || "asc") === "desc";
+      sortOrderSelect.value = isDesc ? "asc" : "desc";
+      sortOrderSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+  syncSortOrderToggle();
+  syncCatalogSortOrderToggle();
 
   villagerTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -88,9 +116,17 @@ export function bindMainEvents({
   resetBtn.addEventListener("click", () => {
     searchInput.value = "";
     personalitySelect.value = "";
+    subtypeSelect.value = "";
     speciesSelect.value = "";
+    if (typeof window.__acnhSyncVillagerSpeciesTabs === "function") {
+      window.__acnhSyncVillagerSpeciesTabs();
+    }
+    if (typeof window.__acnhSyncVillagerSubtypeTabs === "function") {
+      window.__acnhSyncVillagerSubtypeTabs();
+    }
     sortBySelect.value = "name";
     sortOrderSelect.value = "asc";
+    syncSortOrderToggle();
     state.activeVillagerTab = "all";
     villagerTabs.forEach((el) => el.classList.toggle("active", el.dataset.tab === "all"));
     runLoad();
@@ -99,7 +135,17 @@ export function bindMainEvents({
   catalogSearchInput.addEventListener("input", scheduleLoad);
   catalogExtraSelect.addEventListener("change", runLoad);
   catalogSortBySelect.addEventListener("change", runLoad);
-  catalogSortOrderSelect.addEventListener("change", runLoad);
+  catalogSortOrderSelect.addEventListener("change", () => {
+    syncCatalogSortOrderToggle();
+    runLoad();
+  });
+  if (catalogSortOrderToggleBtn) {
+    catalogSortOrderToggleBtn.addEventListener("click", () => {
+      const isDesc = String(catalogSortOrderSelect.value || "asc") === "desc";
+      catalogSortOrderSelect.value = isDesc ? "asc" : "desc";
+      catalogSortOrderSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
 
   catalogTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -129,6 +175,7 @@ export function bindMainEvents({
       catalogSortBySelect.value = "name";
     }
     catalogSortOrderSelect.value = "asc";
+    syncCatalogSortOrderToggle();
     state.activeCatalogTab = "all";
     catalogTabs.forEach((el) => el.classList.toggle("active", el.dataset.tab === "all"));
     runLoad();

@@ -71,17 +71,22 @@ export const summaryCatalogProgress = document.getElementById("summaryCatalogPro
 
 export const searchInput = document.getElementById("searchInput");
 export const personalitySelect = document.getElementById("personalitySelect");
+export const subtypeSelect = document.getElementById("subtypeSelect");
 export const speciesSelect = document.getElementById("speciesSelect");
 export const sortBySelect = document.getElementById("sortBySelect");
 export const sortOrderSelect = document.getElementById("sortOrderSelect");
+export const sortOrderToggleBtn = document.getElementById("sortOrderToggleBtn");
 export const resetBtn = document.getElementById("resetBtn");
 export const villagerTabs = Array.from(document.querySelectorAll("#villagerTabs .tab"));
+export const villagerSubtypeTabs = document.getElementById("villagerSubtypeTabs");
+export const villagerSpeciesTabs = document.getElementById("villagerSpeciesTabs");
 
 export const catalogSearchInput = document.getElementById("catalogSearchInput");
 export const catalogExtraSelect = document.getElementById("catalogExtraSelect");
 export const catalogArtGuideBtn = document.getElementById("catalogArtGuideBtn");
 export const catalogSortBySelect = document.getElementById("catalogSortBySelect");
 export const catalogSortOrderSelect = document.getElementById("catalogSortOrderSelect");
+export const catalogSortOrderToggleBtn = document.getElementById("catalogSortOrderToggleBtn");
 export const catalogToggleAllBtn = document.getElementById("catalogToggleAllBtn");
 export const catalogToggleAllFab = document.getElementById("catalogToggleAllFab");
 export const catalogResetBtn = document.getElementById("catalogResetBtn");

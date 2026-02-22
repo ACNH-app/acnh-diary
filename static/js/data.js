@@ -9,9 +9,12 @@ import {
   personalitySelect,
   resultCount,
   searchInput,
+  subtypeSelect,
   sortBySelect,
   sortOrderSelect,
   speciesSelect,
+  villagerSubtypeTabs,
+  villagerSpeciesTabs,
 } from "./dom.js";
 import {
   fillSelect,
@@ -209,6 +212,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     if (!payload || typeof payload !== "object") return false;
     if (state.activeVillagerTab === "liked" && payload.liked === false) return true;
     if (state.activeVillagerTab === "island" && payload.on_island === false) return true;
+    if (state.activeVillagerTab === "not_island" && payload.on_island === true) return true;
     if (state.activeVillagerTab === "former" && payload.former_resident === false) return true;
     return false;
   }
@@ -222,6 +226,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
   /** Load villager filter metadata into select boxes. */
   async function loadVillagerMeta() {
     const meta = await getJSON("/api/meta");
+
+    personalitySelect.innerHTML = '<option value="">성격 전체</option>';
+    speciesSelect.innerHTML = '<option value="">종 전체</option>';
 
     meta.personalities.forEach((p) => {
       const opt = document.createElement("option");
@@ -240,6 +247,102 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       opt.textContent = `${s.ko} (${s.en})`;
       speciesSelect.appendChild(opt);
     });
+
+    const syncVillagerSpeciesTabs = () => {
+      if (!villagerSpeciesTabs) return;
+      const active = String(speciesSelect.value || "");
+      Array.from(villagerSpeciesTabs.querySelectorAll(".tab")).forEach((btn) => {
+        const species = String(btn?.dataset?.species || "");
+        btn.classList.toggle("active", species === active);
+      });
+    };
+
+    if (villagerSpeciesTabs) {
+      villagerSpeciesTabs.innerHTML = "";
+      const rows = [{ en: "", ko: "종 전체" }, ...sortedSpecies];
+      rows.forEach((row) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tab";
+        btn.dataset.species = String(row.en || "");
+        btn.textContent = row.ko || row.en;
+        btn.addEventListener("click", () => {
+          const next = String(row.en || "");
+          if (String(speciesSelect.value || "") === next) return;
+          speciesSelect.value = next;
+          speciesSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        villagerSpeciesTabs.appendChild(btn);
+      });
+    }
+
+    if (speciesSelect && !speciesSelect.dataset.speciesSyncBound) {
+      speciesSelect.addEventListener("change", syncVillagerSpeciesTabs);
+      speciesSelect.dataset.speciesSyncBound = "1";
+    }
+    syncVillagerSpeciesTabs();
+    window.__acnhSyncVillagerSpeciesTabs = syncVillagerSpeciesTabs;
+
+    const villagersPayload = await getJSON("/api/villagers");
+    const villagerRows = Array.isArray(villagersPayload?.items) ? villagersPayload.items : [];
+    const subtypeMap = new Map();
+    villagerRows.forEach((row) => {
+      const raw = String(row?.sub_personality || "").trim();
+      if (!raw) return;
+      const key = raw.toLowerCase();
+      if (!subtypeMap.has(key)) subtypeMap.set(key, raw);
+    });
+    const subtypeRows = Array.from(subtypeMap.values()).sort((a, b) => a.localeCompare(b, "ko"));
+    const effectiveSubtypeRows = subtypeRows.length ? subtypeRows : ["A", "B"];
+    const prevSubtype = String(subtypeSelect?.value || "");
+    if (subtypeSelect) {
+      subtypeSelect.innerHTML = '<option value="">서브타입 전체</option>';
+      effectiveSubtypeRows.forEach((subtype) => {
+        const opt = document.createElement("option");
+        opt.value = subtype;
+        opt.textContent = subtype;
+        subtypeSelect.appendChild(opt);
+      });
+      if (prevSubtype && effectiveSubtypeRows.includes(prevSubtype)) {
+        subtypeSelect.value = prevSubtype;
+      }
+    }
+
+    const syncVillagerSubtypeTabs = () => {
+      if (!villagerSubtypeTabs) return;
+      const active = String(subtypeSelect?.value || "");
+      Array.from(villagerSubtypeTabs.querySelectorAll(".tab")).forEach((btn) => {
+        const subtype = String(btn?.dataset?.subtype || "");
+        btn.classList.toggle("active", subtype === active);
+      });
+    };
+    if (subtypeSelect && !subtypeSelect.dataset.subtypeSyncBound) {
+      subtypeSelect.addEventListener("change", syncVillagerSubtypeTabs);
+      subtypeSelect.dataset.subtypeSyncBound = "1";
+    }
+
+    if (villagerSubtypeTabs) {
+      villagerSubtypeTabs.innerHTML = "";
+      const rows = effectiveSubtypeRows.map((x) => ({ key: x, label: x }));
+      rows.forEach((row) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tab";
+        btn.dataset.subtype = String(row.key || "");
+        btn.textContent = row.label;
+        btn.addEventListener("click", () => {
+          const nextRaw = String(row.key || "");
+          if (!subtypeSelect) return;
+          const current = String(subtypeSelect.value || "");
+          const next = current === nextRaw ? "" : nextRaw;
+          subtypeSelect.value = next;
+          subtypeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        villagerSubtypeTabs.appendChild(btn);
+      });
+    }
+    syncVillagerSubtypeTabs();
+    window.__acnhSyncVillagerSubtypeTabs = syncVillagerSubtypeTabs;
   }
 
   /** Load catalog metadata once per catalog type and cache it in state. */
@@ -325,7 +428,17 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       villagerQueryCache.set(cacheKey, data);
     }
 
-    renderVillagers(sortVillagers(data.items, sortBySelect.value || "name", sortOrderSelect.value || "asc"), {
+    const sourceItems = Array.isArray(data.items) ? data.items : [];
+    const filteredItems =
+      state.activeVillagerTab === "not_island"
+        ? sourceItems.filter((row) => !Boolean(row?.on_island))
+        : sourceItems;
+    const subtypeFilter = String(subtypeSelect?.value || "").trim().toLowerCase();
+    const finalItems = subtypeFilter
+      ? filteredItems.filter((row) => String(row?.sub_personality || "").trim().toLowerCase() === subtypeFilter)
+      : filteredItems;
+
+    renderVillagers(sortVillagers(finalItems, sortBySelect.value || "name", sortOrderSelect.value || "asc"), {
       onSyncDetailNav: safeSyncDetailNav,
       onToggleState: async (villagerId, payload) => {
         await updateVillagerState(villagerId, payload);

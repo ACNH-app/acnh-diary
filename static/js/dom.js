@@ -117,6 +117,7 @@ export const detailNotForSaleTag = document.getElementById("detailNotForSaleTag"
 export const detailImage = document.getElementById("detailImage");
 export const detailSourceHint = document.getElementById("detailSourceHint");
 export const detailFields = document.getElementById("detailFields");
+export const detailVariationsSection = document.getElementById("detailVariationsSection");
 export const detailExtraImagesSection = document.getElementById("detailExtraImagesSection");
 export const detailExtraImages = document.getElementById("detailExtraImages");
 export const detailVariations = document.getElementById("detailVariations");

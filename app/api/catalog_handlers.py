@@ -65,6 +65,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             {"en": c, "ko": deps.category_ko_for(catalog_type, c)} for c in categories
         ]
 
+        if catalog_type == "photos":
+            category_rows = []
+
         response: dict[str, Any] = {
             "label": deps.catalog_types[catalog_type]["label"],
             "status_label": deps.catalog_types[catalog_type]["status_label"],

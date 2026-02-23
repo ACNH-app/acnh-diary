@@ -13,6 +13,7 @@ import {
   detailRawFields,
   detailSourceHint,
   detailTitle,
+  detailVariationsSection,
   detailVariations,
   variationMarkAllBtn,
   variationUnmarkAllBtn,
@@ -23,6 +24,7 @@ import { state } from "./state.js";
  * Detail modal controller for catalog item details and variation ownership state.
  * @param {{
  *   getJSON: (url: string, options?: RequestInit) => Promise<any>,
+ *   updateCatalogState: (catalogType: string, itemId: string, payload: { owned?: boolean }) => Promise<any>,
  *   updateCatalogVariationState: (catalogType: string, itemId: string, variationId: string, payload: { owned?: boolean, quantity?: number }) => Promise<any>,
  *   updateCatalogVariationStateBatch: (catalogType: string, itemId: string, items: Array<{ variation_id: string, owned: boolean, quantity?: number }>) => Promise<any>,
  *   scheduleCatalogRefresh: (delayMs?: number) => void
@@ -30,11 +32,14 @@ import { state } from "./state.js";
  */
 export function createDetailController({
   getJSON,
+  updateCatalogState,
   updateCatalogVariationState,
   updateCatalogVariationStateBatch,
   scheduleCatalogRefresh,
 }) {
   const villagerImageCache = new Set();
+  let photoCatalogRowsPromise = null;
+  let villagerPhotoPosterRenderToken = 0;
   const favoriteColorMeta = {
     Aqua: { ko: "아쿠아", swatch: "#59dbe0" },
     Beige: { ko: "베이지", swatch: "#d9c7a4" },
@@ -182,6 +187,209 @@ export function createDetailController({
     hi.src = highRes;
   }
 
+  function normalizeLooseText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣]/g, "");
+  }
+
+  function detectPhotoPosterKind(row) {
+    const category = String(row?.category || "").trim().toLowerCase();
+    const nameEn = String(row?.name_en || "").trim().toLowerCase();
+    const nameKo = String(row?.name_ko || "").trim();
+    if (category.includes("poster") || nameEn.includes("poster") || nameKo.includes("포스터")) {
+      return "poster";
+    }
+    if (category.includes("photo") || nameEn.includes("photo") || nameKo.includes("사진")) {
+      return "photo";
+    }
+    return "";
+  }
+
+  async function ensurePhotoCatalogRows() {
+    if (!photoCatalogRowsPromise) {
+      photoCatalogRowsPromise = getJSON("/api/catalog/photos?sort_by=name&sort_order=asc&page=1&page_size=5000")
+        .then((payload) => (Array.isArray(payload?.items) ? payload.items : []))
+        .catch((err) => {
+          console.error(err);
+          return [];
+        });
+    }
+    return photoCatalogRowsPromise;
+  }
+
+  function findVillagerPhotoPosterRows(villager, rows) {
+    const villagerNameKo = String(villager?.name_ko || "").trim();
+    const villagerNameEn = String(villager?.name_en || "").trim();
+    const villagerNameKoNorm = normalizeLooseText(villagerNameKo);
+    const villagerNameEnNorm = normalizeLooseText(villagerNameEn);
+    const out = [];
+
+    for (const row of rows || []) {
+      const kind = detectPhotoPosterKind(row);
+      if (!kind) continue;
+      const rowNameKo = String(row?.name_ko || row?.name || "").trim();
+      const rowNameEn = String(row?.name_en || row?.name || "").trim();
+      const rowKoNorm = normalizeLooseText(rowNameKo);
+      const rowEnNorm = normalizeLooseText(rowNameEn);
+      const matchedKo = villagerNameKoNorm && rowKoNorm.includes(villagerNameKoNorm);
+      const matchedEn = villagerNameEnNorm && rowEnNorm.includes(villagerNameEnNorm);
+      if (!(matchedKo || matchedEn)) continue;
+      out.push({
+        ...row,
+        _kind: kind,
+      });
+    }
+
+    // 같은 종류에서 중복이 있을 수 있으므로 id 기준 중복 제거
+    const byId = new Map();
+    out.forEach((row) => {
+      const id = String(row?.id || "").trim();
+      if (!id) return;
+      if (!byId.has(id)) byId.set(id, row);
+    });
+    return Array.from(byId.values()).sort((a, b) => {
+      const ak = a._kind === "photo" ? 0 : 1;
+      const bk = b._kind === "photo" ? 0 : 1;
+      if (ak !== bk) return ak - bk;
+      return String(a?.name_ko || a?.name_en || "").localeCompare(
+        String(b?.name_ko || b?.name_en || ""),
+        "ko"
+      );
+    });
+  }
+
+  function formatBells(value) {
+    const n = Number(value || 0);
+    if (!Number.isFinite(n) || n <= 0) return "-";
+    return `${n.toLocaleString("ko-KR")}벨`;
+  }
+
+  function formatAcquireText(item) {
+    const pairs = Array.isArray(item?.source_pairs)
+      ? item.source_pairs
+        .map((p) => ({
+          source: String(p?.source || "").trim(),
+          note: String(p?.note || "").trim(),
+        }))
+        .filter((p) => p.source || p.note)
+      : [];
+    if (pairs.length) {
+      return pairs
+        .map((p) => {
+          if (p.source && p.note) return `${p.source} (${p.note})`;
+          return p.source || p.note;
+        })
+        .join(", ");
+    }
+    const source = String(item?.source || "").trim();
+    const note = String(item?.source_notes || "").trim();
+    if (source && note) return `${source} (${note})`;
+    return source || note || "-";
+  }
+
+  async function renderVillagerPhotoPosterSection(v, currentVillagerId) {
+    const token = ++villagerPhotoPosterRenderToken;
+    const rows = await ensurePhotoCatalogRows();
+    if (
+      token !== villagerPhotoPosterRenderToken
+      || state.activeDetailType !== "villager"
+      || state.activeDetailItemId !== currentVillagerId
+    ) {
+      return;
+    }
+
+    const items = findVillagerPhotoPosterRows(v, rows);
+    if (!items.length) return;
+
+    const section = document.createElement("section");
+    section.className = "detail-villager-photo-section";
+
+    const title = document.createElement("p");
+    title.className = "detail-field";
+    title.textContent = "주민 사진/포스터";
+    section.appendChild(title);
+
+    const listWrap = document.createElement("div");
+    listWrap.className = "detail-villager-photo-list";
+
+    items.forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "detail-villager-photo-card";
+
+      const img = document.createElement("img");
+      img.className = "detail-villager-photo-image";
+      img.src = String(item?.image_url || "/static/no-image.svg");
+      img.alt = String(item?.name_ko || item?.name_en || "아이템");
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.onerror = () => {
+        img.src = "/static/no-image.svg";
+      };
+
+      const body = document.createElement("div");
+      body.className = "detail-villager-photo-body";
+
+      const itemName = document.createElement("p");
+      itemName.className = "detail-villager-photo-name";
+      const kindLabel = item?._kind === "poster" ? "포스터" : "사진";
+      itemName.textContent = `${kindLabel}: ${item?.name_ko || item?.name_en || "-"}`;
+
+      const sell = document.createElement("p");
+      sell.className = "detail-villager-photo-meta";
+      sell.textContent = `판매가: ${formatBells(item?.sell)}`;
+
+      const buy = document.createElement("p");
+      buy.className = "detail-villager-photo-meta";
+      buy.textContent = item?.not_for_sale
+        ? "구매가: 비매품"
+        : `구매가: ${formatBells(item?.buy)}`;
+
+      const source = document.createElement("p");
+      source.className = "detail-villager-photo-meta";
+      source.textContent = `획득방법: ${formatAcquireText(item)}`;
+
+      const control = document.createElement("button");
+      control.type = "button";
+      control.className = `detail-villager-photo-owned ${item?.owned ? "active" : ""}`;
+      control.textContent = item?.owned ? "보유" : "미보유";
+      control.addEventListener("click", async () => {
+        const nextOwned = !Boolean(item?.owned);
+        control.disabled = true;
+        try {
+          await updateCatalogState("photos", String(item?.id || ""), { owned: nextOwned });
+          item.owned = nextOwned;
+          const targetId = String(item?.id || "");
+          rows.forEach((row) => {
+            if (String(row?.id || "") === targetId) {
+              row.owned = nextOwned;
+            }
+          });
+          control.classList.toggle("active", nextOwned);
+          control.textContent = nextOwned ? "보유" : "미보유";
+          scheduleCatalogRefresh(150);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          control.disabled = false;
+        }
+      });
+
+      body.appendChild(itemName);
+      body.appendChild(sell);
+      body.appendChild(buy);
+      body.appendChild(source);
+      body.appendChild(control);
+
+      card.appendChild(img);
+      card.appendChild(body);
+      listWrap.appendChild(card);
+    });
+
+    section.appendChild(listWrap);
+    detailFields.appendChild(section);
+  }
+
   function renderFavoriteColorChips(colors) {
     if (!Array.isArray(colors) || !colors.length) return;
     const row = document.createElement("div");
@@ -277,6 +485,7 @@ export function createDetailController({
   function openDetailModal(payload) {
     state.activeDetailType = "catalog";
     state.activeDetailPayload = payload;
+    const isRecipeMode = state.activeMode === "recipes";
     const summary = payload.summary || {};
     const nameKo = String(payload.item?.name_ko || payload.item?.name || "").trim();
     const nameEn = String(summary.name_en || payload.item?.name_en || "").trim();
@@ -302,7 +511,14 @@ export function createDetailController({
     }
 
     detailFields.innerHTML = "";
-    (payload.fields || []).forEach((field) => {
+    const detailFieldsRows = Array.isArray(payload.fields) ? payload.fields : [];
+    const filteredDetailFields = isRecipeMode
+      ? detailFieldsRows.filter((field) => {
+          const label = String(field?.label || "");
+          return !/(색|패턴|변형|color|pattern|variation)/i.test(label);
+        })
+      : detailFieldsRows;
+    filteredDetailFields.forEach((field) => {
       const row = document.createElement("p");
       row.className = "detail-field";
       row.textContent = `${field.label}: ${field.value}`;
@@ -341,14 +557,22 @@ export function createDetailController({
     }
 
     detailVariations.innerHTML = "";
-    state.activeDetailVariations = payload.variations || [];
     const variations = payload.variations || [];
-    if (!variations.length) {
-      const empty = document.createElement("p");
-      empty.className = "detail-empty";
-      empty.textContent = "변형 정보가 없습니다.";
-      detailVariations.appendChild(empty);
+    if (variationMarkAllBtn) variationMarkAllBtn.classList.toggle("hidden", isRecipeMode);
+    if (variationUnmarkAllBtn) variationUnmarkAllBtn.classList.toggle("hidden", isRecipeMode);
+    if (detailVariationsSection) detailVariationsSection.classList.toggle("hidden", isRecipeMode);
+    if (isRecipeMode) {
+      detailVariations.classList.add("hidden");
+      state.activeDetailVariations = [];
     } else {
+      detailVariations.classList.remove("hidden");
+      state.activeDetailVariations = variations;
+      if (!variations.length) {
+        const empty = document.createElement("p");
+        empty.className = "detail-empty";
+        empty.textContent = "변형 정보가 없습니다.";
+        detailVariations.appendChild(empty);
+      } else {
       variations.forEach((v) => {
         const box = document.createElement("article");
         box.className = `variation-card ${v.owned ? "owned" : ""}`;
@@ -453,9 +677,17 @@ export function createDetailController({
         detailVariations.appendChild(box);
       });
     }
+    }
 
     detailRawFields.innerHTML = "";
-    (payload.raw_fields || []).forEach((row) => {
+    const rawRows = Array.isArray(payload.raw_fields) ? payload.raw_fields : [];
+    const filteredRawRows = isRecipeMode
+      ? rawRows.filter((row) => {
+          const key = String(row?.key || "");
+          return !/(색|패턴|변형|color|pattern|variation)/i.test(key);
+        })
+      : rawRows;
+    filteredRawRows.forEach((row) => {
       const p = document.createElement("p");
       p.className = "raw-field";
       p.textContent = `${row.key}: ${row.value}`;
@@ -471,6 +703,12 @@ export function createDetailController({
     const v = villager || {};
     const currentVillagerId = String(v.id || "");
     const contextVillagers = Array.isArray(options.contextVillagers) ? options.contextVillagers : null;
+    const mergeKoEn = (ko, en) => {
+      const koText = String(ko || "").trim();
+      const enText = String(en || "").trim();
+      if (koText && enText && koText !== enText) return `${koText} (${enText})`;
+      return koText || enText;
+    };
     const asText = (val) => {
       if (Array.isArray(val)) return val.filter(Boolean).join(", ");
       if (typeof val === "boolean") return val ? "예" : "아니오";
@@ -497,16 +735,19 @@ export function createDetailController({
     if (detailNotForSaleTag) {
       detailNotForSaleTag.classList.add("hidden");
     }
+    if (variationMarkAllBtn) variationMarkAllBtn.classList.add("hidden");
+    if (variationUnmarkAllBtn) variationUnmarkAllBtn.classList.add("hidden");
+    if (detailVariationsSection) detailVariationsSection.classList.add("hidden");
+    detailVariations.classList.add("hidden");
     setVillagerDetailImage(v, currentVillagerId);
     detailSourceHint.textContent = "주민 데이터 상세 정보";
 
     detailFields.innerHTML = "";
     const activity = getPersonalityActivity(v);
     appendRows([
-      ["이름(한글)", v.name_ko || ""],
-      ["이름(영문)", v.name_en || ""],
-      ["종", v.species_ko || v.species || ""],
-      ["성격", v.personality_ko || v.personality || ""],
+      ["이름", mergeKoEn(v.name_ko, v.name_en)],
+      ["종", mergeKoEn(v.species_ko, v.species)],
+      ["성격", mergeKoEn(v.personality_ko, v.personality)],
       ["성격 구분", activity?.group_ko || ""],
       [
         "활동시간",
@@ -524,11 +765,9 @@ export function createDetailController({
 
     appendRows([
       ["말버릇(한글)", v.catchphrase_ko || ""],
-      ["말버릇(현재)", v.catchphrase || ""],
       ["말버릇(기본)", v.phrase || ""],
       ["과거 말버릇", v.prev_phrases || []],
-      ["좌우명(한글)", v.saying_ko || ""],
-      ["좌우명(영문)", v.saying || ""],
+      ["좋아하는 말", mergeKoEn(v.saying_ko, v.saying)],
     ]);
 
     appendRows([
@@ -540,8 +779,7 @@ export function createDetailController({
     renderFavoriteColorChips(v.favorite_colors || []);
 
     appendRows([
-      ["좋아하는 음악", v.house_music_ko || v.house_music || ""],
-      ["좋아하는 음악(영문)", v.house_music || ""],
+      ["좋아하는 음악", mergeKoEn(v.house_music_ko, v.house_music)],
       ["하우스 음악 메모", v.house_music_note || ""],
       ["하우스 벽지", v.house_wallpaper || ""],
       ["하우스 바닥", v.house_flooring || ""],
@@ -551,6 +789,7 @@ export function createDetailController({
       ["타이틀 색상", v.title_color || ""],
       ["텍스트 색상", v.text_color || ""],
     ]);
+    renderVillagerPhotoPosterSection(v, currentVillagerId).catch((err) => console.error(err));
 
     if (detailExtraImagesSection && detailExtraImages) {
       detailExtraImages.innerHTML = "";
@@ -587,10 +826,6 @@ export function createDetailController({
     }
 
     detailVariations.innerHTML = "";
-    const empty = document.createElement("p");
-    empty.className = "detail-empty";
-    empty.textContent = "주민에는 변형 정보가 없습니다.";
-    detailVariations.appendChild(empty);
 
     detailRawFields.innerHTML = "";
     const raw = [

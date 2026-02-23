@@ -28,7 +28,7 @@ from app.services.nookipedia_client import (
     load_nookipedia_catalog,
     load_nookipedia_villagers,
 )
-from app.services.source import extract_source_pair, translate_source_value_to_ko
+from app.services.source import extract_source_pair, extract_source_pairs, translate_source_value_to_ko
 from app.utils.text import normalize_name
 
 REACTIONS_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "reactions.json"
@@ -235,11 +235,30 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
         source_notes_ko = str(row["source_notes_ko"] or "").strip()
         source_raw = str(row["source"] or "").strip()
         source_notes_raw = str(row["source_notes"] or "").strip()
+        if source_ko == "굉장한 도구 레시피":
+            source_ko = "언제나 쓸 수 있는 도구 레시피"
+        source_pairs_raw = extract_source_pairs(raw)
+        source_pairs: list[dict[str, str]] = [
+            {"source": str(src or ""), "note": str(note or "")}
+            for src, note in source_pairs_raw
+            if str(src or "").strip() or str(note or "").strip()
+        ]
+        if source_pairs:
+            fallback_note = source_notes_ko or str(item.get("source_notes") or source_notes_raw or "")
+            if fallback_note and all(not str(p.get("note") or "").strip() for p in source_pairs):
+                for p in source_pairs:
+                    p["note"] = str(fallback_note)
+        if not source_pairs:
+            base_src = source_ko or str(item.get("source") or source_raw or "")
+            base_note = source_notes_ko or str(item.get("source_notes") or source_notes_raw or "")
+            if base_src or base_note:
+                source_pairs = [{"source": base_src, "note": base_note}]
         # content.db에서는 분리 한글 출처 필드를 우선 사용한다.
         item["source_ko"] = source_ko
         item["source_notes_ko"] = source_notes_ko
         item["source"] = source_ko or str(item.get("source") or source_raw or "")
         item["source_notes"] = source_notes_ko or str(item.get("source_notes") or source_notes_raw or "")
+        item["source_pairs"] = source_pairs
         # DB에 저장된 과거 not_for_sale 값과 무관하게 현재 규칙으로 재계산한다.
         item["not_for_sale"] = _is_not_for_sale(raw, item)
         if catalog_type == "recipes":
@@ -880,9 +899,21 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         extra_filter = "style"
         extra_filter_values = [str(v) for v in (row.get("styles") or []) if str(v).strip()]
 
+    source_pairs_raw = extract_source_pairs(row)
     source, source_notes = extract_source_pair(row)
     if catalog_type == "recipes" and not source and isinstance(local_recipe_row, dict):
         source, source_notes = extract_source_pair(local_recipe_row)
+    if catalog_type == "recipes" and not source_pairs_raw and isinstance(local_recipe_row, dict):
+        source_pairs_raw = extract_source_pairs(local_recipe_row)
+    source_pairs: list[dict[str, str]] = [
+        {"source": str(src or ""), "note": str(note or "")}
+        for src, note in source_pairs_raw
+        if str(src or "").strip() or str(note or "").strip()
+    ]
+    if source_pairs and source_notes:
+        if all(not str(p.get("note") or "").strip() for p in source_pairs):
+            for p in source_pairs:
+                p["note"] = str(source_notes)
     recipe_filters: list[str] = []
     if catalog_type == "recipes":
         source_ref = source
@@ -958,6 +989,7 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         "variation_total": int(row.get("variation_total") or 0),
         "source": source,
         "source_notes": source_notes,
+        "source_pairs": source_pairs,
     }
     orderable_value = row.get("is_orderable")
     if orderable_value is None:
@@ -1505,17 +1537,48 @@ def _catalog_detail_payload(
     real_info: dict[str, Any] = {}
     fake_info: dict[str, Any] = {}
     not_for_sale = _is_not_for_sale(detail, item)
-    detail_source, detail_source_notes = extract_source_pair(detail)
+    detail_source_pairs = extract_source_pairs(detail)
+    if not detail_source_pairs:
+        raw_item_pairs = item.get("source_pairs")
+        if isinstance(raw_item_pairs, list):
+            for p in raw_item_pairs:
+                if not isinstance(p, dict):
+                    continue
+                src = str(p.get("source") or "").strip()
+                note = str(p.get("note") or "").strip()
+                if src or note:
+                    detail_source_pairs.append((src, note))
+
+    if detail_source_pairs:
+        fallback_note = str(item.get("source_notes") or "").strip()
+        if fallback_note:
+            detail_source_pairs = [
+                (src, note if str(note or "").strip() else fallback_note)
+                for src, note in detail_source_pairs
+            ]
+        acquire_parts: list[str] = []
+        for src, note in detail_source_pairs:
+            if src and note:
+                acquire_parts.append(f"{src} ({note})")
+            elif src:
+                acquire_parts.append(src)
+            elif note:
+                acquire_parts.append(note)
+        acquire_text = ", ".join(acquire_parts)
+    else:
+        detail_source, detail_source_notes = extract_source_pair(detail)
+        source_text = detail_source or str(item.get("source") or "")
+        source_notes_text = detail_source_notes or str(item.get("source_notes") or "")
+        if source_text and source_notes_text:
+            acquire_text = f"{source_text} ({source_notes_text})"
+        else:
+            acquire_text = source_text or source_notes_text
     common_fields = [
         ("카테고리", category_ko or category),
         ("구매가", str(detail.get("buy") or item.get("buy") or "")),
         ("판매가", str(detail.get("sell") or item.get("sell") or "")),
         ("비매품 여부", "비매품" if not_for_sale else "구매 가능"),
-        ("출처", detail_source or str(item.get("source") or "")),
-        (
-            "출처 상세",
-            detail_source_notes or str(item.get("source_notes") or ""),
-        ),
+        ("획득방법", acquire_text),
         ("설명", str(detail.get("notes") or detail.get("description") or "")),
         ("URL", str(detail.get("url") or item.get("url") or "")),
     ]

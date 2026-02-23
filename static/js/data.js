@@ -40,10 +40,16 @@ import { compareNamePriority, sortVillagers, toQuery } from "./utils.js";
  * @param {{
  *   onSyncDetailNav?: () => void,
  *   onOpenDetail?: (itemId: string) => void,
- *   onOpenVillagerDetail?: (villager: any) => void
+ *   onOpenVillagerDetail?: (villager: any) => void,
+ *   onStateChange?: (historyAction?: "push" | "replace") => void
  * }} [handlers]
  */
-export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVillagerDetail } = {}) {
+export function createDataController({
+  onSyncDetailNav,
+  onOpenDetail,
+  onOpenVillagerDetail,
+  onStateChange,
+} = {}) {
   const villagerQueryCache = new Map();
   const catalogSortInitialized = new Set();
   let catalogFetchSeq = 0;
@@ -306,6 +312,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       renderRecipeTagActiveBar("recipes");
       closeRecipeTagModal();
       await loadCatalog("recipes", { preserveVisible: false });
+      if (onStateChange) onStateChange("push");
     });
     recipeTagList?.addEventListener("click", (e) => {
       const button = e.target && e.target.closest("button[data-tag-key]");
@@ -330,6 +337,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       setRecipeTagSelection("recipes", next);
       renderRecipeTagActiveBar("recipes");
       await loadCatalog("recipes", { preserveVisible: false });
+      if (onStateChange) onStateChange("push");
     });
   }
 
@@ -550,8 +558,9 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
     const subCategoryRows =
       catalogType === "art" ? meta.authenticity_types || [] : meta.categories || [];
     renderSubCategoryTabs(catalogType, subCategoryRows, {
-      onCategoryChange: () => {
-        loadCurrentModeData().catch((err) => console.error(err));
+      onCategoryChange: async () => {
+        await loadCurrentModeData().catch((err) => console.error(err));
+        if (onStateChange) onStateChange("push");
       },
     });
 
@@ -717,7 +726,12 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
 
     let filtered = allRows.filter((row) => {
       if (qNorm) {
-        const hay = `${row?.name_ko || ""} ${row?.name_en || ""} ${row?.name || ""} ${row?.source || ""} ${row?.source_notes || ""}`.toLowerCase();
+        const sourcePairsText = Array.isArray(row?.source_pairs)
+          ? row.source_pairs
+            .map((p) => `${p?.source || ""} ${p?.note || ""}`)
+            .join(" ")
+          : "";
+        const hay = `${row?.name_ko || ""} ${row?.name_en || ""} ${row?.name || ""} ${row?.source || ""} ${row?.source_notes || ""} ${sourcePairsText}`.toLowerCase();
         if (!hay.includes(qNorm)) return false;
       }
 
@@ -754,12 +768,19 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
       if (ownedFilter !== null && Boolean(row?.owned) !== ownedFilter) return false;
 
       if (sourceFilter) {
+        const pairTokens = Array.isArray(row?.source_pairs)
+          ? row.source_pairs
+            .map((p) => String(p?.source || "").trim())
+            .filter(Boolean)
+          : [];
         const source = String(row?.source || "").trim();
-        if (!source) return false;
-        const tokens = source
-          .split(",")
-          .map((x) => String(x || "").trim())
-          .filter(Boolean);
+        const tokens = pairTokens.length
+          ? pairTokens
+          : source
+            .split(",")
+            .map((x) => String(x || "").trim())
+            .filter(Boolean);
+        if (!tokens.length) return false;
         if (!tokens.includes(sourceFilter)) return false;
       }
 
@@ -884,6 +905,7 @@ export function createDataController({ onSyncDetailNav, onOpenDetail, onOpenVill
           const current = String(state.sourceFilterByMode[catalogType] || "").trim();
           state.sourceFilterByMode[catalogType] = current === next ? "" : next;
           await loadCatalog(catalogType, { preserveVisible: false });
+          if (onStateChange) onStateChange("push");
         },
       }
     );

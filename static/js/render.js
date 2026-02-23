@@ -21,6 +21,60 @@ let navDismissHandlersBound = false;
 const mobileNavQuery = window.matchMedia("(max-width: 768px)");
 const tapNavQuery = window.matchMedia("(hover: none), (pointer: coarse)");
 let villagerRenderToken = 0;
+const monthToNumber = {
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
+};
+
+function parseBirthdayNumberPart(value) {
+  const text = String(value || "").trim().toLowerCase();
+  if (!text) return 0;
+  const directNum = Number.parseInt(text, 10);
+  if (Number.isFinite(directNum) && directNum > 0) return directNum;
+  const monthNum = monthToNumber[text];
+  if (Number.isFinite(monthNum) && monthNum > 0) return monthNum;
+  const numMatch = text.match(/(\d{1,2})/);
+  if (numMatch) {
+    const parsed = Number.parseInt(numMatch[1], 10);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function formatVillagerBirthday(v) {
+  const month = parseBirthdayNumberPart(v?.birthday_month);
+  const day = parseBirthdayNumberPart(v?.birthday_day);
+  if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+    return `${month}/${day}`;
+  }
+  const raw = String(v?.birthday || "").trim();
+  if (!raw) return "";
+  const match = raw.match(/(\d{1,2}).*?(\d{1,2})/);
+  if (match) {
+    const m = Number.parseInt(match[1], 10);
+    const d = Number.parseInt(match[2], 10);
+    if (Number.isFinite(m) && Number.isFinite(d) && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+      return `${m}/${d}`;
+    }
+  }
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    const m = parseBirthdayNumberPart(parts[0]);
+    const d = parseBirthdayNumberPart(parts[1]);
+    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) return `${m}/${d}`;
+  }
+  return raw;
+}
 
 function buildNavGroups(modes) {
   const rows = Array.isArray(modes) ? modes : [];
@@ -465,9 +519,10 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
       nameEn.textContent = "";
       const subtype = String(v.sub_personality || "").trim();
       meta.textContent = subtype
-        ? `${v.species_ko} | ${v.personality_ko} | 서브타입: ${subtype}`
+        ? `${v.species_ko} | ${v.personality_ko} | ${subtype}`
         : `${v.species_ko} | ${v.personality_ko}`;
-      birthday.textContent = v.birthday ? `생일: ${v.birthday}` : "";
+      const birthdayText = formatVillagerBirthday(v);
+      birthday.textContent = birthdayText ? `생일: ${birthdayText}` : "";
 
       const syncVillagerToggleButtons = () => {
         if (likedBtn) likedBtn.classList.toggle("active", Boolean(v.liked));
@@ -620,45 +675,89 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       state.activeMode === "recipes"
     ) {
       desc.innerHTML = "";
-      if (state.activeMode === "recipes" && v.source) {
-        const label = document.createElement("span");
-        label.textContent = "획득처: ";
-        desc.appendChild(label);
-        const sources = String(v.source || "")
-          .split(",")
-          .map((x) => String(x || "").trim())
-          .filter(Boolean);
-        sources.forEach((src, idx) => {
-          const chip = document.createElement("button");
-          chip.type = "button";
-          chip.className = `source-chip ${activeSourceFilter === src ? "active" : ""}`;
-          chip.textContent = src;
-          chip.addEventListener("click", async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!handlers.onFilterBySource) return;
-            await handlers.onFilterBySource(src);
-          });
-          desc.appendChild(chip);
-          if (idx < sources.length - 1) {
-            desc.appendChild(document.createTextNode(", "));
-          }
-        });
-      } else {
-        const base = document.createElement("span");
-        base.textContent = v.source ? `획득처: ${v.source}` : "획득처 정보 없음";
-        desc.appendChild(base);
-      }
-      if (v.source_notes) {
+      const buildSourceNoteHint = (noteText) => {
+        const safeNote = String(noteText || "").trim();
+        if (!safeNote) return null;
         const note = document.createElement("span");
         note.className = "note-hint";
         note.textContent = " ⓘ";
-        note.setAttribute("data-tooltip", v.source_notes);
+        note.setAttribute("data-tooltip", safeNote);
         note.setAttribute("tabindex", "0");
         note.setAttribute("role", "button");
-        note.setAttribute("aria-label", v.source_notes);
+        note.setAttribute("aria-label", safeNote);
         note.addEventListener("click", (e) => e.stopPropagation());
-        desc.appendChild(note);
+        return note;
+      };
+      if (
+        state.activeMode === "recipes"
+        && (v.source || (Array.isArray(v.source_pairs) && v.source_pairs.length))
+      ) {
+        const label = document.createElement("span");
+        label.textContent = "획득방법: ";
+        desc.appendChild(label);
+        const pairs = Array.isArray(v.source_pairs)
+          ? v.source_pairs
+            .map((p) => ({
+              source: String(p?.source || "").trim(),
+              note: String(p?.note || "").trim(),
+            }))
+            .filter((p) => p.source || p.note)
+          : [];
+        if (pairs.length) {
+          pairs.forEach((pair, idx) => {
+            if (pair.source) {
+              const chip = document.createElement("button");
+              chip.type = "button";
+              chip.className = `source-chip ${activeSourceFilter === pair.source ? "active" : ""}`;
+              chip.textContent = pair.source;
+              chip.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!handlers.onFilterBySource) return;
+                await handlers.onFilterBySource(pair.source);
+              });
+              desc.appendChild(chip);
+            }
+            const noteHint = buildSourceNoteHint(pair.note);
+            if (noteHint) {
+              desc.appendChild(noteHint);
+            }
+            if (idx < pairs.length - 1) {
+              desc.appendChild(document.createTextNode(", "));
+            }
+          });
+        } else {
+          const sources = String(v.source || "")
+            .split(",")
+            .map((x) => String(x || "").trim())
+            .filter(Boolean);
+          const noteHint = buildSourceNoteHint(v.source_notes);
+          sources.forEach((src, idx) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = `source-chip ${activeSourceFilter === src ? "active" : ""}`;
+            chip.textContent = src;
+            chip.addEventListener("click", async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!handlers.onFilterBySource) return;
+              await handlers.onFilterBySource(src);
+            });
+            desc.appendChild(chip);
+            if (idx === 0 && noteHint) {
+              desc.appendChild(noteHint);
+            }
+            if (idx < sources.length - 1) {
+              desc.appendChild(document.createTextNode(", "));
+            }
+          });
+        }
+      } else {
+        const base = document.createElement("span");
+        base.textContent = v.source ? `획득방법: ${v.source}` : "획득방법 정보 없음";
+        desc.appendChild(base);
+        const noteHint = buildSourceNoteHint(v.source_notes);
+        if (noteHint) desc.appendChild(noteHint);
       }
       if (isRecipeMode && v.materials_preview) {
         const mat = document.createElement("div");
@@ -668,8 +767,8 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         desc.appendChild(mat);
       }
     } else if (state.activeMode === "reactions") {
-      const src = v.reaction_source || v.source || "획득처 정보 없음";
-      const parts = [`획득처: ${src}`];
+      const src = v.reaction_source || v.source || "획득방법 정보 없음";
+      const parts = [`획득방법: ${src}`];
       if (v.event_type) parts.push(`연관 이벤트: ${v.event_type}`);
       if (v.date) parts.push(`버전: ${v.date}`);
       desc.textContent = parts.join(" | ");

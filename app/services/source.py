@@ -9,12 +9,12 @@ FROM_MAP_KO = {
     "leif, school": "레온(학교)",
     "paradise planning office": "파라다이스 플래닝 사무소",
     "hotel souvenir shop": "호텔 기념품점",
-    "custom fencing in a flash": "울타리 마스터",
-    "pretty good tools recipes": "굉장한 도구 레시피",
-    "test your diy skills": "손재주를 발휘하자!",
-    "wildest dreams diy": "손재주를 뽐내자!",
-    "diy for beginners": "왕초보 도구 레시피",
-    "farway museum": "파웨이 박물관",
+    "custom fencing in a flash": "뚝딱! 울타리 리폼 BOOK",
+    "pretty good tools recipes": "언제나 쓸 수 있는 도구 레시피",
+    "test your diy skills": "도전! DIY 레시피",
+    "wildest dreams diy": "무엇이든 뚝딱?! DIY 레시피",
+    "diy for beginners": "첫 DIY 레시피",
+    "farway museum": "파어웨어 박물관",
     "nook inc.": "너굴 주식회사",
     "starting item": "초기 지급 아이템",
     "message bottle": "메시지 보틀",
@@ -30,7 +30,7 @@ FROM_MAP_KO = {
     "able sisters": "에이블 시스터즈",
     "katrina": "점쟁이 카트리나",
     "kicks": "신발가게 킥스",
-    "leif": "원예상 레온",
+    "leif": "늘봉",
     "nooklink": "너굴링크",
     "bunny day": "이스터 이벤트",
     "egg bottle": "이스터 병편지",
@@ -48,15 +48,15 @@ FROM_MAP_KO = {
     "nook's cranny": "너굴상점",
     "nook shopping": "너굴 쇼핑",
     "nook stop": "너굴포트",
-    "diy recipe": "레시피 제작",
-    "diy recipes": "레시피 제작",
+    "diy recipe": "요리도 DIY! 레시피＋",
+    "diy recipes": "요리도 DIY! 레시피＋",
     "balloon": "풍선 선물",
     "balloon presents": "풍선 선물",
     "saharah": "러그 상인 사하라",
     "redd": "여욱이 상점",
     "redd's raffle": "여욱이 제비뽑기",
-    "gulliver": "걸리버 이벤트",
-    "gullivarr": "해적 걸리버 이벤트",
+    "gulliver": "죠니",
+    "gullivarr": "해적 죠니",
     "wisp": "유령 부옥 이벤트",
     "fishing tourney": "낚시대회",
     "bug-off": "곤충채집대회",
@@ -82,7 +82,7 @@ FROM_MAP_KO = {
     "viva festivale reaction set": "비바 카니발 리액션 세트",
     "festive wrapping paper": "축제 포장지",
     "golden watering can": "황금 물뿌리개",
-    "any villager": "아무 주민",
+    "any villager": "모든 주민",
     "archipelago": "군도",
     "boat tour": "보트 투어",
     "bells": "벨",
@@ -116,7 +116,7 @@ NOTE_MAP_KO = {
     "event item": "이벤트 한정 아이템입니다.",
     "received after doing your 50th group stretch": "단체 체조를 50회 달성하면 획득합니다.",
     "requires a high level of friendship": "주민과의 친밀도가 높아야 획득할 수 있습니다.",
-    "posters": "포스터 아이템",
+    "posters": "파니엘의 섬 포토스튜디오에서 촬영하기",
     "trade in 3 of the bug": "곤충 포인트 3개 교환",
     "trade in 3 of the fish": "물고기 포인트 3개 교환",
     "from the \"redeem nook miles\" section": "너굴 마일 교환에서 획득",
@@ -193,19 +193,19 @@ NOTE_MAP_KO = {
     "obtained during bunny day": "이스터 기간 획득",
     "obtained through tom nook's diy workshop at the beginning of the game": "게임 초반 너굴 DIY 워크숍에서 획득",
     "only on the day of a [[fireworks show]]": "불꽃놀이 당일 한정",
-    "pavé / 상세 조건: [[festivale]]": "무지개새(카니발)",
+    "pavé / 상세 조건: [[festivale]]": "베르리나(카니발)",
     "received via mail": "우편 수령",
     "reward for gifting lollipop on halloween": "할로윈 막대사탕 선물 보상",
     "reward for gifting lollipop on halloween.": "할로윈 막대사탕 선물 보상",
     "reward for making a perfect snowboy during winter": "겨울 완벽한 눈사람 보상",
-    "while performing the quest for gullivarrr": "해적 걸리버 퀘스트 진행 중",
+    "while performing the quest for gullivarrr": "해적 죠니 퀘스트 진행 중",
     "from the teacher": "선생님에게서 획득",
     "cherry blossom season": "벚꽃 시즌",
     "valentine's day": "발렌타인데이",
     "on mystery islands": "마일섬에서 획득",
     "on beaches": "해변에서 획득",
-    "gulliver": "걸리버 관련",
-    "gullivarrr": "해적 걸리버 관련",
+    "gulliver": "죠니 관련",
+    "gullivarrr": "해적 죠니 관련",
     "available at the start": "초기 상태에서 획득 가능",
     "after completing all 8 hotel rooms": "호텔 객실 8개 완성 후",
     "after wrapping bells": "벨 포장 후",
@@ -216,9 +216,9 @@ NOTE_MAP_KO = {
     "small": "소형",
     "ground": "지면",
     "complete his vacation home": "해당 주민 별장 완성 후",
-    "day after gulliver visits": "걸리버 방문 다음날",
-    "day after gullivarrr visits": "해적 걸리버 방문 다음날",
-    "day after gulliver/gullivarrr visits": "걸리버/해적 걸리버 방문 다음날",
+    "day after gulliver visits": "죠니 방문 다음날",
+    "day after gullivarrr visits": "해적 죠니 방문 다음날",
+    "day after gulliver/gullivarrr visits": "죠니/해적 죠니 방문 다음날",
     "nintendo switch 2 edition": "닌텐도 스위치 2 에디션",
     "after being buried on shining soil": "빛나는 땅 매설 후",
     "after being used": "사용 후",
@@ -261,7 +261,7 @@ NPC_SOURCE_MAP_KO = {
     "c.j.": "저스틴",
     "celeste": "부옥",
     "cornimer": "콘키",
-    "cyrus": "리사이클 상점 리포",
+    "cyrus": "리포",
     "daisy mae": "무파니",
     "dodo airlines": "도도항공",
     "flick": "레온",
@@ -279,7 +279,7 @@ NPC_SOURCE_MAP_KO = {
     "niko": "니코",
     "nintendo": "닌텐도",
     "pascal": "해탈한",
-    "pavé": "무지개새",
+    "pavé": "베르리나",
     "reese": "리포",
     "resetti": "리셋씨",
     "rover": "모리",
@@ -485,7 +485,134 @@ def _parse_availability(value: Any) -> tuple[list[str], list[str]]:
     return froms, notes
 
 
+def _availability_pairs(value: Any) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+
+    if isinstance(value, dict):
+        froms: list[str] = []
+        notes: list[str] = []
+        from_value = value.get("from")
+        note_value = value.get("note")
+
+        if isinstance(from_value, list):
+            froms = [str(v).strip() for v in from_value if str(v).strip()]
+        elif from_value is not None:
+            s = str(from_value).strip()
+            if s:
+                froms = [s]
+
+        if isinstance(note_value, list):
+            notes = [str(v).strip() for v in note_value if str(v).strip()]
+        elif note_value is not None:
+            s = str(note_value).strip()
+            if s:
+                notes = [s]
+
+        if froms:
+            if notes and len(notes) == len(froms):
+                out.extend(list(zip(froms, notes)))
+            elif notes:
+                joined_note = " / ".join(dict.fromkeys(notes))
+                out.extend([(f, joined_note) for f in froms])
+            else:
+                out.extend([(f, "") for f in froms])
+        elif notes:
+            out.extend([("", n) for n in notes])
+
+    elif isinstance(value, list):
+        for x in value:
+            out.extend(_availability_pairs(x))
+    elif isinstance(value, str):
+        s = value.strip()
+        if s:
+            out.append((s, ""))
+
+    return out
+
+
+def extract_source_pairs(row: dict[str, Any]) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    def push_pair(source_raw: str, note_raw: str) -> None:
+        src = _translate_from_to_ko(source_raw) if source_raw else ""
+        note = _translate_note_to_ko(note_raw) if note_raw else ""
+        key = (src, note)
+        if (not src and not note) or key in seen:
+            return
+        seen.add(key)
+        pairs.append(key)
+
+    for src_raw, note_raw in _availability_pairs(row.get("availability")):
+        push_pair(src_raw, note_raw)
+
+    if not pairs:
+        source_text = translate_source_value_to_ko(row.get("source"))
+        raw_note = str(
+            row.get("source_notes")
+            or row.get("source_note")
+            or row.get("availability_notes")
+            or ""
+        ).strip()
+        note_text = _translate_note_to_ko(raw_note) if raw_note else ""
+        source_parts = [
+            p.strip()
+            for p in str(source_text or "").split(",")
+            if p and p.strip()
+        ]
+        if source_parts:
+            for part in source_parts:
+                key = (part, note_text)
+                if key not in seen:
+                    seen.add(key)
+                    pairs.append(key)
+        elif note_text:
+            key = ("", note_text)
+            if key not in seen:
+                seen.add(key)
+                pairs.append(key)
+
+    if pairs:
+        return pairs
+
+    variations = row.get("variations")
+    if not isinstance(variations, list):
+        return []
+
+    for variation in variations:
+        if not isinstance(variation, dict):
+            continue
+        for src_raw, note_raw in _availability_pairs(variation.get("availability")):
+            push_pair(src_raw, note_raw)
+        source_text = translate_source_value_to_ko(variation.get("source"))
+        raw_note = str(
+            variation.get("source_notes")
+            or variation.get("source_note")
+            or variation.get("availability_notes")
+            or ""
+        ).strip()
+        note_text = _translate_note_to_ko(raw_note) if raw_note else ""
+        source_parts = [
+            p.strip()
+            for p in str(source_text or "").split(",")
+            if p and p.strip()
+        ]
+        for part in source_parts:
+            key = (part, note_text)
+            if key not in seen:
+                seen.add(key)
+                pairs.append(key)
+
+    return pairs
+
+
 def extract_source_pair(row: dict[str, Any]) -> tuple[str, str]:
+    pairs = extract_source_pairs(row)
+    if pairs:
+        source = ", ".join(dict.fromkeys([src for src, _ in pairs if src]))
+        source_notes = " / ".join(dict.fromkeys([note for _, note in pairs if note]))
+        return source, source_notes
+
     row_froms, row_notes = _parse_availability(row.get("availability"))
     source = ", ".join(dict.fromkeys([_translate_from_to_ko(x) for x in row_froms if x]))
     source_notes = " / ".join(

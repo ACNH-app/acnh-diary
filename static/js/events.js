@@ -27,9 +27,10 @@ import { state } from "./state.js";
  *   scheduleLoad: () => void,
  *   loadCurrentModeData: () => Promise<void>,
  *   loadCatalogPage: (catalogType: string, options?: { append?: boolean }) => Promise<void>,
- *   toggleVisibleCatalogOwned: () => Promise<void>,
- *   updateScrollTopButton: () => void,
- *   detailController: { bindEvents: () => void }
+  *   toggleVisibleCatalogOwned: () => Promise<void>,
+  *   updateScrollTopButton: () => void,
+ *   detailController: { bindEvents: () => void },
+ *   onStateChange?: (historyAction?: "push" | "replace") => void
  * }} handlers
  */
 export function bindMainEvents({
@@ -39,6 +40,7 @@ export function bindMainEvents({
   toggleVisibleCatalogOwned,
   updateScrollTopButton,
   detailController,
+  onStateChange,
 }) {
   let loadingMore = false;
   const isMobileInfiniteMode = () =>
@@ -67,10 +69,11 @@ export function bindMainEvents({
     window.setTimeout(maybeAutoLoadMore, 0);
   };
 
-  const runLoad = () => {
+  const runLoad = (historyAction = "replace") => {
     loadCurrentModeData()
       .then(() => {
         maybeAutoLoadMore();
+        if (onStateChange) onStateChange(historyAction);
       })
       .catch((err) => console.error(err));
   };
@@ -88,13 +91,13 @@ export function bindMainEvents({
   };
 
   searchInput.addEventListener("input", scheduleLoad);
-  personalitySelect.addEventListener("change", runLoad);
-  subtypeSelect.addEventListener("change", runLoad);
-  speciesSelect.addEventListener("change", runLoad);
-  sortBySelect.addEventListener("change", runLoad);
+  personalitySelect.addEventListener("change", () => runLoad("replace"));
+  subtypeSelect.addEventListener("change", () => runLoad("replace"));
+  speciesSelect.addEventListener("change", () => runLoad("replace"));
+  sortBySelect.addEventListener("change", () => runLoad("replace"));
   sortOrderSelect.addEventListener("change", () => {
     syncSortOrderToggle();
-    runLoad();
+    runLoad("replace");
   });
   if (sortOrderToggleBtn) {
     sortOrderToggleBtn.addEventListener("click", () => {
@@ -110,7 +113,7 @@ export function bindMainEvents({
     tab.addEventListener("click", () => {
       state.activeVillagerTab = tab.dataset.tab || "all";
       villagerTabs.forEach((el) => el.classList.toggle("active", el === tab));
-      runLoad();
+      runLoad("push");
     });
   });
 
@@ -130,15 +133,15 @@ export function bindMainEvents({
     syncSortOrderToggle();
     state.activeVillagerTab = "all";
     villagerTabs.forEach((el) => el.classList.toggle("active", el.dataset.tab === "all"));
-    runLoad();
+    runLoad("push");
   });
 
   catalogSearchInput.addEventListener("input", scheduleLoad);
-  catalogExtraSelect.addEventListener("change", runLoad);
-  catalogSortBySelect.addEventListener("change", runLoad);
+  catalogExtraSelect.addEventListener("change", () => runLoad("replace"));
+  catalogSortBySelect.addEventListener("change", () => runLoad("replace"));
   catalogSortOrderSelect.addEventListener("change", () => {
     syncCatalogSortOrderToggle();
-    runLoad();
+    runLoad("replace");
   });
   if (catalogSortOrderToggleBtn) {
     catalogSortOrderToggleBtn.addEventListener("click", () => {
@@ -150,12 +153,35 @@ export function bindMainEvents({
 
   catalogTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      state.activeCatalogTab = tab.dataset.tab || "all";
+      const tabKey = String(tab.dataset.tab || "");
+      const ownedBtn = catalogTabs.find((el) => el.dataset.tab === "owned");
+      const unownedBtn = catalogTabs.find((el) => el.dataset.tab === "unowned");
+      const isOwned = tabKey === "owned";
+      const isUnowned = tabKey === "unowned";
+      if (!isOwned && !isUnowned) return;
+
+      const wasActive = tab.classList.contains("active");
+      if (wasActive) {
+        // 재클릭하면 전체(둘 다 해제)
+        state.activeCatalogTab = "all";
+        ownedBtn?.classList.remove("active");
+        unownedBtn?.classList.remove("active");
+      } else if (isOwned) {
+        // 보유만 선택 (미보유는 자동 해제)
+        state.activeCatalogTab = "owned";
+        ownedBtn?.classList.add("active");
+        unownedBtn?.classList.remove("active");
+      } else {
+        // 미보유만 선택 (보유만은 자동 해제)
+        state.activeCatalogTab = "unowned";
+        ownedBtn?.classList.remove("active");
+        unownedBtn?.classList.add("active");
+      }
+
       if (state.activeMode === "recipes" && state.sourceFilterByMode) {
         state.sourceFilterByMode[state.activeMode] = "";
       }
-      catalogTabs.forEach((el) => el.classList.toggle("active", el === tab));
-      runLoad();
+      runLoad("push");
     });
   });
 
@@ -188,8 +214,8 @@ export function bindMainEvents({
     catalogSortOrderSelect.value = "asc";
     syncCatalogSortOrderToggle();
     state.activeCatalogTab = "all";
-    catalogTabs.forEach((el) => el.classList.toggle("active", el.dataset.tab === "all"));
-    runLoad();
+    catalogTabs.forEach((el) => el.classList.remove("active"));
+    runLoad("push");
   });
 
   catalogTabs.forEach((tab) => {

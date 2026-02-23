@@ -755,6 +755,12 @@ button {
   flex-wrap: wrap;
 }
 
+.tabs-inline {
+  margin: 0;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+}
+
 .tab {
   min-height: 36px;
   border: 1px solid var(--line);
@@ -1288,6 +1294,67 @@ label {
   margin: 6px 0 10px;
 }
 
+.detail-villager-photo-section {
+  margin: 10px 0 14px;
+}
+
+.detail-villager-photo-list {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-villager-photo-card {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  background: #fdfefb;
+}
+
+.detail-villager-photo-image {
+  width: 84px;
+  height: 84px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #f1f4eb;
+  object-fit: cover;
+}
+
+.detail-villager-photo-body {
+  min-width: 0;
+}
+
+.detail-villager-photo-name {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  color: var(--text-strong);
+}
+
+.detail-villager-photo-meta {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.detail-villager-photo-owned {
+  margin-top: 6px;
+  min-height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.detail-villager-photo-owned.active {
+  border-color: var(--accent);
+  background: #eef8e9;
+  color: var(--accent-strong);
+}
+
 .detail-color-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1739,6 +1806,10 @@ label {
     flex: none;
   }
 
+  .controls-inline > #catalogToggleAllBtn {
+    grid-column: 1 / -1;
+  }
+
   .controls-inline > select,
   .controls-inline > button {
     min-width: 0;
@@ -1748,6 +1819,18 @@ label {
 
   #catalogArtGuideBtn {
     grid-column: 1 / -1;
+  }
+
+  #catalogTabs.tabs-inline {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  #catalogTabs.tabs-inline .tab {
+    width: 100%;
+    padding: 0 8px;
   }
 
   .home-resident-grid {

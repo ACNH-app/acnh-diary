@@ -273,7 +273,18 @@
           <div class="control-group">
             <h2>필터/정렬</h2>
             <div class="controls controls-inline">
+              <button
+                id="catalogToggleAllBtn"
+                type="button"
+                onclick="return window.__acnhToggleAllOwnedInline(event);"
+              >
+                전체
+              </button>
               <input id="catalogSearchInput" type="text" placeholder="이름 검색" />
+              <div class="tabs tabs-inline" id="catalogTabs">
+                <button type="button" class="tab" data-tab="owned">보유만</button>
+                <button type="button" class="tab" data-tab="unowned">미보유</button>
+              </div>
               <select id="catalogExtraSelect" class="hidden"></select>
               <button id="catalogArtGuideBtn" type="button" class="hidden">진품/가품 특징</button>
               <select id="catalogSortBySelect">
@@ -288,22 +299,9 @@
               </select>
               <button id="catalogSortOrderToggleBtn" type="button" aria-label="오름차순 정렬">↑</button>
               <button id="recipeTagPickerBtn" type="button" class="hidden">태그 선택</button>
-              <button
-                id="catalogToggleAllBtn"
-                type="button"
-                onclick="return window.__acnhToggleAllOwnedInline(event);"
-              >
-                전체
-              </button>
               <button id="catalogResetBtn" type="button">초기화</button>
             </div>
           </div>
-        </section>
-
-        <section class="tabs" id="catalogTabs">
-          <button type="button" class="tab active" data-tab="all">전체</button>
-          <button type="button" class="tab" data-tab="owned">보유/완료</button>
-          <button type="button" class="tab" data-tab="unowned">미보유</button>
         </section>
         <section id="recipeTagActiveBar" class="recipe-tag-active-bar hidden"></section>
         <section id="subCategoryTabs" class="sub-category-tabs hidden"></section>
@@ -352,7 +350,7 @@
             <h3>하우스 이미지</h3>
             <div id="detailExtraImages" class="variation-grid"></div>
           </section>
-          <section>
+          <section id="detailVariationsSection">
             <h3>변형(색상/패턴)</h3>
             <div class="variation-actions">
               <button id="variationMarkAllBtn" type="button">전체 보유</button>

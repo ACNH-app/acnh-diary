@@ -18,6 +18,7 @@ import {
   updateVillagerState,
   updateCatalogVariationState,
   updateCatalogVariationStateBatch,
+  updateCatalogState,
   deletePlayer,
   updateIslandProfile,
 } from "./js/api.js";
@@ -27,7 +28,23 @@ import {
   initializeCalendarState,
   loadCalendarMonth,
 } from "./js/calendar.js";
-import { brandHomeBtn, calendarSelectedDate, resultCount } from "./js/dom.js";
+import {
+  brandHomeBtn,
+  calendarSelectedDate,
+  catalogExtraSelect,
+  catalogSearchInput,
+  catalogSortBySelect,
+  catalogSortOrderSelect,
+  catalogTabs,
+  personalitySelect,
+  resultCount,
+  searchInput,
+  sortBySelect,
+  sortOrderSelect,
+  speciesSelect,
+  subtypeSelect,
+  villagerTabs,
+} from "./js/dom.js";
 import { createDataController } from "./js/data.js";
 import { createDetailController } from "./js/detail.js";
 import { bindMainEvents } from "./js/events.js";
@@ -46,6 +63,119 @@ import { getEffectiveNow } from "./js/utils.js";
 let detailController = null;
 let calendarReloadMonth = null;
 let calendarLoadDay = null;
+let historyRestoreInProgress = false;
+let lastViewQuery = "";
+
+function isCatalogMode(mode) {
+  return mode !== "home" && mode !== "villagers";
+}
+
+function syncTabButtonStates() {
+  villagerTabs.forEach((el) => {
+    const tab = String(el?.dataset?.tab || "all");
+    el.classList.toggle("active", tab === state.activeVillagerTab);
+  });
+  catalogTabs.forEach((el) => {
+    const tab = String(el?.dataset?.tab || "all");
+    el.classList.toggle("active", tab === state.activeCatalogTab);
+  });
+}
+
+function serializeViewQuery() {
+  const params = new URLSearchParams();
+  params.set("mode", String(state.activeMode || "home"));
+  if (state.activeMode === "villagers") {
+    params.set("vtab", String(state.activeVillagerTab || "all"));
+    if (searchInput.value.trim()) params.set("vq", searchInput.value.trim());
+    if (personalitySelect.value) params.set("personality", personalitySelect.value);
+    if (speciesSelect.value) params.set("species", speciesSelect.value);
+    if (subtypeSelect.value) params.set("subtype", subtypeSelect.value);
+    if (sortBySelect.value) params.set("vsort", sortBySelect.value);
+    if (sortOrderSelect.value) params.set("vorder", sortOrderSelect.value);
+  } else if (isCatalogMode(state.activeMode)) {
+    params.set("ctab", String(state.activeCatalogTab || "all"));
+    if (catalogSearchInput.value.trim()) params.set("cq", catalogSearchInput.value.trim());
+    if (catalogSortBySelect.value) params.set("csort", catalogSortBySelect.value);
+    if (catalogSortOrderSelect.value) params.set("corder", catalogSortOrderSelect.value);
+    const sub = String(state.subCategoryStateByMode?.[state.activeMode] || "");
+    if (sub) params.set("sub", sub);
+    if (catalogExtraSelect?.value) params.set("extra", catalogExtraSelect.value);
+    if (state.activeMode === "recipes") {
+      const source = String(state.sourceFilterByMode?.recipes || "").trim();
+      if (source) params.set("source", source);
+      const tags = Array.isArray(state.recipeTagSelectionByMode?.recipes)
+        ? state.recipeTagSelectionByMode.recipes
+        : [];
+      if (tags.length) params.set("rtags", tags.join(","));
+      const match = String(state.recipeTagMatchModeByMode?.recipes || "and").toLowerCase();
+      if (match === "or") params.set("rmatch", "or");
+    }
+  }
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+function commitViewHistory(historyAction = "replace") {
+  if (historyRestoreInProgress) return;
+  const query = serializeViewQuery();
+  if (!query && !lastViewQuery) return;
+  const url = `${window.location.pathname}${query}`;
+  if (historyAction === "push" && query !== lastViewQuery) {
+    window.history.pushState({ q: query }, "", url);
+  } else {
+    window.history.replaceState({ q: query }, "", url);
+  }
+  lastViewQuery = query;
+}
+
+function applyViewFromUrlSearch(search) {
+  const params = new URLSearchParams(String(search || ""));
+  const mode = params.get("mode") || "home";
+  const knownModes = new Set((state.navModes || []).map((m) => String(m?.key || "")));
+  state.activeMode = knownModes.has(mode) ? mode : "home";
+
+  state.activeVillagerTab = params.get("vtab") || "all";
+  searchInput.value = params.get("vq") || "";
+  personalitySelect.value = params.get("personality") || "";
+  speciesSelect.value = params.get("species") || "";
+  subtypeSelect.value = params.get("subtype") || "";
+  sortBySelect.value = params.get("vsort") || "name";
+  sortOrderSelect.value = params.get("vorder") || "asc";
+
+  state.activeCatalogTab = params.get("ctab") || "all";
+  catalogSearchInput.value = params.get("cq") || "";
+  catalogSortBySelect.value = params.get("csort") || (
+    ["bugs", "fish", "sea", "recipes"].includes(state.activeMode) ? "number" : "name"
+  );
+  catalogSortOrderSelect.value = params.get("corder") || "asc";
+
+  const sub = params.get("sub") || "";
+  state.activeSubCategory = sub;
+  if (state.activeMode) {
+    state.subCategoryStateByMode[state.activeMode] = sub;
+  }
+  catalogExtraSelect.value = params.get("extra") || "";
+
+  if (!state.sourceFilterByMode || typeof state.sourceFilterByMode !== "object") {
+    state.sourceFilterByMode = {};
+  }
+  state.sourceFilterByMode.recipes = params.get("source") || "";
+
+  if (!state.recipeTagSelectionByMode || typeof state.recipeTagSelectionByMode !== "object") {
+    state.recipeTagSelectionByMode = {};
+  }
+  const tagRaw = params.get("rtags") || "";
+  state.recipeTagSelectionByMode.recipes = tagRaw
+    ? tagRaw.split(",").map((x) => String(x || "").trim()).filter(Boolean)
+    : [];
+
+  if (!state.recipeTagMatchModeByMode || typeof state.recipeTagMatchModeByMode !== "object") {
+    state.recipeTagMatchModeByMode = {};
+  }
+  state.recipeTagMatchModeByMode.recipes = params.get("rmatch") === "or" ? "or" : "and";
+
+  syncTabButtonStates();
+}
 
 async function navigateToMode(mode) {
   const target = String(mode || "").trim();
@@ -72,9 +202,11 @@ async function navigateToMode(mode) {
         await ensureHomeSummaryLoaded();
         await ensurePlayersLoaded();
         await ensureCalendarLoaded();
+        commitViewHistory("push");
         return;
       }
       await dataController.loadCurrentModeData();
+      commitViewHistory("push");
     },
   });
   if (state.activeMode === "home") {
@@ -86,6 +218,7 @@ async function navigateToMode(mode) {
     return;
   }
   await dataController.loadCurrentModeData();
+  commitViewHistory("push");
 }
 
 const dataController = createDataController({
@@ -100,10 +233,14 @@ const dataController = createDataController({
     if (!detailController) return;
     detailController.openVillagerDetail(villager);
   },
+  onStateChange: (historyAction = "replace") => {
+    commitViewHistory(historyAction);
+  },
 });
 
 detailController = createDetailController({
   getJSON,
+  updateCatalogState,
   updateCatalogVariationState,
   updateCatalogVariationStateBatch,
   scheduleCatalogRefresh: dataController.scheduleCatalogRefresh,
@@ -125,6 +262,9 @@ bindMainEvents({
   toggleVisibleCatalogOwned: dataController.toggleVisibleCatalogOwned,
   updateScrollTopButton,
   detailController,
+  onStateChange: (historyAction = "replace") => {
+    commitViewHistory(historyAction);
+  },
 });
 window.__acnhToggleAllOwned = () => dataController.toggleVisibleCatalogOwned();
 window.__acnhCurrentMode = state.activeMode;
@@ -225,6 +365,45 @@ window.addEventListener("acnh:navigate-mode", (e) => {
   const mode = e?.detail?.mode || "";
   navigateToMode(mode).catch((err) => console.error(err));
 });
+window.addEventListener("popstate", () => {
+  historyRestoreInProgress = true;
+  applyViewFromUrlSearch(window.location.search);
+  window.__acnhCurrentMode = state.activeMode;
+  updatePanels();
+  renderNav({
+    onModeChange: () => {
+      if (state.activeMode !== "recipes" && state.sourceFilterByMode) {
+        state.sourceFilterByMode.recipes = "";
+      }
+      window.__acnhCurrentMode = state.activeMode;
+      updatePanels();
+      if (state.activeMode === "home") {
+        ensureHomeProfileLoaded().catch((err) => console.error(err));
+        ensureHomeIslandResidentsLoaded().catch((err) => console.error(err));
+        ensureHomeSummaryLoaded().catch((err) => console.error(err));
+        ensurePlayersLoaded().catch((err) => console.error(err));
+        ensureCalendarLoaded().catch((err) => console.error(err));
+        return;
+      }
+      dataController.loadCurrentModeData().catch((err) => console.error(err));
+    },
+  });
+  const task = state.activeMode === "home"
+    ? Promise.all([
+        ensureHomeProfileLoaded(),
+        ensureHomeIslandResidentsLoaded(),
+        ensureHomeSummaryLoaded(),
+        ensurePlayersLoaded(),
+        ensureCalendarLoaded(),
+      ])
+    : dataController.loadCurrentModeData();
+  Promise.resolve(task)
+    .catch((err) => console.error(err))
+    .finally(() => {
+      lastViewQuery = window.location.search || "";
+      historyRestoreInProgress = false;
+    });
+});
 if (brandHomeBtn) {
   brandHomeBtn.addEventListener("click", () => {
     navigateToMode("home").catch((err) => console.error(err));
@@ -243,6 +422,9 @@ if (brandHomeBtn) {
       state.navModes.unshift({ key: "villagers", label: "주민" });
     }
 
+    applyViewFromUrlSearch(window.location.search);
+    window.__acnhCurrentMode = state.activeMode;
+
     renderNav({
       onModeChange: () => {
         if (state.activeMode !== "recipes" && state.sourceFilterByMode) {
@@ -256,9 +438,11 @@ if (brandHomeBtn) {
           ensureHomeSummaryLoaded().catch((err) => console.error(err));
           ensurePlayersLoaded().catch((err) => console.error(err));
           ensureCalendarLoaded().catch((err) => console.error(err));
+          commitViewHistory("push");
           return;
         }
         dataController.loadCurrentModeData().catch((err) => console.error(err));
+        commitViewHistory("push");
       },
     });
     updatePanels();
@@ -272,6 +456,7 @@ if (brandHomeBtn) {
     if (state.activeMode !== "home") {
       await dataController.loadCurrentModeData();
     }
+    commitViewHistory("replace");
     updateScrollTopButton();
   } catch (err) {
     console.error(err);

@@ -486,6 +486,7 @@ export function createDetailController({
     state.activeDetailType = "catalog";
     state.activeDetailPayload = payload;
     const isRecipeMode = state.activeMode === "recipes";
+    const hideVariationInfoMode = state.activeMode === "recipes" || state.activeMode === "reactions";
     const summary = payload.summary || {};
     const nameKo = String(payload.item?.name_ko || payload.item?.name || "").trim();
     const nameEn = String(summary.name_en || payload.item?.name_en || "").trim();
@@ -512,7 +513,7 @@ export function createDetailController({
 
     detailFields.innerHTML = "";
     const detailFieldsRows = Array.isArray(payload.fields) ? payload.fields : [];
-    const filteredDetailFields = isRecipeMode
+    const filteredDetailFields = hideVariationInfoMode
       ? detailFieldsRows.filter((field) => {
           const label = String(field?.label || "");
           return !/(색|패턴|변형|color|pattern|variation)/i.test(label);
@@ -558,10 +559,10 @@ export function createDetailController({
 
     detailVariations.innerHTML = "";
     const variations = payload.variations || [];
-    if (variationMarkAllBtn) variationMarkAllBtn.classList.toggle("hidden", isRecipeMode);
-    if (variationUnmarkAllBtn) variationUnmarkAllBtn.classList.toggle("hidden", isRecipeMode);
-    if (detailVariationsSection) detailVariationsSection.classList.toggle("hidden", isRecipeMode);
-    if (isRecipeMode) {
+    if (variationMarkAllBtn) variationMarkAllBtn.classList.toggle("hidden", hideVariationInfoMode);
+    if (variationUnmarkAllBtn) variationUnmarkAllBtn.classList.toggle("hidden", hideVariationInfoMode);
+    if (detailVariationsSection) detailVariationsSection.classList.toggle("hidden", hideVariationInfoMode);
+    if (hideVariationInfoMode) {
       detailVariations.classList.add("hidden");
       state.activeDetailVariations = [];
     } else {
@@ -681,7 +682,7 @@ export function createDetailController({
 
     detailRawFields.innerHTML = "";
     const rawRows = Array.isArray(payload.raw_fields) ? payload.raw_fields : [];
-    const filteredRawRows = isRecipeMode
+    const filteredRawRows = hideVariationInfoMode
       ? rawRows.filter((row) => {
           const key = String(row?.key || "");
           return !/(색|패턴|변형|color|pattern|variation)/i.test(key);

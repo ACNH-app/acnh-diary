@@ -204,13 +204,7 @@ export function bindMainEvents({
     }
     state.activeSubCategory = "";
     if (state.activeMode) state.subCategoryStateByMode[state.activeMode] = "";
-    if (state.activeMode === "events") {
-      catalogSortBySelect.value = "date";
-    } else if (["bugs", "fish", "sea", "recipes"].includes(state.activeMode)) {
-      catalogSortBySelect.value = "number";
-    } else {
-      catalogSortBySelect.value = "name";
-    }
+    catalogSortBySelect.value = "number";
     catalogSortOrderSelect.value = "asc";
     syncCatalogSortOrderToggle();
     state.activeCatalogTab = "all";

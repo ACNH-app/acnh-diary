@@ -94,6 +94,7 @@ export const catalogResetBtn = document.getElementById("catalogResetBtn");
 export const catalogTabs = Array.from(document.querySelectorAll("#catalogTabs .tab"));
 export const subCategoryTabs = document.getElementById("subCategoryTabs");
 export const recipeTagActiveBar = document.getElementById("recipeTagActiveBar");
+export const sourceFilterActiveBar = document.getElementById("sourceFilterActiveBar");
 export const recipeTagModal = document.getElementById("recipeTagModal");
 export const recipeTagModalBackdrop = document.getElementById("recipeTagModalBackdrop");
 export const recipeTagCloseBtn = document.getElementById("recipeTagCloseBtn");

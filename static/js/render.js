@@ -36,6 +36,34 @@ const monthToNumber = {
   december: 12,
 };
 
+function isEventLikeReactionType(value) {
+  const text = String(value || "").trim().toLowerCase();
+  if (!text) return false;
+  return [
+    "halloween",
+    "festivale",
+    "festival",
+    "carnival",
+    "toy day",
+    "bunny day",
+    "할로윈",
+    "카니발",
+    "페스티벌",
+    "토이데이",
+    "이스터",
+  ].some((token) => text.includes(token));
+}
+
+function isReactionSourceNotForSale(source) {
+  const text = String(source || "").trim();
+  if (!text) return false;
+  if (text === "펌킹") return true;
+  if (text.endsWith("주민")) return true;
+  if (text.startsWith("그룹 체조(")) return true;
+  if (text.startsWith("DJ K.K. 공연(")) return true;
+  return false;
+}
+
 function parseBirthdayNumberPart(value) {
   const text = String(value || "").trim().toLowerCase();
   if (!text) return 0;
@@ -622,6 +650,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const isMuseumMode = ["bugs", "fish", "sea"].includes(state.activeMode);
     const isMusicMode = musicMode;
     const isRecipeMode = state.activeMode === "recipes";
+    const isReactionMode = state.activeMode === "reactions";
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.loading = "lazy";
@@ -632,7 +661,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     nameKo.textContent = v.name_ko || v.name_en;
     nameEn.textContent =
-      isArtMode || isMusicMode || state.activeMode === "recipes"
+      isArtMode || isMusicMode || isRecipeMode || isReactionMode
         ? ""
         : v.name_en
           ? `EN: ${v.name_en}`
@@ -644,7 +673,16 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const variationQtyTotal = Number(v.variation_quantity_total || 0);
     const variationInfo = variationTotal ? ` | 변형: ${ownedCount}/${variationTotal}` : "";
     const authenticityInfo = v.authenticity_ko ? ` | ${v.authenticity_ko}` : "";
-    meta.textContent = isArtMode || isMusicMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
+    if (isReactionMode) {
+      const eventType = String(v.event_type || "").trim();
+      const sourceText = String(v.reaction_source || v.source || "").trim();
+      const eventNorm = eventType.toLowerCase().replace(/\s+/g, "");
+      const sourceNorm = sourceText.toLowerCase().replace(/\s+/g, "");
+      const isDuplicate = eventNorm && sourceNorm && (sourceNorm.includes(eventNorm) || eventNorm.includes(sourceNorm));
+      meta.textContent = isEventLikeReactionType(eventType) && !isDuplicate ? `타입: ${eventType}` : "";
+    } else {
+      meta.textContent = isArtMode || isMusicMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
+    }
 
     if (isArtMode) {
       desc.textContent = "";
@@ -661,7 +699,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       }
       card.classList.add("music-card");
       icon.classList.add("music-icon");
-    } else if (v.event_type || v.date) {
+    } else if (!isReactionMode && (v.event_type || v.date)) {
       const parts = [];
       if (v.event_type) parts.push(`타입: ${v.event_type}`);
       if (v.date) parts.push(`날짜: ${v.date}`);
@@ -766,12 +804,42 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         desc.appendChild(document.createElement("br"));
         desc.appendChild(mat);
       }
-    } else if (state.activeMode === "reactions") {
-      const src = v.reaction_source || v.source || "획득방법 정보 없음";
-      const parts = [`획득방법: ${src}`];
-      if (v.event_type) parts.push(`연관 이벤트: ${v.event_type}`);
-      if (v.date) parts.push(`버전: ${v.date}`);
-      desc.textContent = parts.join(" | ");
+    } else if (isReactionMode) {
+      const src = v.source || v.reaction_source || "획득방법 정보 없음";
+      desc.textContent = "";
+      const label = document.createElement("span");
+      label.textContent = "획득방법: ";
+      desc.appendChild(label);
+      if (handlers.onFilterBySource && src !== "획득방법 정보 없음") {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = `source-chip ${activeSourceFilter === src ? "active" : ""}`;
+        chip.textContent = src;
+        chip.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          await handlers.onFilterBySource(src);
+        });
+        desc.appendChild(chip);
+      } else {
+        const text = document.createElement("span");
+        text.textContent = src;
+        desc.appendChild(text);
+      }
+      if (isReactionSourceNotForSale(src)) {
+        desc.appendChild(document.createTextNode(" "));
+        const nfsBtn = document.createElement("button");
+        nfsBtn.type = "button";
+        nfsBtn.className = `source-chip ${activeSourceFilter === "__not_for_sale__" ? "active" : ""}`;
+        nfsBtn.textContent = "비매품";
+        nfsBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!handlers.onFilterBySource) return;
+          await handlers.onFilterBySource("__not_for_sale__");
+        });
+        desc.appendChild(nfsBtn);
+      }
     } else if (Array.isArray(v.styles_ko) && v.styles_ko.length) {
       const labelThemes =
         Array.isArray(v.label_themes_ko) && v.label_themes_ko.length ? v.label_themes_ko.join(", ") : "-";
@@ -779,7 +847,10 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     } else {
       desc.textContent = v.sell ? `판매가: ${v.sell}` : "";
     }
-    if (v.not_for_sale && !isMusicMode && state.activeMode !== "recipes") {
+    const showNotForSaleTag = isReactionMode
+      ? isReactionSourceNotForSale(v.source || v.reaction_source)
+      : v.not_for_sale && !isMusicMode && state.activeMode !== "recipes";
+    if (showNotForSaleTag && !isReactionMode) {
       const tag = document.createElement("span");
       tag.className = "music-pill-not-sale";
       tag.textContent = "비매품";
@@ -805,6 +876,8 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     }
     if (isMusicMode) {
       ownedLabel.textContent = owned.checked ? "보유" : "미보유";
+    } else if (isReactionMode) {
+      ownedLabel.textContent = owned.checked ? "습득" : "미습득";
     } else {
       ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
       if (isRecipeMode && ownedLabel) {
@@ -834,7 +907,11 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     }
     owned.addEventListener("change", async () => {
       owned.indeterminate = false;
-      ownedLabel.textContent = isMusicMode ? (owned.checked ? "보유" : "미보유") : statusLabel;
+      ownedLabel.textContent = isMusicMode
+        ? (owned.checked ? "보유" : "미보유")
+        : isReactionMode
+          ? (owned.checked ? "습득" : "미습득")
+          : statusLabel;
       if (isRecipeMode && ownedWrapLabel) {
         ownedWrapLabel.classList.toggle("checked", owned.checked);
       }

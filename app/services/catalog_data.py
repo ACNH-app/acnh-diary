@@ -825,6 +825,62 @@ def _safe_int(value: Any, default: int = 0) -> int:
     return default
 
 
+def _normalize_reaction_event_type(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    parts = [p.strip() for p in text.split(";") if p.strip()]
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for part in parts:
+        part = re.sub(r"\s*\([^)]*\)\s*$", "", part).strip()
+        if not part:
+            continue
+        key = part.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(part)
+    if not cleaned:
+        return ""
+    return "; ".join(cleaned)
+
+
+def _is_event_like_reaction_type(value: Any) -> bool:
+    text = str(value or "").strip().lower()
+    if not text:
+        return False
+    tokens = (
+        "halloween",
+        "festivale",
+        "festival",
+        "carnival",
+        "toy day",
+        "bunny day",
+        "할로윈",
+        "카니발",
+        "페스티벌",
+        "토이데이",
+        "이스터",
+    )
+    return any(token in text for token in tokens)
+
+
+def _is_reaction_source_not_for_sale(source_text: Any) -> bool:
+    text = str(source_text or "").strip()
+    if not text:
+        return False
+    if text == "펌킹":
+        return True
+    if text.endswith("주민"):
+        return True
+    if text.startswith("그룹 체조("):
+        return True
+    if text.startswith("DJ K.K. 공연("):
+        return True
+    return False
+
+
 def _art_auth_state(row: dict[str, Any]) -> str:
     has_fake = _first_bool(row, ["has_fake", "fake_available", "is_fake_available"], False)
     return "has_fake" if has_fake else "genuine_only"
@@ -946,7 +1002,7 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
             **row,
             "source_notes": str(source_notes_raw or "").strip(),
             "version": str(row.get("versionAdded") or "").strip(),
-            "event_type": str(row.get("seasonEvent") or "").strip(),
+            "event_type": _normalize_reaction_event_type(row.get("seasonEvent")),
         }
 
     local_number_value = 0
@@ -1013,7 +1069,7 @@ def _make_catalog_item(catalog_type: str, row: dict[str, Any]) -> dict[str, Any]
         event_country_map = load_event_country_map()
         item["event_country_ko"] = str(event_country_map.get(origin_key, "")).strip()
     elif catalog_type == "reactions":
-        item["event_type"] = str(row.get("seasonEvent") or "").strip()
+        item["event_type"] = _normalize_reaction_event_type(row.get("seasonEvent"))
         item["date"] = str(row.get("version") or row.get("versionAdded") or "").strip()
         item["icon_filename"] = str(row.get("iconFilename") or "").strip()
         item["season_event_exclusive"] = bool(row.get("seasonEventExclusive"))
@@ -1536,7 +1592,15 @@ def _catalog_detail_payload(
     # summary 블록에서 art 관련 필드를 공통으로 참조하므로 기본값을 먼저 둔다.
     real_info: dict[str, Any] = {}
     fake_info: dict[str, Any] = {}
-    not_for_sale = _is_not_for_sale(detail, item)
+    # 상세 모달 비매품 판정은 목록 카드와 동일 기준(item.not_for_sale)을 우선 사용한다.
+    # 값이 없을 때만 상세 데이터로 보조 계산한다.
+    if "not_for_sale" in item:
+        try:
+            not_for_sale = bool(item.get("not_for_sale"))
+        except Exception:
+            not_for_sale = _is_not_for_sale(detail, item)
+    else:
+        not_for_sale = _is_not_for_sale(detail, item)
     detail_source_pairs = extract_source_pairs(detail)
     if not detail_source_pairs:
         raw_item_pairs = item.get("source_pairs")
@@ -1573,6 +1637,8 @@ def _catalog_detail_payload(
             acquire_text = f"{source_text} ({source_notes_text})"
         else:
             acquire_text = source_text or source_notes_text
+    if catalog_type == "reactions":
+        not_for_sale = _is_reaction_source_not_for_sale(acquire_text)
     common_fields = [
         ("카테고리", category_ko or category),
         ("구매가", str(detail.get("buy") or item.get("buy") or "")),
@@ -1583,6 +1649,17 @@ def _catalog_detail_payload(
         ("URL", str(detail.get("url") or item.get("url") or "")),
     ]
     fields = [{"label": k, "value": v} for k, v in common_fields if v]
+    if catalog_type == "reactions":
+        reaction_event_type = _normalize_reaction_event_type(
+            detail.get("seasonEvent") or detail.get("type") or item.get("event_type") or ""
+        )
+        source_norm = str(acquire_text or "").lower().replace(" ", "")
+        event_norm = reaction_event_type.lower().replace(" ", "")
+        is_dup = bool(event_norm and source_norm and (event_norm in source_norm or source_norm in event_norm))
+        fields = [{"label": "획득방법", "value": acquire_text}]
+        if reaction_event_type and _is_event_like_reaction_type(reaction_event_type) and not is_dup:
+            fields.append({"label": "타입", "value": reaction_event_type})
+        fields.append({"label": "비매품 여부", "value": "비매품" if not_for_sale else "구매 가능"})
     if catalog_type == "recipes":
         material_rows = _recipe_material_rows(detail)
         if material_rows:

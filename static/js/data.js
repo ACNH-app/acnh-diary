@@ -8,6 +8,7 @@ import {
   catalogTabs,
   personalitySelect,
   recipeTagActiveBar,
+  sourceFilterActiveBar,
   recipeTagApplyBtn,
   recipeTagCloseBtn,
   recipeTagList,
@@ -94,7 +95,7 @@ export function createDataController({
     return null;
   };
   const getActiveSourceFilter = (catalogType) => {
-    if (!catalogType || catalogType !== "recipes") return "";
+    if (!catalogType || (catalogType !== "recipes" && catalogType !== "reactions")) return "";
     const map = state.sourceFilterByMode && typeof state.sourceFilterByMode === "object"
       ? state.sourceFilterByMode
       : {};
@@ -124,6 +125,15 @@ export function createDataController({
       : {};
     const mode = String(map[catalogType] || "and").toLowerCase();
     return mode === "or" ? "or" : "and";
+  };
+  const isReactionSourceNotForSale = (sourceText) => {
+    const text = String(sourceText || "").trim();
+    if (!text) return false;
+    if (text === "펌킹") return true;
+    if (text.endsWith("주민")) return true;
+    if (text.startsWith("그룹 체조(")) return true;
+    if (text.startsWith("DJ K.K. 공연(")) return true;
+    return false;
   };
   const setRecipeTagMatchMode = (catalogType, mode) => {
     if (!state.recipeTagMatchModeByMode || typeof state.recipeTagMatchModeByMode !== "object") {
@@ -176,23 +186,23 @@ export function createDataController({
       cache.delete(id);
     }
   };
+  const normalizeCatalogSortBy = (value) => {
+    const key = String(value || "").trim();
+    return key === "name" || key === "number" || key === "source" ? key : "number";
+  };
   const sortCatalogLocal = (rows, sortBy, sortOrder) => {
+    const safeSortBy = normalizeCatalogSortBy(sortBy);
     const sign = sortOrder === "desc" ? -1 : 1;
     const safeRows = [...rows];
     safeRows.sort((a, b) => {
-      if (sortBy === "number") {
+      if (safeSortBy === "number") {
         const an = Number(a?.number ?? Number.MAX_SAFE_INTEGER);
         const bn = Number(b?.number ?? Number.MAX_SAFE_INTEGER);
         if (an !== bn) return (an - bn) * sign;
-      } else if (sortBy === "category") {
-        const ac = a?.category_ko || a?.category || "";
-        const bc = b?.category_ko || b?.category || "";
-        const diff = textKoSort(ac, bc);
-        if (diff) return diff * sign;
-      } else if (sortBy === "date") {
-        const ad = String(a?.date || "");
-        const bd = String(b?.date || "");
-        const diff = ad.localeCompare(bd);
+      } else if (safeSortBy === "source") {
+        const as = String(a?.source || "").trim();
+        const bs = String(b?.source || "").trim();
+        const diff = textKoSort(as, bs);
         if (diff) return diff * sign;
       }
       const nameDiff = textKoSort(catalogName(a), catalogName(b));
@@ -204,6 +214,7 @@ export function createDataController({
   let recipeTagDraftSelection = [];
   let recipeTagDraftMatchMode = "and";
   let recipeTagModalBound = false;
+  let sourceFilterBarBound = false;
 
   async function ensureRecipeTagMeta(catalogType) {
     if (catalogType !== "recipes") return [];
@@ -258,6 +269,28 @@ export function createDataController({
     });
     recipeTagActiveBar.innerHTML = `<span class="recipe-tag-match-pill">태그 ${mode.toUpperCase()}</span>${chips.join("")}`;
     recipeTagActiveBar.classList.remove("hidden");
+  }
+
+  function renderSourceFilterActiveBar(catalogType) {
+    if (!sourceFilterActiveBar) return;
+    if (catalogType !== "recipes" && catalogType !== "reactions") {
+      sourceFilterActiveBar.classList.add("hidden");
+      sourceFilterActiveBar.innerHTML = "";
+      return;
+    }
+    const active = getActiveSourceFilter(catalogType);
+    if (!active) {
+      sourceFilterActiveBar.classList.add("hidden");
+      sourceFilterActiveBar.innerHTML = "";
+      return;
+    }
+    const label = active === "__not_for_sale__" ? "비매품" : active;
+    const prefix = catalogType === "reactions" ? "리액션 필터" : "획득방법 필터";
+    sourceFilterActiveBar.innerHTML = [
+      `<span class="recipe-tag-match-pill">${prefix}</span>`,
+      `<button type="button" class="recipe-tag-chip active" data-source-filter="${active}" title="필터 해제">${label} ×</button>`,
+    ].join("");
+    sourceFilterActiveBar.classList.remove("hidden");
   }
 
   function renderRecipeTagModalList(catalogType) {
@@ -339,6 +372,22 @@ export function createDataController({
       await loadCatalog("recipes", { preserveVisible: false });
       if (onStateChange) onStateChange("push");
     });
+    if (!sourceFilterBarBound && sourceFilterActiveBar) {
+      sourceFilterBarBound = true;
+      sourceFilterActiveBar.addEventListener("click", async (e) => {
+        const button = e.target && e.target.closest("button[data-source-filter]");
+        if (!button) return;
+        if (!state.sourceFilterByMode || typeof state.sourceFilterByMode !== "object") {
+          state.sourceFilterByMode = {};
+        }
+        const mode = String(state.activeMode || "");
+        if (!mode) return;
+        state.sourceFilterByMode[mode] = "";
+        renderSourceFilterActiveBar(mode);
+        await loadCatalog(mode, { preserveVisible: false });
+        if (onStateChange) onStateChange("push");
+      });
+    }
   }
 
   async function enrichMusicCardRows(rows) {
@@ -604,9 +653,10 @@ export function createDataController({
       renderRecipeTagActiveBar("");
       closeRecipeTagModal();
     }
+    renderSourceFilterActiveBar(catalogType);
 
-    // 생물도감 + 레시피는 번호순이 기본 정렬.
-    if (["bugs", "fish", "sea", "recipes"].includes(catalogType) && !catalogSortInitialized.has(catalogType)) {
+    // 카탈로그 기본 정렬은 번호순.
+    if (!catalogSortInitialized.has(catalogType)) {
       catalogSortBySelect.value = "number";
       catalogSortOrderSelect.value = "asc";
       catalogSortInitialized.add(catalogType);
@@ -768,20 +818,30 @@ export function createDataController({
       if (ownedFilter !== null && Boolean(row?.owned) !== ownedFilter) return false;
 
       if (sourceFilter) {
-        const pairTokens = Array.isArray(row?.source_pairs)
-          ? row.source_pairs
-            .map((p) => String(p?.source || "").trim())
-            .filter(Boolean)
-          : [];
-        const source = String(row?.source || "").trim();
-        const tokens = pairTokens.length
-          ? pairTokens
-          : source
-            .split(",")
-            .map((x) => String(x || "").trim())
-            .filter(Boolean);
-        if (!tokens.length) return false;
-        if (!tokens.includes(sourceFilter)) return false;
+        if (catalogType === "reactions") {
+          if (sourceFilter === "__not_for_sale__") {
+            const src = String(row?.source || row?.reaction_source || "").trim();
+            if (!isReactionSourceNotForSale(src)) return false;
+          } else {
+            const src = String(row?.source || row?.reaction_source || "").trim();
+            if (!src || src !== sourceFilter) return false;
+          }
+        } else {
+          const pairTokens = Array.isArray(row?.source_pairs)
+            ? row.source_pairs
+              .map((p) => String(p?.source || "").trim())
+              .filter(Boolean)
+            : [];
+          const source = String(row?.source || "").trim();
+          const tokens = pairTokens.length
+            ? pairTokens
+            : source
+              .split(",")
+              .map((x) => String(x || "").trim())
+              .filter(Boolean);
+          if (!tokens.length) return false;
+          if (!tokens.includes(sourceFilter)) return false;
+        }
       }
 
       if (extraValue) {
@@ -798,7 +858,7 @@ export function createDataController({
 
     filtered = sortCatalogLocal(
       filtered,
-      String(catalogSortBySelect.value || "name"),
+      normalizeCatalogSortBy(catalogSortBySelect.value || "number"),
       String(catalogSortOrderSelect.value || "asc")
     );
 
@@ -897,13 +957,14 @@ export function createDataController({
           safeOpenDetail(itemId);
         },
         onFilterBySource: async (source) => {
-          if (catalogType !== "recipes") return;
+          if (catalogType !== "recipes" && catalogType !== "reactions") return;
           const next = String(source || "").trim();
           if (!state.sourceFilterByMode || typeof state.sourceFilterByMode !== "object") {
             state.sourceFilterByMode = {};
           }
           const current = String(state.sourceFilterByMode[catalogType] || "").trim();
           state.sourceFilterByMode[catalogType] = current === next ? "" : next;
+          renderSourceFilterActiveBar(catalogType);
           await loadCatalog(catalogType, { preserveVisible: false });
           if (onStateChange) onStateChange("push");
         },

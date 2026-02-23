@@ -204,31 +204,6 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             "items": paged_items,
         }
 
-    def get_art_guide() -> dict[str, Any]:
-        if "art" not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="미술품 카탈로그가 없습니다.")
-        items = deps.load_catalog("art")
-        rows = deps.sort_catalog_items(items, sort_by="name", sort_order="asc")
-        return {
-            "count": len(rows),
-            "items": [
-                {
-                    "id": x["id"],
-                    "name": x.get("name") or x.get("name_en") or "",
-                    "name_ko": x.get("name_ko") or "",
-                    "name_en": x.get("name_en") or "",
-                    "authenticity": x.get("authenticity") or "",
-                    "authenticity_ko": x.get("authenticity_ko") or "",
-                    "real_image_url": x.get("real_image_url") or x.get("image_url") or "",
-                    "fake_image_url": x.get("fake_image_url") or "",
-                    "real_description": x.get("real_description") or "",
-                    "fake_description": x.get("fake_description") or "",
-                    "owned": bool(x.get("owned")),
-                }
-                for x in deps.with_catalog_state("art", rows)
-            ],
-        }
-
     def get_catalog_detail(catalog_type: str, item_id: str) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
             raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
@@ -621,5 +596,4 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         update_catalog_state_bulk=update_catalog_state_bulk,
         update_catalog_variation_state=update_catalog_variation_state,
         update_catalog_variation_state_batch=update_catalog_variation_state_batch,
-        get_art_guide=get_art_guide,
     )

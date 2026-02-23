@@ -1,11 +1,14 @@
 import { getJSON, updateCatalogState, updateCatalogStateBulk, updateVillagerState } from "./api.js";
 import {
   catalogExtraSelect,
-  catalogArtGuideBtn,
   catalogSearchInput,
   catalogSortOrderSelect,
   catalogSortBySelect,
+  catalogToggleAllBtn,
+  catalogToggleAllFab,
+  catalogToggleDonatedBtn,
   catalogTabs,
+  catalogDonatedTabs,
   personalitySelect,
   recipeTagActiveBar,
   sourceFilterActiveBar,
@@ -92,6 +95,11 @@ export function createDataController({
   const getActiveOwnedFilter = () => {
     if (state.activeCatalogTab === "owned") return true;
     if (state.activeCatalogTab === "unowned") return false;
+    return null;
+  };
+  const getActiveDonatedFilter = () => {
+    if (state.activeCatalogDonatedTab === "donated") return true;
+    if (state.activeCatalogDonatedTab === "undonated") return false;
     return null;
   };
   const getActiveSourceFilter = (catalogType) => {
@@ -616,9 +624,6 @@ export function createDataController({
     catalogExtraSelect.classList.add("hidden");
     catalogExtraSelect.innerHTML = "";
     catalogExtraSelect.dataset.extraType = "";
-    if (catalogArtGuideBtn) {
-      catalogArtGuideBtn.classList.toggle("hidden", catalogType !== "art");
-    }
 
     if (catalogType === "clothing") {
       fillSelect(
@@ -642,6 +647,26 @@ export function createDataController({
       catalogExtraSelect.dataset.extraType = "event_type";
       catalogExtraSelect.classList.remove("hidden");
     }
+    if (catalogToggleDonatedBtn) {
+      const isMuseumMode = ["art", "fossils", "bugs", "fish", "sea"].includes(catalogType);
+      catalogToggleDonatedBtn.classList.toggle("hidden", !isMuseumMode);
+    }
+    const ownedTabsWrap = document.getElementById("catalogTabs");
+    const isArtOnlyDonatedMode = catalogType === "art";
+    if (ownedTabsWrap) ownedTabsWrap.classList.toggle("hidden", isArtOnlyDonatedMode);
+    if (catalogToggleAllBtn) catalogToggleAllBtn.classList.toggle("hidden", isArtOnlyDonatedMode);
+    if (catalogToggleAllFab) catalogToggleAllFab.classList.toggle("hidden", isArtOnlyDonatedMode);
+    if (isArtOnlyDonatedMode) {
+      state.activeCatalogTab = "all";
+      catalogTabs.forEach((el) => el.classList.remove("active"));
+    }
+    const donatedTabsWrap = document.getElementById("catalogDonatedTabs");
+    const isMuseumMode = ["art", "fossils", "bugs", "fish", "sea"].includes(catalogType);
+    if (donatedTabsWrap) donatedTabsWrap.classList.toggle("hidden", !isMuseumMode);
+    if (!isMuseumMode) {
+      state.activeCatalogDonatedTab = "all";
+      catalogDonatedTabs.forEach((el) => el.classList.remove("active"));
+    }
 
     bindRecipeTagModalEvents();
     if (catalogType === "recipes") {
@@ -662,7 +687,10 @@ export function createDataController({
       catalogSortInitialized.add(catalogType);
     }
     const ownedTab = catalogTabs.find((el) => el.dataset.tab === "owned");
-    if (ownedTab) ownedTab.textContent = `${meta.status_label}만`;
+    if (ownedTab) {
+      const forceOwnedLabel = ["art", "fossils", "bugs", "fish", "sea"].includes(catalogType);
+      ownedTab.textContent = forceOwnedLabel ? "보유만" : `${meta.status_label}만`;
+    }
   }
 
   /** Fetch and render villagers based on current filters/sort/tab state. */
@@ -763,6 +791,7 @@ export function createDataController({
 
     const qNorm = String(catalogSearchInput.value || "").trim().toLowerCase();
     const ownedFilter = getActiveOwnedFilter();
+    const donatedFilter = getActiveDonatedFilter();
     const extraType = catalogExtraSelect.dataset.extraType || "";
     const extraValue = getExtraFilterValue();
     const subCategory = String(state.activeSubCategory || "");
@@ -816,6 +845,7 @@ export function createDataController({
       }
 
       if (ownedFilter !== null && Boolean(row?.owned) !== ownedFilter) return false;
+      if (donatedFilter !== null && Boolean(row?.donated) !== donatedFilter) return false;
 
       if (sourceFilter) {
         if (catalogType === "reactions") {
@@ -1095,6 +1125,44 @@ export function createDataController({
     await setVisibleCatalogOwned(!allOwned);
   }
 
+  async function toggleVisibleCatalogDonated() {
+    const donatedInputs = Array.from(document.querySelectorAll("#list .donated"));
+    if (!donatedInputs.length) return;
+    const allDonated = donatedInputs.every((el) => {
+      const input = /** @type {HTMLInputElement} */ (el);
+      return Boolean(input.checked);
+    });
+    const nextDonated = !allDonated;
+
+    const ids = donatedInputs
+      .map((el) => String(el?.dataset?.itemId || el?.closest?.(".card")?.dataset?.itemId || "").trim())
+      .filter(Boolean);
+    const uniqIds = Array.from(new Set(ids));
+    if (!uniqIds.length) return;
+
+    donatedInputs.forEach((el) => {
+      const input = /** @type {HTMLInputElement} */ (el);
+      input.checked = nextDonated;
+    });
+
+    const idSet = new Set(uniqIds);
+    state.renderedCatalogItems = (state.renderedCatalogItems || []).map((row) => {
+      const rid = String(row?.id || "").trim();
+      if (!idSet.has(rid)) return row;
+      return { ...row, donated: nextDonated };
+    });
+    bulkPatchCatalogCache(state.activeMode, uniqIds, (row) => ({ ...row, donated: nextDonated }));
+
+    for (const itemId of uniqIds) {
+      try {
+        await updateCatalogState(state.activeMode, itemId, { donated: nextDonated });
+        invalidateDetailCacheItem(state.activeMode, itemId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+
   /** Debounced loader for text inputs. */
   function scheduleLoad() {
     clearTimeout(state.debounceTimer);
@@ -1120,5 +1188,6 @@ export function createDataController({
     scheduleLoad,
     setVisibleCatalogOwned,
     toggleVisibleCatalogOwned,
+    toggleVisibleCatalogDonated,
   };
 }

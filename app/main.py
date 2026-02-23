@@ -261,7 +261,6 @@ app.include_router(
         get_recipe_tags_handler=handlers.catalog.get_recipe_tags,
         get_catalog_handler=handlers.catalog.get_catalog,
         get_catalog_detail_handler=handlers.catalog.get_catalog_detail,
-        get_art_guide_handler=handlers.catalog.get_art_guide,
         update_catalog_state_handler=handlers.catalog.update_catalog_state,
         update_catalog_state_bulk_handler=handlers.catalog.update_catalog_state_bulk,
         update_catalog_variation_state_handler=handlers.catalog.update_catalog_variation_state,

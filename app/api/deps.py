@@ -103,7 +103,6 @@ class CatalogHandlers:
     update_catalog_state_bulk: Callable[..., dict[str, Any]]
     update_catalog_variation_state: Callable[..., Any]
     update_catalog_variation_state_batch: Callable[..., dict[str, Any]]
-    get_art_guide: Callable[..., dict[str, Any]]
     get_recipe_tags: Callable[..., dict[str, Any]]
 
 

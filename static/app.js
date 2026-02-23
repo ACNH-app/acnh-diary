@@ -48,7 +48,6 @@ import {
 import { createDataController } from "./js/data.js";
 import { createDetailController } from "./js/detail.js";
 import { bindMainEvents } from "./js/events.js";
-import { bindArtGuideEvents } from "./js/art-guide.js";
 import {
   bindHomeEvents,
   loadHomeIslandResidents,
@@ -260,6 +259,7 @@ bindMainEvents({
   loadCurrentModeData: dataController.loadCurrentModeData,
   loadCatalogPage: dataController.loadCatalogPage,
   toggleVisibleCatalogOwned: dataController.toggleVisibleCatalogOwned,
+  toggleVisibleCatalogDonated: dataController.toggleVisibleCatalogDonated,
   updateScrollTopButton,
   detailController,
   onStateChange: (historyAction = "replace") => {
@@ -275,7 +275,6 @@ window.__acnhForceBulkToggleVisible = async () => {
   await dataController.setVisibleCatalogOwned(!allOwned);
   return true;
 };
-bindArtGuideEvents({ getJSON });
 
 async function ensureHomeProfileLoaded() {
   if (state.islandProfileLoaded) return;

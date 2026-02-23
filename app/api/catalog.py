@@ -21,7 +21,6 @@ def create_catalog_router(
     get_recipe_tags_handler: Callable[..., dict[str, Any]],
     get_catalog_handler: Callable[..., dict[str, Any]],
     get_catalog_detail_handler: Callable[..., dict[str, Any]],
-    get_art_guide_handler: Callable[..., dict[str, Any]],
     update_catalog_state_handler: Callable[..., CatalogStateOut],
     update_catalog_state_bulk_handler: Callable[..., dict[str, Any]],
     update_catalog_variation_state_handler: Callable[..., CatalogVariationStateOut],
@@ -72,10 +71,6 @@ def create_catalog_router(
     @router.get("/api/catalog/{catalog_type}/{item_id}/detail")
     def get_catalog_detail(catalog_type: str, item_id: str) -> dict[str, Any]:
         return get_catalog_detail_handler(catalog_type=catalog_type, item_id=item_id)
-
-    @router.get("/api/catalog/art/guide")
-    def get_art_guide() -> dict[str, Any]:
-        return get_art_guide_handler()
 
     @router.post("/api/catalog/{catalog_type}/{item_id}/state", response_model=CatalogStateOut)
     def update_catalog_state(

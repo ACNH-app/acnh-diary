@@ -1532,57 +1532,6 @@ label {
   word-break: break-word;
 }
 
-.art-guide-list {
-  display: grid;
-  gap: 10px;
-}
-
-.art-guide-card {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  background: #fbfdf8;
-}
-
-.art-guide-card h3 {
-  margin: 0 0 8px;
-  font-size: 0.96rem;
-}
-
-.art-guide-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.art-guide-col {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 8px;
-  background: #fff;
-}
-
-.art-guide-label {
-  margin: 0 0 6px;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
-.art-guide-img {
-  width: 100%;
-  height: 130px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  object-fit: contain;
-  background: #f1f4eb;
-}
-
-.art-guide-desc {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
 .load-more-wrap {
   display: flex;
   justify-content: center;
@@ -1817,10 +1766,6 @@ label {
     flex: none;
   }
 
-  #catalogArtGuideBtn {
-    grid-column: 1 / -1;
-  }
-
   #catalogTabs.tabs-inline {
     grid-column: 1 / -1;
     display: grid;
@@ -1944,10 +1889,6 @@ label {
   .detail-nav-actions {
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .art-guide-body {
-    grid-template-columns: 1fr;
   }
 
   .scroll-top-btn {

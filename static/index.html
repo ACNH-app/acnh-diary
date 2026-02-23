@@ -280,13 +280,19 @@
               >
                 전체
               </button>
+              <button id="catalogToggleDonatedBtn" type="button" class="hidden">
+                기증 전체
+              </button>
               <input id="catalogSearchInput" type="text" placeholder="이름 검색" />
               <div class="tabs tabs-inline" id="catalogTabs">
                 <button type="button" class="tab" data-tab="owned">보유만</button>
                 <button type="button" class="tab" data-tab="unowned">미보유</button>
               </div>
+              <div class="tabs tabs-inline hidden" id="catalogDonatedTabs">
+                <button type="button" class="tab" data-tab="donated">기증만</button>
+                <button type="button" class="tab" data-tab="undonated">미기증</button>
+              </div>
               <select id="catalogExtraSelect" class="hidden"></select>
-              <button id="catalogArtGuideBtn" type="button" class="hidden">진품/가품 특징</button>
               <select id="catalogSortBySelect">
                 <option value="number">번호순</option>
                 <option value="name">이름순</option>
@@ -381,20 +387,6 @@
         <div class="modal-body">
           <p id="recipeTagStatus" class="detail-source">0개 선택됨</p>
           <div id="recipeTagList" class="recipe-tag-list"></div>
-        </div>
-      </article>
-    </section>
-
-    <section id="artGuideModal" class="modal hidden" aria-hidden="true">
-      <div id="artGuideBackdrop" class="modal-backdrop"></div>
-      <article class="modal-panel">
-        <header class="modal-header">
-          <h2>미술품 진품/가품 특징</h2>
-          <button id="artGuideCloseBtn" type="button" class="modal-close">닫기</button>
-        </header>
-        <div class="modal-body">
-          <p id="artGuideStatus" class="detail-source">로딩 중...</p>
-          <section id="artGuideList" class="art-guide-list"></section>
         </div>
       </article>
     </section>

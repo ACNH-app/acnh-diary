@@ -487,6 +487,7 @@ export function createDetailController({
     state.activeDetailPayload = payload;
     const isRecipeMode = state.activeMode === "recipes";
     const hideVariationInfoMode = state.activeMode === "recipes" || state.activeMode === "reactions";
+    const isEncyclopediaMode = ["fossils", "bugs", "fish", "sea"].includes(state.activeMode);
     const summary = payload.summary || {};
     const nameKo = String(payload.item?.name_ko || payload.item?.name || "").trim();
     const nameEn = String(summary.name_en || payload.item?.name_en || "").trim();
@@ -508,7 +509,7 @@ export function createDetailController({
       ? "single API 상세 데이터"
       : "목록 API 상세 데이터(대체)";
     if (detailNotForSaleTag) {
-      detailNotForSaleTag.classList.toggle("hidden", !isNotForSale);
+      detailNotForSaleTag.classList.toggle("hidden", !isNotForSale || isEncyclopediaMode);
     }
 
     detailFields.innerHTML = "";

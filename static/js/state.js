@@ -15,6 +15,7 @@ export const state = {
   openNavPrimaryKey: "",
   activeVillagerTab: "all",
   activeCatalogTab: "all",
+  activeCatalogDonatedTab: "all",
   activeDetailType: "",
   activeDetailItemId: "",
   activeDetailVariations: [],

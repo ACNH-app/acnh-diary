@@ -5,7 +5,9 @@ import {
   catalogSortBySelect,
   catalogSortOrderSelect,
   catalogSortOrderToggleBtn,
+  catalogToggleDonatedBtn,
   catalogTabs,
+  catalogDonatedTabs,
   recipeTagModal,
   loadMoreBtn,
   personalitySelect,
@@ -28,6 +30,7 @@ import { state } from "./state.js";
  *   loadCurrentModeData: () => Promise<void>,
  *   loadCatalogPage: (catalogType: string, options?: { append?: boolean }) => Promise<void>,
   *   toggleVisibleCatalogOwned: () => Promise<void>,
+  *   toggleVisibleCatalogDonated: () => Promise<void>,
   *   updateScrollTopButton: () => void,
  *   detailController: { bindEvents: () => void },
  *   onStateChange?: (historyAction?: "push" | "replace") => void
@@ -38,6 +41,7 @@ export function bindMainEvents({
   loadCurrentModeData,
   loadCatalogPage,
   toggleVisibleCatalogOwned,
+  toggleVisibleCatalogDonated,
   updateScrollTopButton,
   detailController,
   onStateChange,
@@ -185,6 +189,34 @@ export function bindMainEvents({
     });
   });
 
+  catalogDonatedTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const tabKey = String(tab.dataset.tab || "");
+      const donatedBtn = catalogDonatedTabs.find((el) => el.dataset.tab === "donated");
+      const undonatedBtn = catalogDonatedTabs.find((el) => el.dataset.tab === "undonated");
+      const isDonated = tabKey === "donated";
+      const isUndonated = tabKey === "undonated";
+      if (!isDonated && !isUndonated) return;
+
+      const wasActive = tab.classList.contains("active");
+      if (wasActive) {
+        state.activeCatalogDonatedTab = "all";
+        donatedBtn?.classList.remove("active");
+        undonatedBtn?.classList.remove("active");
+      } else if (isDonated) {
+        state.activeCatalogDonatedTab = "donated";
+        donatedBtn?.classList.add("active");
+        undonatedBtn?.classList.remove("active");
+      } else {
+        state.activeCatalogDonatedTab = "undonated";
+        donatedBtn?.classList.remove("active");
+        undonatedBtn?.classList.add("active");
+      }
+
+      runLoad("push");
+    });
+  });
+
   catalogResetBtn.addEventListener("click", () => {
     catalogSearchInput.value = "";
     catalogExtraSelect.value = "";
@@ -209,6 +241,8 @@ export function bindMainEvents({
     syncCatalogSortOrderToggle();
     state.activeCatalogTab = "all";
     catalogTabs.forEach((el) => el.classList.remove("active"));
+    state.activeCatalogDonatedTab = "all";
+    catalogDonatedTabs.forEach((el) => el.classList.remove("active"));
     runLoad("push");
   });
 
@@ -271,4 +305,21 @@ export function bindMainEvents({
   );
 
   detailController.bindEvents();
+
+  if (catalogToggleDonatedBtn) {
+    let togglingDonatedAll = false;
+    catalogToggleDonatedBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (togglingDonatedAll || !toggleVisibleCatalogDonated) return;
+      togglingDonatedAll = true;
+      try {
+        await toggleVisibleCatalogDonated();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        togglingDonatedAll = false;
+      }
+    });
+  }
 }

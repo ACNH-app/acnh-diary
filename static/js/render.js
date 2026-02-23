@@ -639,6 +639,9 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       owned.dataset.itemId = String(v.id || "");
     }
     const donated = fragment.querySelector(".donated");
+    if (donated) {
+      donated.dataset.itemId = String(v.id || "");
+    }
     const donatedWrap = fragment.querySelector(".donated-wrap");
     const ownedLabel = fragment.querySelector(".owned-label");
     const ownedWrapLabel = owned ? owned.closest("label") : null;
@@ -647,10 +650,14 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const toggles = fragment.querySelector(".toggles");
     const isArtMode = state.activeMode === "art";
     const isFurnitureMode = state.activeMode === "furniture";
-    const isMuseumMode = ["bugs", "fish", "sea"].includes(state.activeMode);
+    const isMuseumMode = ["art", "fossils", "bugs", "fish", "sea"].includes(state.activeMode);
+    const isEncyclopediaMode = ["fossils", "bugs", "fish", "sea"].includes(state.activeMode);
     const isMusicMode = musicMode;
     const isRecipeMode = state.activeMode === "recipes";
     const isReactionMode = state.activeMode === "reactions";
+    const ownedStatusLabel = ["art", "fossils", "bugs", "fish", "sea"].includes(state.activeMode)
+      ? "보유"
+      : statusLabel;
 
     icon.src = v.image_url || "/static/no-image.svg";
     icon.loading = "lazy";
@@ -849,7 +856,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     }
     const showNotForSaleTag = isReactionMode
       ? isReactionSourceNotForSale(v.source || v.reaction_source)
-      : v.not_for_sale && !isMusicMode && state.activeMode !== "recipes";
+      : v.not_for_sale && !isMusicMode && state.activeMode !== "recipes" && !isEncyclopediaMode;
     if (showNotForSaleTag && !isReactionMode) {
       const tag = document.createElement("span");
       tag.className = "music-pill-not-sale";
@@ -879,13 +886,16 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     } else if (isReactionMode) {
       ownedLabel.textContent = owned.checked ? "습득" : "미습득";
     } else {
-      ownedLabel.textContent = isPartialOwned ? "일부 보유" : statusLabel;
+      ownedLabel.textContent = isPartialOwned ? "일부 보유" : ownedStatusLabel;
       if (isRecipeMode && ownedLabel) {
         ownedLabel.textContent = "✓";
       }
     }
     if (donatedWrap) {
       donatedWrap.classList.toggle("hidden", !isMuseumMode);
+    }
+    if (ownedWrapLabel) {
+      ownedWrapLabel.classList.toggle("hidden", isArtMode);
     }
     if (donated) {
       donated.checked = Boolean(v.donated);
@@ -911,7 +921,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         ? (owned.checked ? "보유" : "미보유")
         : isReactionMode
           ? (owned.checked ? "습득" : "미습득")
-          : statusLabel;
+          : ownedStatusLabel;
       if (isRecipeMode && ownedWrapLabel) {
         ownedWrapLabel.classList.toggle("checked", owned.checked);
       }
@@ -947,7 +957,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         qtyInput.value = String(safeQty);
         owned.checked = safeQty > 0;
         owned.indeterminate = false;
-        ownedLabel.textContent = statusLabel;
+        ownedLabel.textContent = ownedStatusLabel;
         if (!handlers.onUpdateQuantity) return;
         await handlers.onUpdateQuantity(v.id, safeQty);
       });

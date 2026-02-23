@@ -269,7 +269,7 @@ CATALOG_TYPES: dict[str, dict[str, Any]] = {
         "label": "미술품",
         "nook_path": "/nh/art",
         "name_map_path": ART_NAME_MAP_PATH,
-        "status_label": "기증",
+        "status_label": "보유",
     },
     "reactions": {
         "label": "리액션",

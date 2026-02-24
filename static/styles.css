@@ -353,6 +353,63 @@ body:not([data-active-mode="home"]):not([data-active-mode="villagers"]) .catalog
   margin-top: 10px;
 }
 
+.home-creatures-now {
+  margin-top: 10px;
+}
+
+.home-creature-filters {
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+.home-creature-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdf8;
+}
+
+.home-creature-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 880px;
+}
+
+.home-creature-table th,
+.home-creature-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+  font-size: 0.84rem;
+}
+
+.home-creature-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f1f7e8;
+  z-index: 1;
+}
+
+.home-creature-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.home-creature-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.home-creature-empty {
+  text-align: center;
+  color: var(--muted);
+}
+
 .home-resident-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -1863,6 +1920,12 @@ label {
   .summary-cards {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
+  }
+
+  .home-creature-table th,
+  .home-creature-table td {
+    padding: 6px 8px;
+    font-size: 0.78rem;
   }
 
   .summary-card {

@@ -57,17 +57,23 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
 
         with deps.get_db() as conn:
             existing = conn.execute(
-                "SELECT liked, on_island, former_resident, island_order FROM villager_state WHERE villager_id = ?",
+                "SELECT liked, on_island, camping_visited, former_resident, island_order FROM villager_state WHERE villager_id = ?",
                 (villager_id,),
             ).fetchone()
 
             current_liked = bool(existing["liked"]) if existing else False
             current_on_island = bool(existing["on_island"]) if existing else False
+            current_camping_visited = bool(existing["camping_visited"]) if existing else False
             current_former_resident = bool(existing["former_resident"]) if existing else False
             current_island_order = int(existing["island_order"] or 0) if existing else 0
 
             new_liked = payload.liked if payload.liked is not None else current_liked
             new_on_island = payload.on_island if payload.on_island is not None else current_on_island
+            new_camping_visited = (
+                payload.camping_visited
+                if payload.camping_visited is not None
+                else current_camping_visited
+            )
             new_former_resident = (
                 payload.former_resident
                 if payload.former_resident is not None
@@ -98,11 +104,12 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
 
             conn.execute(
                 """
-                INSERT INTO villager_state (villager_id, liked, on_island, former_resident, island_order)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO villager_state (villager_id, liked, on_island, camping_visited, former_resident, island_order)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(villager_id) DO UPDATE SET
                     liked = excluded.liked,
                     on_island = excluded.on_island,
+                    camping_visited = excluded.camping_visited,
                     former_resident = excluded.former_resident,
                     island_order = excluded.island_order,
                     updated_at = CURRENT_TIMESTAMP
@@ -111,6 +118,7 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
                     villager_id,
                     int(new_liked),
                     int(new_on_island),
+                    int(new_camping_visited),
                     int(new_former_resident),
                     int(next_order),
                 ),
@@ -120,6 +128,7 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
             villager_id=villager_id,
             liked=bool(new_liked),
             on_island=bool(new_on_island),
+            camping_visited=bool(new_camping_visited),
             former_resident=bool(new_former_resident),
         )
 

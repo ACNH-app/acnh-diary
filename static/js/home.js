@@ -42,6 +42,11 @@ import {
   summaryBloomingShrubs,
   summaryBloomingShrubsText,
   summaryCatalogProgress,
+  homeCreatureTabs,
+  homeCreatureOwnedFilter,
+  homeCreatureDonatedFilter,
+  homeCreatureStatus,
+  homeCreatureTableBody,
   summaryNookShopping,
   summarySeasonText,
   summarySeasonalRecipes,
@@ -59,9 +64,18 @@ let editingPlayerId = null;
 let residentActionBound = false;
 let residentPickerMetaLoaded = false;
 let homeResidentItems = [];
+let homeCreatureActionBound = false;
+let homeCreatureLoader = null;
 
 function notifyEffectiveDateChanged() {
   window.dispatchEvent(new CustomEvent("acnh:effective-date-changed"));
+}
+
+function parseBoolFilter(value) {
+  const text = String(value || "").trim().toLowerCase();
+  if (text === "true") return true;
+  if (text === "false") return false;
+  return null;
 }
 
 function daysInMonth(monthValue) {
@@ -525,6 +539,77 @@ export async function loadHomeSummary(getHomeSummary) {
   renderHomeSummary(summary);
 }
 
+function renderHomeCreatureRows(payload) {
+  if (!homeCreatureTableBody) return;
+  const rows = Array.isArray(payload?.items) ? payload.items : [];
+  homeCreatureTableBody.innerHTML = "";
+
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 8;
+    td.className = "home-creature-empty";
+    td.textContent = "조건에 맞는 출현 생물이 없습니다.";
+    tr.appendChild(td);
+    homeCreatureTableBody.appendChild(tr);
+  } else {
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      const typeLabelMap = { bugs: "곤충", fish: "물고기", sea: "해산물" };
+      const typeLabel = typeLabelMap[String(row.catalog_type || "")] || "-";
+
+      const nameTd = document.createElement("td");
+      nameTd.textContent = `${row.name_ko || row.name_en || "-"} (${typeLabel})`;
+
+      const iconTd = document.createElement("td");
+      const icon = document.createElement("img");
+      icon.className = "home-creature-icon";
+      icon.loading = "lazy";
+      icon.decoding = "async";
+      icon.alt = row.name_ko || row.name_en || "생물";
+      icon.src = row.icon_url || "/static/no-image.svg";
+      icon.addEventListener("error", () => {
+        icon.src = "/static/no-image.svg";
+      });
+      iconTd.appendChild(icon);
+
+      const sizeTd = document.createElement("td");
+      sizeTd.textContent = row.size || "-";
+      const locationTd = document.createElement("td");
+      locationTd.textContent = row.location || "-";
+      const timeTd = document.createElement("td");
+      timeTd.textContent = row.time || "-";
+      const monthsTd = document.createElement("td");
+      monthsTd.textContent = row.months || "-";
+      const ownedTd = document.createElement("td");
+      ownedTd.textContent = row.owned ? "예" : "아니오";
+      const donatedTd = document.createElement("td");
+      donatedTd.textContent = row.donated ? "예" : "아니오";
+
+      tr.append(nameTd, iconTd, sizeTd, locationTd, timeTd, monthsTd, ownedTd, donatedTd);
+      homeCreatureTableBody.appendChild(tr);
+    });
+  }
+
+  if (homeCreatureStatus) {
+    const count = Number(payload?.count || rows.length || 0);
+    const dt = String(payload?.effective_datetime || "").trim();
+    homeCreatureStatus.textContent = `총 ${count}종${dt ? ` | 기준 시각: ${dt}` : ""}`;
+  }
+}
+
+export async function loadHomeCreaturesNow(getHomeCreaturesNow) {
+  if (typeof getHomeCreaturesNow !== "function") return;
+  const params = { catalog_type: state.homeCreatureType || "all" };
+  const ownedFilter = parseBoolFilter(state.homeCreatureOwnedFilter);
+  const donatedFilter = parseBoolFilter(state.homeCreatureDonatedFilter);
+  if (ownedFilter !== null) params.owned = ownedFilter;
+  if (donatedFilter !== null) params.donated = donatedFilter;
+  if (homeCreatureStatus) homeCreatureStatus.textContent = "출현 생물 로딩 중...";
+  const payload = await getHomeCreaturesNow(params);
+  renderHomeCreatureRows(payload);
+}
+
 export async function loadHomeIslandResidents(
   getHomeIslandResidents,
   {
@@ -647,10 +732,14 @@ export async function loadHomeIslandResidents(
 export function bindHomeEvents({
   updateIslandProfile,
   getHomeSummary,
+  getHomeCreaturesNow,
   getPlayers,
   savePlayer,
   deletePlayer,
 }) {
+  if (typeof getHomeCreaturesNow === "function") {
+    homeCreatureLoader = getHomeCreaturesNow;
+  }
   fillMonthDayOptions(birthdayMonthInput, birthdayDayInput);
   fillMonthDayOptions(playerBirthdayMonthInput, playerBirthdayDayInput);
   resetPlayerForm();
@@ -672,6 +761,9 @@ export function bindHomeEvents({
     applyIslandProfile(saved);
     if (getHomeSummary) {
       await loadHomeSummary(getHomeSummary);
+    }
+    if (homeCreatureLoader) {
+      await loadHomeCreaturesNow(homeCreatureLoader);
     }
   };
 
@@ -707,11 +799,17 @@ export function bindHomeEvents({
     gameDateTimeInput.disabled = !state.timeTravelEnabled;
     renderEffectiveDateTime();
     notifyEffectiveDateChanged();
+    if (homeCreatureLoader) {
+      loadHomeCreaturesNow(homeCreatureLoader).catch((err) => console.error(err));
+    }
   });
   gameDateTimeInput.addEventListener("change", () => {
     state.gameDateTime = gameDateTimeInput.value || "";
     renderEffectiveDateTime();
     notifyEffectiveDateChanged();
+    if (homeCreatureLoader) {
+      loadHomeCreaturesNow(homeCreatureLoader).catch((err) => console.error(err));
+    }
   });
   setNowGameTimeBtn.addEventListener("click", () => {
     profileStatus.textContent = "저장 중...";
@@ -720,6 +818,9 @@ export function bindHomeEvents({
     state.gameDateTime = now;
     renderEffectiveDateTime();
     notifyEffectiveDateChanged();
+    if (homeCreatureLoader) {
+      loadHomeCreaturesNow(homeCreatureLoader).catch((err) => console.error(err));
+    }
     saveProfile()
       .then(() => {
         profileStatus.textContent = "현재 시간으로 저장되었습니다.";
@@ -800,4 +901,29 @@ export function bindHomeEvents({
     resetPlayerForm();
     playerStatus.textContent = "";
   });
+
+  if (!homeCreatureActionBound) {
+    homeCreatureActionBound = true;
+    homeCreatureTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        state.homeCreatureType = String(tab.dataset.type || "all");
+        homeCreatureTabs.forEach((x) => x.classList.toggle("active", x === tab));
+        if (homeCreatureLoader) {
+          loadHomeCreaturesNow(homeCreatureLoader).catch((err) => console.error(err));
+        }
+      });
+    });
+    homeCreatureOwnedFilter?.addEventListener("change", () => {
+      state.homeCreatureOwnedFilter = String(homeCreatureOwnedFilter.value || "");
+      if (homeCreatureLoader) {
+        loadHomeCreaturesNow(homeCreatureLoader).catch((err) => console.error(err));
+      }
+    });
+    homeCreatureDonatedFilter?.addEventListener("change", () => {
+      state.homeCreatureDonatedFilter = String(homeCreatureDonatedFilter.value || "");
+      if (homeCreatureLoader) {
+        loadHomeCreaturesNow(homeCreatureLoader).catch((err) => console.error(err));
+      }
+    });
+  }
 }

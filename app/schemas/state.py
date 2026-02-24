@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class VillagerStateIn(BaseModel):
     liked: bool | None = None
     on_island: bool | None = None
+    camping_visited: bool | None = None
     former_resident: bool | None = None
 
 
@@ -13,6 +14,7 @@ class VillagerStateOut(BaseModel):
     villager_id: str
     liked: bool
     on_island: bool
+    camping_visited: bool
     former_resident: bool
 
 

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS villager_state (
     villager_id TEXT PRIMARY KEY,
     liked INTEGER NOT NULL DEFAULT 0,
     on_island INTEGER NOT NULL DEFAULT 0,
+    camping_visited INTEGER NOT NULL DEFAULT 0,
     former_resident INTEGER NOT NULL DEFAULT 0,
     island_order INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -107,6 +108,10 @@ def _migrate_villager_state(conn: sqlite3.Connection) -> None:
 
     if "TEXT" in villager_type:
         column_names = {str(r["name"]) for r in info}
+        if "camping_visited" not in column_names:
+            conn.execute(
+                "ALTER TABLE villager_state ADD COLUMN camping_visited INTEGER NOT NULL DEFAULT 0"
+            )
         if "former_resident" not in column_names:
             conn.execute(
                 "ALTER TABLE villager_state ADD COLUMN former_resident INTEGER NOT NULL DEFAULT 0"
@@ -121,8 +126,9 @@ def _migrate_villager_state(conn: sqlite3.Connection) -> None:
     conn.execute(VILLAGER_STATE_TABLE_SQL)
     conn.execute(
         """
-        INSERT INTO villager_state (villager_id, liked, on_island, former_resident, island_order, updated_at)
+        INSERT INTO villager_state (villager_id, liked, on_island, camping_visited, former_resident, island_order, updated_at)
         SELECT CAST(villager_id AS TEXT), COALESCE(liked, 0), COALESCE(on_island, 0),
+               0,
                0,
                0,
                COALESCE(updated_at, CURRENT_TIMESTAMP)

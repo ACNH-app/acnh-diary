@@ -234,6 +234,7 @@ app.include_router(
         nav_handler=handlers.meta.get_nav,
         villager_meta_handler=handlers.meta.get_villager_meta,
         home_summary_handler=handlers.meta.get_home_summary,
+        home_creatures_now_handler=handlers.meta.get_home_creatures_now,
         island_profile_handler=handlers.meta.get_island_profile,
         update_island_profile_handler=handlers.meta.update_island_profile,
         calendar_entries_handler=handlers.meta.get_calendar_entries,

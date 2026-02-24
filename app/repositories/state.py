@@ -92,12 +92,13 @@ def get_villager_state_map() -> dict[str, dict[str, bool]]:
     init_db()
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT villager_id, liked, on_island, former_resident, island_order FROM villager_state"
+            "SELECT villager_id, liked, on_island, camping_visited, former_resident, island_order FROM villager_state"
         ).fetchall()
     return {
         str(r["villager_id"]): {
             "liked": bool(r["liked"]),
             "on_island": bool(r["on_island"]),
+            "camping_visited": bool(r["camping_visited"]),
             "former_resident": bool(r["former_resident"]),
             "island_order": int(r["island_order"] or 0),
         }
@@ -110,7 +111,14 @@ def with_villager_state(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     merged = []
     for item in items:
         s = state_map.get(
-            item["id"], {"liked": False, "on_island": False, "former_resident": False, "island_order": 0}
+            item["id"],
+            {
+                "liked": False,
+                "on_island": False,
+                "camping_visited": False,
+                "former_resident": False,
+                "island_order": 0,
+            },
         )
         merged.append({**item, **s})
     return merged

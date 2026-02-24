@@ -22,6 +22,7 @@ def create_meta_router(
     nav_handler: Callable[[], dict[str, Any]],
     villager_meta_handler: Callable[[], dict[str, Any]],
     home_summary_handler: Callable[[], dict[str, Any]],
+    home_creatures_now_handler: Callable[..., dict[str, Any]],
     island_profile_handler: Callable[[], dict[str, Any]],
     update_island_profile_handler: Callable[..., dict[str, Any]],
     calendar_entries_handler: Callable[[str], list[dict[str, Any]]],
@@ -52,6 +53,18 @@ def create_meta_router(
     @router.get("/api/home/summary")
     def get_home_summary() -> dict[str, Any]:
         return home_summary_handler()
+
+    @router.get("/api/home/creatures-now")
+    def get_home_creatures_now(
+        catalog_type: str = "all",
+        owned: bool | None = None,
+        donated: bool | None = None,
+    ) -> dict[str, Any]:
+        return home_creatures_now_handler(
+            catalog_type=catalog_type,
+            owned=owned,
+            donated=donated,
+        )
 
     @router.get("/api/profile", response_model=IslandProfileOut)
     def get_island_profile() -> dict[str, Any]:

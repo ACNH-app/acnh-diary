@@ -5,6 +5,7 @@ import {
   getCalendarEntriesByDate,
   getJSON,
   getHomeSummary,
+  getHomeCreaturesNow,
   getHomeIslandResidents,
   getVillagerMeta,
   getVillagers,
@@ -52,6 +53,7 @@ import {
   bindHomeEvents,
   loadHomeIslandResidents,
   loadHomeSummary,
+  loadHomeCreaturesNow,
   loadIslandProfile,
   loadPlayers,
 } from "./js/home.js";
@@ -248,6 +250,7 @@ detailController = createDetailController({
 bindHomeEvents({
   updateIslandProfile,
   getHomeSummary,
+  getHomeCreaturesNow,
   getPlayers,
   savePlayer,
   setMainPlayer,
@@ -283,6 +286,7 @@ async function ensureHomeProfileLoaded() {
 
 async function ensureHomeSummaryLoaded() {
   await loadHomeSummary(getHomeSummary);
+  await loadHomeCreaturesNow(getHomeCreaturesNow);
 }
 
 async function ensureHomeIslandResidentsLoaded() {
@@ -359,6 +363,7 @@ async function syncCalendarToEffectiveDate() {
 
 window.addEventListener("acnh:effective-date-changed", () => {
   syncCalendarToEffectiveDate().catch((err) => console.error(err));
+  ensureHomeSummaryLoaded().catch((err) => console.error(err));
 });
 window.addEventListener("acnh:navigate-mode", (e) => {
   const mode = e?.detail?.mode || "";

@@ -533,6 +533,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
       const meta = node.querySelector(".meta");
       const birthday = node.querySelector(".birthday");
       const likedBtn = node.querySelector(".liked");
+      const campingVisitedBtn = node.querySelector(".camping-visited");
       const onIslandBtn = node.querySelector(".on-island");
       const formerResidentBtn = node.querySelector(".former-resident");
 
@@ -554,6 +555,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
 
       const syncVillagerToggleButtons = () => {
         if (likedBtn) likedBtn.classList.toggle("active", Boolean(v.liked));
+        if (campingVisitedBtn) campingVisitedBtn.classList.toggle("active", Boolean(v.camping_visited));
         if (onIslandBtn) onIslandBtn.classList.toggle("active", Boolean(v.on_island));
         if (formerResidentBtn) formerResidentBtn.classList.toggle("active", Boolean(v.former_resident));
       };
@@ -566,6 +568,14 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
         v.liked = !Boolean(v.liked);
         syncVillagerToggleButtons();
         await onToggleState(v.id, { liked: Boolean(v.liked) });
+      });
+      campingVisitedBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!onToggleState) return;
+        v.camping_visited = !Boolean(v.camping_visited);
+        syncVillagerToggleButtons();
+        await onToggleState(v.id, { camping_visited: Boolean(v.camping_visited) });
       });
       onIslandBtn?.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -861,10 +871,10 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       const tag = document.createElement("span");
       tag.className = "music-pill-not-sale";
       tag.textContent = "비매품";
-      if (desc.firstChild) {
-        desc.insertBefore(document.createTextNode(" "), desc.firstChild);
+      if (desc.lastChild) {
+        desc.appendChild(document.createTextNode(" "));
       }
-      desc.insertBefore(tag, desc.firstChild);
+      desc.appendChild(tag);
     }
 
     const isPartialOwned = variationTotal > 0 && ownedCount > 0 && ownedCount < variationTotal;

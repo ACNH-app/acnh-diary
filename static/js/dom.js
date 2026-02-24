@@ -68,6 +68,11 @@ export const summaryNookShopping = document.getElementById("summaryNookShopping"
 export const summarySeasonalRecipes = document.getElementById("summarySeasonalRecipes");
 export const summaryBloomingShrubs = document.getElementById("summaryBloomingShrubs");
 export const summaryCatalogProgress = document.getElementById("summaryCatalogProgress");
+export const homeCreatureTabs = Array.from(document.querySelectorAll("#homeCreatureTabs .tab"));
+export const homeCreatureOwnedFilter = document.getElementById("homeCreatureOwnedFilter");
+export const homeCreatureDonatedFilter = document.getElementById("homeCreatureDonatedFilter");
+export const homeCreatureStatus = document.getElementById("homeCreatureStatus");
+export const homeCreatureTableBody = document.getElementById("homeCreatureTableBody");
 
 export const searchInput = document.getElementById("searchInput");
 export const personalitySelect = document.getElementById("personalitySelect");

@@ -141,6 +141,45 @@
           <h3 class="summary-subtitle">카탈로그 진행률</h3>
           <div id="summaryCatalogProgress" class="progress-grid"></div>
         </section>
+
+        <section class="control-group home-creatures-now">
+          <h2>현재 출현 생물</h2>
+          <div id="homeCreatureTabs" class="tabs tabs-inline">
+            <button type="button" class="tab active" data-type="bugs">곤충</button>
+            <button type="button" class="tab" data-type="fish">물고기</button>
+            <button type="button" class="tab" data-type="sea">해산물</button>
+          </div>
+          <div class="controls controls-inline home-creature-filters">
+            <select id="homeCreatureOwnedFilter">
+              <option value="">잡은 여부: 전체</option>
+              <option value="true">잡은 것만</option>
+              <option value="false">미획득만</option>
+            </select>
+            <select id="homeCreatureDonatedFilter">
+              <option value="">기증 여부: 전체</option>
+              <option value="true">기증한 것만</option>
+              <option value="false">미기증만</option>
+            </select>
+          </div>
+          <p id="homeCreatureStatus" class="profile-status">-</p>
+          <div class="home-creature-table-wrap">
+            <table class="home-creature-table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>아이콘</th>
+                  <th>크기</th>
+                  <th>출현 위치</th>
+                  <th>출현 시간</th>
+                  <th>출현 월</th>
+                  <th>잡은 적</th>
+                  <th>기증</th>
+                </tr>
+              </thead>
+              <tbody id="homeCreatureTableBody"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
       <section
@@ -404,6 +443,7 @@
           <p class="birthday"></p>
           <div class="toggles villager-toggle-set">
             <button type="button" class="villager-toggle-btn liked" data-role="liked" aria-label="좋아하는 주민">❤️</button>
+            <button type="button" class="villager-toggle-btn camping-visited" data-role="camping_visited" aria-label="캠핑장 방문 주민">⛺</button>
             <button type="button" class="villager-toggle-btn on-island" data-role="on_island" aria-label="우리 섬 주민">🏠</button>
             <button type="button" class="villager-toggle-btn former-resident" data-role="former_resident" aria-label="과거 주민">📦</button>
           </div>

@@ -62,4 +62,7 @@ export const state = {
   homeRepresentativeName: "",
   homeRepresentativeBirthday: "",
   players: [],
+  homeCreatureType: "bugs",
+  homeCreatureOwnedFilter: "",
+  homeCreatureDonatedFilter: "",
 };

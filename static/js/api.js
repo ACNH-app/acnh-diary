@@ -66,6 +66,16 @@ export function getHomeSummary() {
   return getJSON("/api/home/summary");
 }
 
+export function getHomeCreaturesNow(params = {}) {
+  const q = new URLSearchParams();
+  Object.entries(params || {}).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === "") return;
+    q.set(k, String(v));
+  });
+  const qs = q.toString();
+  return getJSON(`/api/home/creatures-now${qs ? `?${qs}` : ""}`);
+}
+
 export function getHomeIslandResidents() {
   return getJSON("/api/villagers?on_island=true");
 }

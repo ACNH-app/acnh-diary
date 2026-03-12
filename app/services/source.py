@@ -277,7 +277,7 @@ NPC_SOURCE_MAP_KO = {
     "luna": "몽셰르",
     "mabel": "고순",
     "mom": "엄마",
-    "niko": "니코",
+    "niko": "방글이",
     "nintendo": "닌텐도",
     "pascal": "해탈한",
     "pavé": "베르리나",

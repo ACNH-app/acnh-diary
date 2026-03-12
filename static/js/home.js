@@ -349,7 +349,9 @@ export function applyIslandProfile(profile) {
   representativeFruitInput.value = p.representative_fruit || "";
   representativeFlowerInput.value = p.representative_flower || "";
   setMonthDayValue(birthdayMonthInput, birthdayDayInput, p.birthday || "");
-  hemisphereSelect.value = p.hemisphere === "south" ? "south" : "north";
+  const hemi = p.hemisphere === "south" ? "south" : "north";
+  hemisphereSelect.value = hemi;
+  state.homeHemisphere = hemi;
   state.timeTravelEnabled = Boolean(p.time_travel_enabled);
   state.gameDateTime = p.game_datetime || nowLocal;
   timeTravelEnabledInput.checked = state.timeTravelEnabled;
@@ -542,12 +544,18 @@ export async function loadHomeSummary(getHomeSummary) {
 function renderHomeCreatureRows(payload) {
   if (!homeCreatureTableBody) return;
   const rows = Array.isArray(payload?.items) ? payload.items : [];
+  const hideSizeColumn = String(state.homeCreatureType || "all") === "bugs";
+  const creatureTable = homeCreatureTableBody.closest("table");
+  const sizeHeader = creatureTable?.querySelector("thead th:nth-child(2)");
+  if (sizeHeader) {
+    sizeHeader.style.display = hideSizeColumn ? "none" : "";
+  }
   homeCreatureTableBody.innerHTML = "";
 
   if (!rows.length) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 8;
+    td.colSpan = hideSizeColumn ? 6 : 7;
     td.className = "home-creature-empty";
     td.textContent = "조건에 맞는 출현 생물이 없습니다.";
     tr.appendChild(td);
@@ -555,13 +563,10 @@ function renderHomeCreatureRows(payload) {
   } else {
     rows.forEach((row) => {
       const tr = document.createElement("tr");
-      const typeLabelMap = { bugs: "곤충", fish: "물고기", sea: "해산물" };
-      const typeLabel = typeLabelMap[String(row.catalog_type || "")] || "-";
 
       const nameTd = document.createElement("td");
-      nameTd.textContent = `${row.name_ko || row.name_en || "-"} (${typeLabel})`;
-
-      const iconTd = document.createElement("td");
+      const nameCell = document.createElement("div");
+      nameCell.className = "home-creature-name-cell";
       const icon = document.createElement("img");
       icon.className = "home-creature-icon";
       icon.loading = "lazy";
@@ -571,10 +576,17 @@ function renderHomeCreatureRows(payload) {
       icon.addEventListener("error", () => {
         icon.src = "/static/no-image.svg";
       });
-      iconTd.appendChild(icon);
+      const nameText = document.createElement("span");
+      nameText.className = "home-creature-name-text";
+      nameText.textContent = row.name_ko || row.name_en || "-";
+      nameCell.append(icon, nameText);
+      nameTd.appendChild(nameCell);
 
       const sizeTd = document.createElement("td");
       sizeTd.textContent = row.size || "-";
+      if (hideSizeColumn) {
+        sizeTd.style.display = "none";
+      }
       const locationTd = document.createElement("td");
       locationTd.textContent = row.location || "-";
       const timeTd = document.createElement("td");
@@ -586,7 +598,7 @@ function renderHomeCreatureRows(payload) {
       const donatedTd = document.createElement("td");
       donatedTd.textContent = row.donated ? "예" : "아니오";
 
-      tr.append(nameTd, iconTd, sizeTd, locationTd, timeTd, monthsTd, ownedTd, donatedTd);
+      tr.append(nameTd, sizeTd, locationTd, timeTd, monthsTd, ownedTd, donatedTd);
       homeCreatureTableBody.appendChild(tr);
     });
   }

@@ -1580,6 +1580,132 @@ def _is_not_for_sale(detail: dict[str, Any], item: dict[str, Any]) -> bool:
     return ("not for sale" in joined) or ("구매가 불가능" in joined) or ("비매품" in joined)
 
 
+def _critter_region(detail: dict[str, Any], hemisphere_key: str) -> dict[str, Any]:
+    region = detail.get(hemisphere_key)
+    return region if isinstance(region, dict) else {}
+
+
+def _critter_months_text(detail: dict[str, Any], hemisphere_key: str) -> str:
+    region = _critter_region(detail, hemisphere_key)
+    return str(region.get("months") or "").strip()
+
+
+def _critter_time_text(detail: dict[str, Any], hemisphere_key: str) -> str:
+    region = _critter_region(detail, hemisphere_key)
+    availability = region.get("availability_array")
+    if isinstance(availability, list) and availability:
+        parts: list[str] = []
+        for row in availability:
+            if not isinstance(row, dict):
+                continue
+            months = str(row.get("months") or "").strip()
+            time = str(row.get("time") or "").strip()
+            if months and time:
+                parts.append(f"{months}: {time}")
+            elif time:
+                parts.append(time)
+            elif months:
+                parts.append(months)
+        if parts:
+            return " / ".join(parts)
+
+    # fallback: 월별 시간표에서 유효한 시간만 모아 표시
+    by_month = region.get("times_by_month")
+    if isinstance(by_month, dict):
+        valid = []
+        for month in range(1, 13):
+            t = str(by_month.get(str(month)) or "").strip()
+            if not t or t.upper() in {"NA", "N/A"}:
+                continue
+            valid.append(t)
+        if valid:
+            uniq = list(dict.fromkeys(valid))
+            return " / ".join(uniq)
+
+    return ""
+
+
+CRITTER_LOCATION_KO_MAP: dict[str, str] = {
+    "Pier": "부두",
+    "Pond": "연못",
+    "River": "강",
+    "River (clifftop)": "절벽 위 강",
+    "River (mouth)": "강 하구",
+    "Sea": "바다",
+    "Sea (raining)": "바다(비 오는 날)",
+    "Disguised on shoreline": "해변가 위장",
+    "Disguised under trees": "나무 아래 위장",
+    "Flying": "비행",
+    "Flying near blue, purple, and black flowers": "파랑/보라/검정 꽃 주변 비행",
+    "Flying near flowers": "꽃 주변 비행",
+    "Flying near light sources": "광원 주변 비행",
+    "Flying near trash or rotten turnips": "쓰레기/썩은 무 주변 비행",
+    "Flying near water": "물가 주변 비행",
+    "From hitting rocks": "바위 치기",
+    "On beach rocks": "해변 바위",
+    "On flowers": "꽃 위",
+    "On palm trees": "야자수",
+    "On rivers and ponds": "강/연못 주변",
+    "On rocks and bushes": "바위/덤불",
+    "On the ground": "지면",
+    "On tree stumps": "그루터기",
+    "On trees (any kind)": "나무(모든 종류)",
+    "On trees (hardwood and cedar)": "활엽수/침엽수",
+    "On villagers": "주민 위",
+    "On white flowers": "흰 꽃 위",
+    "On/near spoiled turnips/candy/lollipops": "썩은 무/사탕/막대사탕 주변",
+    "Pushing snowballs": "눈덩이 굴리기",
+    "Shaking non-fruit hardwood trees or cedar trees": "열매 없는 활엽수/침엽수 흔들기",
+    "Shaking trees": "나무 흔들기",
+    "Shaking trees (hardwood and cedar)": "활엽수/침엽수 흔들기",
+    "Underground": "땅속",
+}
+
+
+def format_critter_location_label(location_raw: Any) -> str:
+    raw = str(location_raw or "").strip()
+    if not raw:
+        return ""
+    return CRITTER_LOCATION_KO_MAP.get(raw, raw)
+
+
+def format_critter_size_label(size_raw: Any) -> str:
+    raw = str(size_raw or "").strip()
+    if not raw:
+        return ""
+
+    low = raw.lower()
+    has_fin = ("with fin" in low) or ("finned" in low) or ("등지느러미" in raw)
+
+    base_low = low.replace("with fin", "").replace("finned", "")
+    base_low = re.sub(r"\(\d+\)", "", base_low)
+    normalized = re.sub(r"[^a-z]", "", base_low)
+    if normalized in {"tiny", "smallest"}:
+        number_text = "1"
+    elif normalized == "small":
+        number_text = "2"
+    elif normalized == "medium":
+        number_text = "3"
+    elif normalized == "large":
+        number_text = "4"
+    elif normalized in {"largest", "huge", "verylarge"}:
+        number_text = "5"
+    elif normalized in {"long", "narrow"}:
+        # 숫자 체계에 포함되지 않는 장형 그림자.
+        number_text = "long"
+    else:
+        # 사전 매핑이 없는 값만 원본 숫자를 fallback으로 사용한다.
+        number_match = re.search(r"\((\d+)\)", raw)
+        if not number_match:
+            number_match = re.search(r"\b(\d+)\b", raw)
+        if number_match:
+            n = number_match.group(1)
+            return f"{n} (등지느러미)" if has_fin else n
+        return raw
+
+    return f"{number_text} (등지느러미)" if has_fin else number_text
+
+
 def _catalog_detail_payload(
     catalog_type: str,
     item: dict[str, Any],
@@ -1642,7 +1768,7 @@ def _catalog_detail_payload(
     common_fields = [
         ("카테고리", category_ko or category),
         ("구매가", str(detail.get("buy") or item.get("buy") or "")),
-        ("판매가", str(detail.get("sell") or item.get("sell") or "")),
+        ("판매가", str(detail.get("sell") or detail.get("sell_nook") or item.get("sell") or "")),
         ("비매품 여부", "비매품" if not_for_sale else "구매 가능"),
         ("획득방법", acquire_text),
         ("설명", str(detail.get("notes") or detail.get("description") or "")),
@@ -1664,6 +1790,69 @@ def _catalog_detail_payload(
         material_rows = _recipe_material_rows(detail)
         if material_rows:
             fields.append({"label": "재료", "value": " / ".join(material_rows)})
+    if catalog_type in {"bugs", "fish", "sea"}:
+        spawn_place_raw = _first_non_empty(
+            detail,
+            ["location_ko", "spawn_location_ko", "location", "spawn_location", "spawn", "where", "place"],
+        )
+        spawn_place = format_critter_location_label(spawn_place_raw)
+        rarity_text = _first_non_empty(
+            detail,
+            ["rarity", "rarity_ko", "rarityLevel", "rarity_level"],
+        )
+        size_text = _first_non_empty(
+            detail,
+            ["shadow_size", "shadow", "size"],
+        )
+        size_text = format_critter_size_label(size_text)
+        movement_text = _first_non_empty(
+            detail,
+            ["shadow_movement", "movement", "speed"],
+        )
+        stationary_text = _first_non_empty(
+            detail,
+            ["stationary", "is_stationary"],
+        )
+        if not stationary_text:
+            move_norm = str(movement_text or "").strip().lower()
+            if move_norm:
+                stationary_text = "Yes" if "stationary" in move_norm else "No"
+        weather_text = _first_non_empty(
+            detail,
+            ["weather"],
+        )
+        north_months = _critter_months_text(detail, "north")
+        south_months = _critter_months_text(detail, "south")
+        north_times = _critter_time_text(detail, "north")
+        south_times = _critter_time_text(detail, "south")
+
+        if catalog_type == "sea":
+            critter_fields = [
+                ("희귀도", rarity_text),
+                ("그림자 사이즈", size_text),
+                ("Stationary", stationary_text),
+                ("움직임/속도", movement_text),
+                ("날씨 조건", weather_text),
+                ("북반구 출현 월", north_months),
+                ("북반구 출현 시간", north_times),
+                ("남반구 출현 월", south_months),
+                ("남반구 출현 시간", south_times),
+            ]
+        else:
+            critter_fields = [
+                ("출현 위치/장소", spawn_place),
+                ("희귀도", rarity_text),
+                ("사이즈", size_text),
+                ("움직임/속도", movement_text),
+                ("날씨 조건", weather_text),
+                ("북반구 출현 월", north_months),
+                ("북반구 출현 시간", north_times),
+                ("남반구 출현 월", south_months),
+                ("남반구 출현 시간", south_times),
+            ]
+        for label, value in critter_fields:
+            if value:
+                fields.append({"label": label, "value": value})
 
     if catalog_type == "art":
         real_info = _art_real_info(detail)

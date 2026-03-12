@@ -131,6 +131,32 @@ export function createDetailController({
       note: "가장 늦게 일어나는 '늦잠꾸러기'입니다.",
     },
   };
+  const monthNameMap = {
+    january: 1,
+    jan: 1,
+    february: 2,
+    feb: 2,
+    march: 3,
+    mar: 3,
+    april: 4,
+    apr: 4,
+    may: 5,
+    june: 6,
+    jun: 6,
+    july: 7,
+    jul: 7,
+    august: 8,
+    aug: 8,
+    september: 9,
+    sep: 9,
+    sept: 9,
+    october: 10,
+    oct: 10,
+    november: 11,
+    nov: 11,
+    december: 12,
+    dec: 12,
+  };
 
   function getPersonalityActivity(v) {
     const keyEn = String(v.personality || "").trim();
@@ -423,6 +449,212 @@ export function createDetailController({
     detailFields.appendChild(row);
   }
 
+  function parseAvailableMonths(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return [];
+    const low = raw.toLowerCase();
+    if (
+      /(all\s*year|year[\s-]*round|all[\s-]*months|연중|항상|항시|전체\s*월)/i.test(low)
+    ) {
+      return Array.from({ length: 12 }, (_, i) => i + 1);
+    }
+
+    let text = low;
+    text = text.replace(/(\d{1,2})\s*월/g, "$1");
+    Object.entries(monthNameMap).forEach(([name, num]) => {
+      text = text.replace(new RegExp(`\\b${name}\\b`, "gi"), ` ${num} `);
+    });
+
+    const out = new Set();
+    const rangeRegex = /(\d{1,2})\s*(?:-|–|~|to)\s*(\d{1,2})/gi;
+    let m;
+    while ((m = rangeRegex.exec(text)) !== null) {
+      const start = Number(m[1]);
+      const end = Number(m[2]);
+      if (!(start >= 1 && start <= 12 && end >= 1 && end <= 12)) continue;
+      if (start <= end) {
+        for (let i = start; i <= end; i += 1) out.add(i);
+      } else {
+        for (let i = start; i <= 12; i += 1) out.add(i);
+        for (let i = 1; i <= end; i += 1) out.add(i);
+      }
+    }
+    text = text.replace(rangeRegex, " ");
+
+    const numRegex = /\b(1[0-2]|[1-9])\b/g;
+    let n;
+    while ((n = numRegex.exec(text)) !== null) {
+      out.add(Number(n[1]));
+    }
+    return Array.from(out).sort((a, b) => a - b);
+  }
+
+  function renderCritterMonthField(label, value) {
+    const row = document.createElement("div");
+    row.className = "detail-month-row";
+
+    const title = document.createElement("p");
+    title.className = "detail-field";
+    title.textContent = `${label}:`;
+    row.appendChild(title);
+
+    const months = parseAvailableMonths(value);
+    if (!months.length) {
+      const fallback = document.createElement("p");
+      fallback.className = "detail-field";
+      fallback.textContent = String(value || "-");
+      row.appendChild(fallback);
+      return row;
+    }
+
+    const set = new Set(months);
+    const chips = document.createElement("div");
+    chips.className = "detail-month-chips";
+    for (let month = 1; month <= 12; month += 1) {
+      const chip = document.createElement("span");
+      chip.className = `detail-month-chip ${set.has(month) ? "active" : ""}`;
+      chip.textContent = `${month}월`;
+      chips.appendChild(chip);
+    }
+    row.appendChild(chips);
+    return row;
+  }
+
+  function parseHourTextToRanges(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return [];
+    const low = raw.toLowerCase();
+    if (/(all\s*day|all-day|all_day|24\s*hours|종일|하루\s*종일)/i.test(low)) {
+      return [[0, 24]];
+    }
+    if (/^(na|n\/a|none|-)$/.test(low)) return [];
+
+    const ranges = [];
+    const partList = raw.split(/[\/,;&]/).map((x) => x.trim()).filter(Boolean);
+    const tokens = partList.length ? partList : [raw];
+
+    const to24 = (hour12, ampm) => {
+      let h = Number(hour12) % 12;
+      if (String(ampm || "").trim().toUpperCase() === "PM") h += 12;
+      return h;
+    };
+
+    tokens.forEach((token) => {
+      const m = token.match(/(\d{1,2})\s*(AM|PM)\s*[–-]\s*(\d{1,2})\s*(AM|PM)/i);
+      if (m) {
+        const start = to24(m[1], m[2]);
+        const end = to24(m[3], m[4]);
+        if (start === end) {
+          ranges.push([0, 24]);
+        } else if (start < end) {
+          ranges.push([start, end]);
+        } else {
+          ranges.push([start, 24], [0, end]);
+        }
+        return;
+      }
+
+      const h24 = token.match(/\b([01]?\d|2[0-4])\s*[:시]?\s*[–-]\s*([01]?\d|2[0-4])\b/i);
+      if (h24) {
+        const start = Number(h24[1]) % 24;
+        const endRaw = Number(h24[2]);
+        const end = endRaw === 24 ? 24 : endRaw % 24;
+        if (start === end) {
+          ranges.push([0, 24]);
+        } else if (start < end) {
+          ranges.push([start, end]);
+        } else {
+          ranges.push([start, 24], [0, end]);
+        }
+      }
+    });
+    return ranges;
+  }
+
+  function rangesToDisplayHourSet(ranges) {
+    const out = new Set();
+    ranges.forEach(([start, end]) => {
+      const s = Math.max(0, Math.min(24, Number(start)));
+      const e = Math.max(0, Math.min(24, Number(end)));
+      for (let h = s; h < e; h += 1) {
+        out.add(h === 0 ? 24 : h);
+      }
+    });
+    return out;
+  }
+
+  function renderCritterTimeField(label, value) {
+    const row = document.createElement("div");
+    row.className = "detail-time-row";
+
+    const title = document.createElement("p");
+    title.className = "detail-field";
+    title.textContent = `${label}:`;
+    row.appendChild(title);
+
+    const ranges = parseHourTextToRanges(value);
+    if (!ranges.length) {
+      const fallback = document.createElement("p");
+      fallback.className = "detail-field";
+      fallback.textContent = String(value || "-");
+      row.appendChild(fallback);
+      return row;
+    }
+
+    const activeHours = rangesToDisplayHourSet(ranges);
+
+    const scale = document.createElement("div");
+    scale.className = "detail-time-scale";
+
+    const track = document.createElement("div");
+    track.className = "detail-time-track";
+    for (let h = 1; h <= 24; h += 1) {
+      const slot = document.createElement("span");
+      slot.className = `detail-time-slot ${activeHours.has(h) ? "active" : ""}`;
+      track.appendChild(slot);
+    }
+
+    const axis = document.createElement("div");
+    axis.className = "detail-time-axis";
+    for (let i = 0; i <= 24; i += 1) {
+      const tick = document.createElement("span");
+      let isActive = false;
+      if (i === 0) isActive = activeHours.has(1);
+      else if (i === 24) isActive = activeHours.has(24);
+      else isActive = activeHours.has(i) || activeHours.has(i + 1);
+      tick.className = `detail-time-axis-tick ${isActive ? "active" : ""}`;
+      tick.style.left = `${(i / 24) * 100}%`;
+      axis.appendChild(tick);
+    }
+
+    const labels = document.createElement("div");
+    labels.className = "detail-time-labels";
+    const axisLabels = [
+      { hour: 0, text: "12am" },
+      { hour: 3, text: "3am" },
+      { hour: 6, text: "6am" },
+      { hour: 9, text: "9am" },
+      { hour: 12, text: "12pm" },
+      { hour: 15, text: "3pm" },
+      { hour: 18, text: "6pm" },
+      { hour: 21, text: "9pm" },
+    ];
+    axisLabels.forEach((label) => {
+      const text = document.createElement("span");
+      text.className = "detail-time-axis-label";
+      if (label.hour === 0) text.classList.add("edge-start");
+      text.textContent = label.text;
+      text.style.left = `${(label.hour / 24) * 100}%`;
+      labels.appendChild(text);
+    });
+
+    scale.appendChild(track);
+    scale.appendChild(axis);
+    scale.appendChild(labels);
+    row.appendChild(scale);
+    return row;
+  }
+
   function getDetailModeCache(mode) {
     if (!state.detailCacheByMode[mode]) state.detailCacheByMode[mode] = new Map();
     return state.detailCacheByMode[mode];
@@ -486,8 +718,11 @@ export function createDetailController({
     state.activeDetailType = "catalog";
     state.activeDetailPayload = payload;
     const isRecipeMode = state.activeMode === "recipes";
-    const hideVariationInfoMode = state.activeMode === "recipes" || state.activeMode === "reactions";
-    const isEncyclopediaMode = ["fossils", "bugs", "fish", "sea"].includes(state.activeMode);
+    const isEncyclopediaMode = ["fossils", "bugs", "fish", "sea", "art"].includes(state.activeMode);
+    const isCritterMode = ["bugs", "fish", "sea"].includes(state.activeMode);
+    const hideVariationInfoMode = state.activeMode === "recipes"
+      || state.activeMode === "reactions"
+      || isEncyclopediaMode;
     const summary = payload.summary || {};
     const nameKo = String(payload.item?.name_ko || payload.item?.name || "").trim();
     const nameEn = String(summary.name_en || payload.item?.name_en || "").trim();
@@ -514,16 +749,41 @@ export function createDetailController({
 
     detailFields.innerHTML = "";
     const detailFieldsRows = Array.isArray(payload.fields) ? payload.fields : [];
-    const filteredDetailFields = hideVariationInfoMode
+    let filteredDetailFields = hideVariationInfoMode
       ? detailFieldsRows.filter((field) => {
           const label = String(field?.label || "");
           return !/(색|패턴|변형|color|pattern|variation)/i.test(label);
         })
       : detailFieldsRows;
+    if (isCritterMode) {
+      const hemi = String(state.homeHemisphere || "north").toLowerCase();
+      filteredDetailFields = filteredDetailFields.filter((field) => {
+        const label = String(field?.label || "");
+        if (hemi === "south" && label.startsWith("북반구")) return false;
+        if (hemi !== "south" && label.startsWith("남반구")) return false;
+        return true;
+      });
+    }
+    if (isEncyclopediaMode) {
+      filteredDetailFields = filteredDetailFields.filter((field) => {
+        const label = String(field?.label || "");
+        return label !== "비매품 여부";
+      });
+    }
     filteredDetailFields.forEach((field) => {
+      const label = String(field?.label || "");
+      const value = String(field?.value || "");
+      if (isCritterMode && /출현\s*월/.test(label)) {
+        detailFields.appendChild(renderCritterMonthField(label, value));
+        return;
+      }
+      if (isCritterMode && /출현\s*시간/.test(label)) {
+        detailFields.appendChild(renderCritterTimeField(label, value));
+        return;
+      }
       const row = document.createElement("p");
       row.className = "detail-field";
-      row.textContent = `${field.label}: ${field.value}`;
+      row.textContent = `${label}: ${value}`;
       detailFields.appendChild(row);
     });
 
@@ -683,12 +943,21 @@ export function createDetailController({
 
     detailRawFields.innerHTML = "";
     const rawRows = Array.isArray(payload.raw_fields) ? payload.raw_fields : [];
-    const filteredRawRows = hideVariationInfoMode
+    let filteredRawRows = hideVariationInfoMode
       ? rawRows.filter((row) => {
           const key = String(row?.key || "");
           return !/(색|패턴|변형|color|pattern|variation)/i.test(key);
         })
       : rawRows;
+    if (isCritterMode) {
+      const hemi = String(state.homeHemisphere || "north").toLowerCase();
+      filteredRawRows = filteredRawRows.filter((row) => {
+        const key = String(row?.key || "");
+        if (hemi === "south" && key === "north") return false;
+        if (hemi !== "south" && key === "south") return false;
+        return true;
+      });
+    }
     filteredRawRows.forEach((row) => {
       const p = document.createElement("p");
       p.className = "raw-field";

@@ -61,6 +61,7 @@ export const state = {
   homeIslandName: "",
   homeRepresentativeName: "",
   homeRepresentativeBirthday: "",
+  homeHemisphere: "north",
   players: [],
   homeCreatureType: "bugs",
   homeCreatureOwnedFilter: "",

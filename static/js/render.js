@@ -655,12 +655,14 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const donatedWrap = fragment.querySelector(".donated-wrap");
     const ownedLabel = fragment.querySelector(".owned-label");
     const ownedWrapLabel = owned ? owned.closest("label") : null;
+    const donatedWrapLabel = donated ? donated.closest("label") : donatedWrap;
     const qtyWrap = fragment.querySelector(".owned-qty-wrap");
     const qtyInput = fragment.querySelector(".owned-qty");
     const toggles = fragment.querySelector(".toggles");
     const isArtMode = state.activeMode === "art";
     const isFurnitureMode = state.activeMode === "furniture";
     const isMuseumMode = ["art", "fossils", "bugs", "fish", "sea"].includes(state.activeMode);
+    const isCritterMode = ["bugs", "fish", "sea"].includes(state.activeMode);
     const isEncyclopediaMode = ["fossils", "bugs", "fish", "sea"].includes(state.activeMode);
     const isMusicMode = musicMode;
     const isRecipeMode = state.activeMode === "recipes";
@@ -678,7 +680,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     nameKo.textContent = v.name_ko || v.name_en;
     nameEn.textContent =
-      isArtMode || isMusicMode || isRecipeMode || isReactionMode
+      isArtMode || isMusicMode || isRecipeMode || isReactionMode || isCritterMode
         ? ""
         : v.name_en
           ? `EN: ${v.name_en}`
@@ -697,6 +699,8 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       const sourceNorm = sourceText.toLowerCase().replace(/\s+/g, "");
       const isDuplicate = eventNorm && sourceNorm && (sourceNorm.includes(eventNorm) || eventNorm.includes(sourceNorm));
       meta.textContent = isEventLikeReactionType(eventType) && !isDuplicate ? `타입: ${eventType}` : "";
+    } else if (isCritterMode) {
+      meta.textContent = "";
     } else {
       meta.textContent = isArtMode || isMusicMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
     }
@@ -716,6 +720,8 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       }
       card.classList.add("music-card");
       icon.classList.add("music-icon");
+    } else if (isCritterMode) {
+      desc.textContent = "";
     } else if (!isReactionMode && (v.event_type || v.date)) {
       const parts = [];
       if (v.event_type) parts.push(`타입: ${v.event_type}`);
@@ -891,13 +897,29 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         ownedLabel.textContent = "✓";
       }
     }
+    if (isCritterMode) {
+      card.classList.add("critter-card");
+      if (ownedWrapLabel) {
+        ownedWrapLabel.classList.add("owned-overlay");
+        ownedWrapLabel.classList.toggle("checked", owned.checked);
+      }
+      if (ownedLabel) {
+        ownedLabel.textContent = "✓";
+      }
+      if (donatedWrapLabel) {
+        donatedWrapLabel.classList.add("donated-overlay");
+        donatedWrapLabel.classList.toggle("checked", Boolean(v.donated));
+        donatedWrapLabel.setAttribute("aria-label", "박물관 기증");
+        donatedWrapLabel.title = "박물관 기증";
+      }
+    }
     if (isMusicMode) {
       ownedLabel.textContent = owned.checked ? "보유" : "미보유";
     } else if (isReactionMode) {
       ownedLabel.textContent = owned.checked ? "습득" : "미습득";
     } else {
       ownedLabel.textContent = isPartialOwned ? "일부 보유" : ownedStatusLabel;
-      if (isRecipeMode && ownedLabel) {
+      if ((isRecipeMode || isCritterMode) && ownedLabel) {
         ownedLabel.textContent = "✓";
       }
     }
@@ -932,10 +954,10 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         : isReactionMode
           ? (owned.checked ? "습득" : "미습득")
           : ownedStatusLabel;
-      if (isRecipeMode && ownedWrapLabel) {
+      if ((isRecipeMode || isCritterMode) && ownedWrapLabel) {
         ownedWrapLabel.classList.toggle("checked", owned.checked);
       }
-      if (isRecipeMode && ownedLabel) {
+      if ((isRecipeMode || isCritterMode) && ownedLabel) {
         ownedLabel.textContent = "✓";
       }
       card.classList.remove("partially-owned");
@@ -954,6 +976,9 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     if (isMuseumMode && donated) {
       donated.addEventListener("change", async () => {
+        if (isCritterMode && donatedWrapLabel) {
+          donatedWrapLabel.classList.toggle("checked", donated.checked);
+        }
         if (!handlers.onToggleDonated) return;
         await handlers.onToggleDonated(v.id, donated.checked);
       });

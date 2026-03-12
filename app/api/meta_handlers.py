@@ -17,6 +17,8 @@ from app.services.home_summary import catalog_progress_summary
 from app.services.home_summary import parse_effective_now
 from app.services.calendar_annotations import build_calendar_annotations
 from app.services.catalog_data import _find_catalog_row
+from app.services.catalog_data import format_critter_location_label
+from app.services.catalog_data import format_critter_size_label
 
 
 def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
@@ -107,8 +109,10 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
                 size = str(raw.get("shadow_size") or raw.get("shadow") or "-").strip() or "-"
             elif str(raw.get("size") or "").strip():
                 size = str(raw.get("size")).strip()
+            size = format_critter_size_label(size) or "-"
 
-            location = str(raw.get("location") or raw.get("spawn_location") or "-").strip() or "-"
+            location_raw = str(raw.get("location_ko") or raw.get("spawn_location_ko") or raw.get("location") or raw.get("spawn_location") or "-").strip() or "-"
+            location = format_critter_location_label(location_raw) or "-"
             months_text = str(region.get("months") or "-").strip() or "-"
 
             out.append(

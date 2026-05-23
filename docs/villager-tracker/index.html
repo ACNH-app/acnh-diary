@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모동숲 주민 트래커</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">ACNH Villager Tracker</p>
+          <h1>성격과 동물종으로 정리하는 모동숲 주민 도감</h1>
+          <p class="hero-text">
+            주민을 성격별, 동물종별로 나눠서 보고 상세 정보를 확인하면서
+            <strong>위시 주민</strong>, <strong>섬 주민</strong>,
+            <strong>캠핑장 방문</strong>, <strong>이사감</strong>,
+            <strong>사진 선물 받음</strong> 상태를 브라우저에 저장할 수 있습니다.
+          </p>
+        </div>
+        <div class="hero-note">
+          <p>저장 위치</p>
+          <strong>현재 브라우저의 localStorage</strong>
+          <span>같은 기기/브라우저에서 자동 유지됩니다.</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel summary-panel">
+          <div class="panel-head">
+            <h2>진행 현황</h2>
+            <button id="resetStorageButton" class="ghost-button" type="button">체크 초기화</button>
+          </div>
+          <div id="summaryGrid" class="summary-grid"></div>
+        </section>
+
+        <section class="panel controls-panel">
+          <div class="panel-head">
+            <h2>필터와 분류</h2>
+          </div>
+          <div class="controls-grid">
+            <label class="field">
+              <span>이름 검색</span>
+              <input id="searchInput" type="search" placeholder="한글/영문 이름 검색" />
+            </label>
+
+            <label class="field">
+              <span>분류 기준</span>
+              <select id="groupBySelect">
+                <option value="personality">성격별</option>
+                <option value="species">동물종별</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>성격 필터</span>
+              <select id="personalityFilter">
+                <option value="">전체</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>동물종 필터</span>
+              <select id="speciesFilter">
+                <option value="">전체</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>상태 필터</span>
+              <select id="statusFilter">
+                <option value="">전체</option>
+                <option value="wish">위시 주민</option>
+                <option value="island">섬 주민</option>
+                <option value="camping">캠핑장 방문</option>
+                <option value="movedOut">이사간 주민</option>
+                <option value="photoGifted">사진 선물 받음</option>
+              </select>
+            </label>
+          </div>
+          <div id="activeFilters" class="active-filters"></div>
+        </section>
+
+        <section class="panel list-panel">
+          <div class="panel-head panel-head-spread">
+            <div>
+              <h2>주민 목록</h2>
+              <p id="listMeta" class="panel-subtext"></p>
+            </div>
+            <div class="legend">
+              <span><b>W</b> 위시</span>
+              <span><b>I</b> 섬</span>
+              <span><b>C</b> 캠핑</span>
+              <span><b>M</b> 이사감</span>
+              <span><b>P</b> 사진</span>
+            </div>
+          </div>
+          <div id="groupList" class="group-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="detailBackdrop" class="detail-backdrop hidden"></div>
+    <aside id="detailPanel" class="detail-panel hidden" aria-hidden="true">
+      <button id="closeDetailButton" class="detail-close" type="button" aria-label="상세 닫기">닫기</button>
+      <div id="detailContent"></div>
+    </aside>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>

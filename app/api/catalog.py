@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header, HTTPException
 
 from app.schemas.state import (
     CatalogStateBulkIn,
@@ -13,6 +13,19 @@ from app.schemas.state import (
     CatalogVariationStateIn,
     CatalogVariationStateOut,
 )
+
+
+def _resolve_island_id(x_island_id: str | None) -> int:
+    text = str(x_island_id or "").strip()
+    if not text:
+        return 1
+    try:
+        island_id = int(text)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid island id") from exc
+    if island_id <= 0:
+        raise HTTPException(status_code=400, detail="invalid island id")
+    return island_id
 
 
 def create_catalog_router(
@@ -51,8 +64,10 @@ def create_catalog_router(
         sort_order: str = "asc",
         page: int = 1,
         page_size: int = 60,
+        x_island_id: str | None = Header(default=None),
     ) -> dict[str, Any]:
         return get_catalog_handler(
+            island_id=_resolve_island_id(x_island_id),
             catalog_type=catalog_type,
             q=q,
             category=category,
@@ -69,23 +84,39 @@ def create_catalog_router(
         )
 
     @router.get("/api/catalog/{catalog_type}/{item_id}/detail")
-    def get_catalog_detail(catalog_type: str, item_id: str) -> dict[str, Any]:
-        return get_catalog_detail_handler(catalog_type=catalog_type, item_id=item_id)
+    def get_catalog_detail(
+        catalog_type: str,
+        item_id: str,
+        x_island_id: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        return get_catalog_detail_handler(
+            island_id=_resolve_island_id(x_island_id),
+            catalog_type=catalog_type,
+            item_id=item_id,
+        )
 
     @router.post("/api/catalog/{catalog_type}/{item_id}/state", response_model=CatalogStateOut)
     def update_catalog_state(
-        catalog_type: str, item_id: str, payload: CatalogStateIn
+        catalog_type: str,
+        item_id: str,
+        payload: CatalogStateIn,
+        x_island_id: str | None = Header(default=None),
     ) -> CatalogStateOut:
         return update_catalog_state_handler(
-            catalog_type=catalog_type, item_id=item_id, payload=payload
+            island_id=_resolve_island_id(x_island_id),
+            catalog_type=catalog_type,
+            item_id=item_id,
+            payload=payload,
         )
 
     @router.post("/api/catalog/{catalog_type}/state/bulk")
     def update_catalog_state_bulk(
         catalog_type: str,
         payload: CatalogStateBulkIn,
+        x_island_id: str | None = Header(default=None),
     ) -> dict[str, Any]:
         return update_catalog_state_bulk_handler(
+            island_id=_resolve_island_id(x_island_id),
             catalog_type=catalog_type,
             payload=payload,
         )
@@ -99,8 +130,10 @@ def create_catalog_router(
         item_id: str,
         variation_id: str,
         payload: CatalogVariationStateIn,
+        x_island_id: str | None = Header(default=None),
     ) -> CatalogVariationStateOut:
         return update_catalog_variation_state_handler(
+            island_id=_resolve_island_id(x_island_id),
             catalog_type=catalog_type,
             item_id=item_id,
             variation_id=variation_id,
@@ -112,8 +145,10 @@ def create_catalog_router(
         catalog_type: str,
         item_id: str,
         payload: CatalogVariationStateBatchIn,
+        x_island_id: str | None = Header(default=None),
     ) -> dict[str, Any]:
         return update_catalog_variation_state_batch_handler(
+            island_id=_resolve_island_id(x_island_id),
             catalog_type=catalog_type,
             item_id=item_id,
             payload=payload,

@@ -1,9 +1,12 @@
 import {
+  createIsland,
+  deleteIsland,
   deleteCalendarEntry,
   getCalendarEntries,
   getCalendarAnnotations,
   getCalendarEntriesByDate,
   getJSON,
+  getIslands,
   getHomeSummary,
   getHomeCreaturesNow,
   getHomeIslandResidents,
@@ -51,6 +54,7 @@ import { createDetailController } from "./js/detail.js";
 import { bindMainEvents } from "./js/events.js";
 import {
   bindHomeEvents,
+  loadIslands,
   loadHomeIslandResidents,
   loadHomeSummary,
   loadHomeCreaturesNow,
@@ -248,6 +252,34 @@ detailController = createDetailController({
 });
 
 bindHomeEvents({
+  getIslands,
+  createIsland,
+  deleteIsland,
+  onIslandChange: async (islandId) => {
+    state.currentIslandId = islandId;
+    window.localStorage.setItem("acnh-current-island-id", String(islandId));
+    state.islandProfileLoaded = false;
+    state.calendarMonthEntries = [];
+    state.calendarMonthAnnotations = [];
+    state.calendarDayEntries = [];
+    state.calendarDayAnnotations = [];
+    state.players = [];
+    state.catalogAllItemsByMode = {};
+    state.detailCacheByMode = {};
+    state.musicCardMetaCache = {};
+    await ensureHomeProfileLoaded();
+    await ensureHomeIslandResidentsLoaded();
+    await ensureHomeSummaryLoaded();
+    await ensurePlayersLoaded();
+    if (state.calendarLoaded && calendarReloadMonth && calendarLoadDay) {
+      await syncCalendarToEffectiveDate();
+    } else {
+      await ensureCalendarLoaded();
+    }
+    if (state.activeMode !== "home") {
+      await dataController.loadCurrentModeData();
+    }
+  },
   updateIslandProfile,
   getHomeSummary,
   getHomeCreaturesNow,
@@ -349,6 +381,15 @@ function effectiveIsoDate() {
   return `${y}-${m}-${d}`;
 }
 
+async function reloadVillagersPreservingScroll() {
+  const scrollX = window.scrollX;
+  const scrollY = window.scrollY;
+  await dataController.loadCurrentModeData();
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ left: scrollX, top: scrollY, behavior: "auto" });
+  });
+}
+
 async function syncCalendarToEffectiveDate() {
   const date = effectiveIsoDate();
   state.calendarSelectedDate = date;
@@ -364,6 +405,15 @@ async function syncCalendarToEffectiveDate() {
 window.addEventListener("acnh:effective-date-changed", () => {
   syncCalendarToEffectiveDate().catch((err) => console.error(err));
   ensureHomeSummaryLoaded().catch((err) => console.error(err));
+});
+window.addEventListener("acnh:villager-state-changed", (e) => {
+  ensureHomeIslandResidentsLoaded().catch((err) => console.error(err));
+  if (typeof dataController.invalidateVillagerCache === "function") {
+    dataController.invalidateVillagerCache();
+  }
+  if (state.activeMode === "villagers" && e?.detail?.source !== "villagers") {
+    reloadVillagersPreservingScroll().catch((err) => console.error(err));
+  }
 });
 window.addEventListener("acnh:navigate-mode", (e) => {
   const mode = e?.detail?.mode || "";
@@ -418,6 +468,7 @@ if (brandHomeBtn) {
   try {
     const nav = await getJSON("/api/nav");
     state.navModes = nav.modes || [];
+    await loadIslands(getIslands);
 
     if (!state.navModes.find((m) => m.key === "home")) {
       state.navModes.unshift({ key: "home", label: "홈" });

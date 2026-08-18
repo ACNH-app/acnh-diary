@@ -48,10 +48,13 @@ from app.core.config import (
 from app.core.db import get_db, init_db
 from app.domain.catalog import category_ko_for, order_categories
 from app.repositories.state import (
+    create_island,
+    delete_island,
     delete_player,
     delete_calendar_entry,
     invalidate_catalog_state_caches,
     get_island_profile,
+    list_islands,
     list_players,
     list_calendar_entries,
     list_calendar_entries_by_date,
@@ -182,6 +185,9 @@ handlers = create_handlers(
             load_personality_map=load_personality_map,
             load_species_map=load_species_map,
             load_catalog=load_catalog,
+            list_islands=list_islands,
+            create_island=create_island,
+            delete_island=delete_island,
             get_island_profile=get_island_profile,
             upsert_island_profile=upsert_island_profile,
             list_calendar_entries=list_calendar_entries,
@@ -233,6 +239,9 @@ app.include_router(
         home_handler=handlers.meta.home,
         nav_handler=handlers.meta.get_nav,
         villager_meta_handler=handlers.meta.get_villager_meta,
+        islands_handler=handlers.meta.get_islands,
+        create_island_handler=handlers.meta.create_island,
+        delete_island_handler=handlers.meta.delete_island,
         home_summary_handler=handlers.meta.get_home_summary,
         home_creatures_now_handler=handlers.meta.get_home_creatures_now,
         island_profile_handler=handlers.meta.get_island_profile,

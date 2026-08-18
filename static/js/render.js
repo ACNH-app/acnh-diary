@@ -567,7 +567,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
         if (!onToggleState) return;
         v.liked = !Boolean(v.liked);
         syncVillagerToggleButtons();
-        await onToggleState(v.id, { liked: Boolean(v.liked) });
+        await onToggleState(v.id, { liked: Boolean(v.liked) }, { card });
       });
       campingVisitedBtn?.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -575,7 +575,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
         if (!onToggleState) return;
         v.camping_visited = !Boolean(v.camping_visited);
         syncVillagerToggleButtons();
-        await onToggleState(v.id, { camping_visited: Boolean(v.camping_visited) });
+        await onToggleState(v.id, { camping_visited: Boolean(v.camping_visited) }, { card });
       });
       onIslandBtn?.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -583,7 +583,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
         if (!onToggleState) return;
         v.on_island = !Boolean(v.on_island);
         syncVillagerToggleButtons();
-        await onToggleState(v.id, { on_island: Boolean(v.on_island) });
+        await onToggleState(v.id, { on_island: Boolean(v.on_island) }, { card });
       });
       formerResidentBtn?.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -591,7 +591,7 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
         if (!onToggleState) return;
         v.former_resident = !Boolean(v.former_resident);
         syncVillagerToggleButtons();
-        await onToggleState(v.id, { former_resident: Boolean(v.former_resident) });
+        await onToggleState(v.id, { former_resident: Boolean(v.former_resident) }, { card });
       });
 
       card.addEventListener("click", (e) => {

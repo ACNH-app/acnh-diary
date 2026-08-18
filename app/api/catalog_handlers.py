@@ -30,7 +30,10 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         origin = str((item or {}).get("origin_catalog_type") or "").strip()
         return origin if origin in deps.catalog_types else catalog_type
 
-    def _merge_state_for_special_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _merge_state_for_special_items_for_island(
+        island_id: int,
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         grouped: dict[str, list[dict[str, Any]]] = {}
         for item in items:
             origin = str(item.get("origin_catalog_type") or "").strip()
@@ -40,8 +43,8 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
 
         merged_by_id: dict[str, dict[str, Any]] = {}
         for origin, rows in grouped.items():
-            rows_with_state = deps.with_catalog_state(origin, rows)
-            rows_with_counts = deps.with_catalog_variation_counts(origin, rows_with_state)
+            rows_with_state = deps.with_catalog_state(island_id, origin, rows)
+            rows_with_counts = deps.with_catalog_variation_counts(island_id, origin, rows_with_state)
             for row in rows_with_counts:
                 row_id = str(row.get("id") or "")
                 if row_id:
@@ -105,6 +108,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         }
 
     def get_catalog(
+        island_id: int,
         catalog_type: str,
         q: str = "",
         category: str = "",
@@ -164,10 +168,10 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             items = [x for x in items if x.get("authenticity") == fake_state]
 
         if _is_special_items_mode(catalog_type):
-            items = _merge_state_for_special_items(items)
+            items = _merge_state_for_special_items_for_island(island_id, items)
         else:
-            items = deps.with_catalog_state(catalog_type, items)
-            items = deps.with_catalog_variation_counts(catalog_type, items)
+            items = deps.with_catalog_state(island_id, catalog_type, items)
+            items = deps.with_catalog_variation_counts(island_id, catalog_type, items)
 
         if owned is not None:
             items = [x for x in items if x["owned"] is owned]
@@ -204,7 +208,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             "items": paged_items,
         }
 
-    def get_catalog_detail(catalog_type: str, item_id: str) -> dict[str, Any]:
+    def get_catalog_detail(island_id: int, catalog_type: str, item_id: str) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
             raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
 
@@ -232,7 +236,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             except Exception:
                 from_single = False
 
-        variation_state_map = deps.get_catalog_variation_state_map(state_catalog_type, item_id)
+        variation_state_map = deps.get_catalog_variation_state_map(island_id, state_catalog_type, item_id)
         return deps.catalog_detail_payload(
             catalog_type=state_catalog_type,
             item=item,
@@ -242,6 +246,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         )
 
     def update_catalog_state(
+        island_id: int,
         catalog_type: str, item_id: str, payload: CatalogStateIn
     ) -> CatalogStateOut:
         if catalog_type not in deps.catalog_types:
@@ -259,9 +264,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 """
                 SELECT owned, donated, quantity
                 FROM catalog_state
-                WHERE catalog_type = ? AND item_id = ?
+                WHERE island_id = ? AND catalog_type = ? AND item_id = ?
                 """,
-                (state_catalog_type, item_id),
+                (island_id, state_catalog_type, item_id),
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
@@ -278,6 +283,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             )
             deps.upsert_catalog_state(
                 conn,
+                island_id,
                 state_catalog_type,
                 item_id,
                 bool(new_owned),
@@ -285,11 +291,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 bool(new_donated),
             )
             deps.upsert_all_variation_states(
-                conn, state_catalog_type, item_id, variation_ids, bool(new_owned)
+                conn, island_id, state_catalog_type, item_id, variation_ids, bool(new_owned)
             )
-        deps.invalidate_catalog_state_caches(state_catalog_type)
+        deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
         if _is_special_items_mode(catalog_type):
-            deps.invalidate_catalog_state_caches(catalog_type)
+            deps.invalidate_catalog_state_caches(catalog_type, island_id)
 
         return CatalogStateOut(
             catalog_type=catalog_type,
@@ -300,6 +306,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         )
 
     def update_catalog_state_bulk(
+        island_id: int,
         catalog_type: str,
         payload: CatalogStateBulkIn,
     ) -> dict[str, Any]:
@@ -337,9 +344,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                         f"""
                         SELECT item_id, donated, quantity
                         FROM catalog_state
-                        WHERE catalog_type = ? AND item_id IN ({placeholders})
+                        WHERE island_id = ? AND catalog_type = ? AND item_id IN ({placeholders})
                         """,
-                        (state_catalog_type, *grouped_item_ids),
+                        (island_id, state_catalog_type, *grouped_item_ids),
                     ).fetchall()
                     existing_map = {
                         str(r["item_id"]): {
@@ -361,14 +368,14 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                         else:
                             quantity = current_qty
                         state_rows.append(
-                            (state_catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
+                            (island_id, state_catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
                         )
 
                     conn.executemany(
                         """
-                        INSERT INTO catalog_state (catalog_type, item_id, owned, donated, quantity)
-                        VALUES (?, ?, ?, ?, ?)
-                        ON CONFLICT(catalog_type, item_id) DO UPDATE SET
+                        INSERT INTO catalog_state (island_id, catalog_type, item_id, owned, donated, quantity)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(island_id, catalog_type, item_id) DO UPDATE SET
                             owned = excluded.owned,
                             donated = excluded.donated,
                             quantity = excluded.quantity,
@@ -382,23 +389,23 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                         for variation_id in variation_map[item_id]:
                             qty = 1 if payload.owned else 0
                             variation_rows.append(
-                                (state_catalog_type, item_id, variation_id, int(payload.owned), int(qty))
+                                (island_id, state_catalog_type, item_id, variation_id, int(payload.owned), int(qty))
                             )
                     if variation_rows:
                         conn.executemany(
                             """
-                            INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
-                            VALUES (?, ?, ?, ?, ?)
-                            ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+                            INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
                                 owned = excluded.owned,
                                 quantity = excluded.quantity,
                                 updated_at = CURRENT_TIMESTAMP
                             """,
                             variation_rows,
                         )
-                deps.invalidate_catalog_state_caches(state_catalog_type)
+                deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
                 updated_total += len(grouped_item_ids)
-            deps.invalidate_catalog_state_caches(catalog_type)
+            deps.invalidate_catalog_state_caches(catalog_type, island_id)
             return {"updated": updated_total, "owned": bool(payload.owned)}
 
         with deps.get_db() as conn:
@@ -407,9 +414,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 f"""
                 SELECT item_id, donated, quantity
                 FROM catalog_state
-                WHERE catalog_type = ? AND item_id IN ({placeholders})
+                WHERE island_id = ? AND catalog_type = ? AND item_id IN ({placeholders})
                 """,
-                (catalog_type, *target_ids),
+                (island_id, catalog_type, *target_ids),
             ).fetchall()
             existing_map = {
                 str(r["item_id"]): {
@@ -431,14 +438,14 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 else:
                     quantity = current_qty
                 state_rows.append(
-                    (catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
+                    (island_id, catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
                 )
 
             conn.executemany(
                 """
-                INSERT INTO catalog_state (catalog_type, item_id, owned, donated, quantity)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(catalog_type, item_id) DO UPDATE SET
+                INSERT INTO catalog_state (island_id, catalog_type, item_id, owned, donated, quantity)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(island_id, catalog_type, item_id) DO UPDATE SET
                     owned = excluded.owned,
                     donated = excluded.donated,
                     quantity = excluded.quantity,
@@ -452,25 +459,26 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 for variation_id in variation_map[item_id]:
                     qty = 1 if payload.owned else 0
                     variation_rows.append(
-                        (catalog_type, item_id, variation_id, int(payload.owned), int(qty))
+                        (island_id, catalog_type, item_id, variation_id, int(payload.owned), int(qty))
                     )
             if variation_rows:
                 conn.executemany(
                     """
-                    INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
-                    VALUES (?, ?, ?, ?, ?)
-                    ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+                    INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
                         owned = excluded.owned,
                         quantity = excluded.quantity,
                         updated_at = CURRENT_TIMESTAMP
                     """,
                     variation_rows,
                 )
-        deps.invalidate_catalog_state_caches(catalog_type)
+        deps.invalidate_catalog_state_caches(catalog_type, island_id)
 
         return {"updated": len(target_ids), "owned": bool(payload.owned)}
 
     def update_catalog_variation_state(
+        island_id: int,
         catalog_type: str,
         item_id: str,
         variation_id: str,
@@ -494,9 +502,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 """
                 SELECT owned, quantity
                 FROM catalog_variation_state
-                WHERE catalog_type = ? AND item_id = ? AND variation_id = ?
+                WHERE island_id = ? AND catalog_type = ? AND item_id = ? AND variation_id = ?
                 """,
-                (state_catalog_type, item_id, variation_id),
+                (island_id, state_catalog_type, item_id, variation_id),
             ).fetchone()
 
             current_owned = bool(existing["owned"]) if existing else False
@@ -512,19 +520,19 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
 
             conn.execute(
                 """
-                INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+                INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
                     owned = excluded.owned,
                     quantity = excluded.quantity,
                     updated_at = CURRENT_TIMESTAMP
                 """,
-                (state_catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
+                (island_id, state_catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
             )
-            deps.recalc_item_owned_from_variations(conn, state_catalog_type, item_id, variation_ids)
-        deps.invalidate_catalog_state_caches(state_catalog_type)
+            deps.recalc_item_owned_from_variations(conn, island_id, state_catalog_type, item_id, variation_ids)
+        deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
         if _is_special_items_mode(catalog_type):
-            deps.invalidate_catalog_state_caches(catalog_type)
+            deps.invalidate_catalog_state_caches(catalog_type, island_id)
 
         return CatalogVariationStateOut(
             catalog_type=catalog_type,
@@ -535,6 +543,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         )
 
     def update_catalog_variation_state_batch(
+        island_id: int,
         catalog_type: str,
         item_id: str,
         payload: CatalogVariationStateBatchIn,
@@ -560,15 +569,16 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         with deps.get_db() as conn:
             conn.executemany(
                 """
-                INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+                INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
                     owned = excluded.owned,
                     quantity = excluded.quantity,
                     updated_at = CURRENT_TIMESTAMP
                 """,
                 [
                     (
+                        island_id,
                         state_catalog_type,
                         item_id,
                         row.variation_id,
@@ -579,11 +589,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 ],
             )
             item_owned = deps.recalc_item_owned_from_variations(
-                conn, state_catalog_type, item_id, variation_ids
+                conn, island_id, state_catalog_type, item_id, variation_ids
             )
-        deps.invalidate_catalog_state_caches(state_catalog_type)
+        deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
         if _is_special_items_mode(catalog_type):
-            deps.invalidate_catalog_state_caches(catalog_type)
+            deps.invalidate_catalog_state_caches(catalog_type, island_id)
 
         return {"updated": len(payload.items), "item_owned": item_owned}
 

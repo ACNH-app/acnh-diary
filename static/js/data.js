@@ -224,6 +224,12 @@ export function createDataController({
   let recipeTagModalBound = false;
   let sourceFilterBarBound = false;
 
+  const notifyVillagerStateChanged = () => {
+    window.dispatchEvent(new CustomEvent("acnh:villager-state-changed", {
+      detail: { source: "villagers" },
+    }));
+  };
+
   async function ensureRecipeTagMeta(catalogType) {
     if (catalogType !== "recipes") return [];
     if (!state.recipeTagMetaByMode || typeof state.recipeTagMetaByMode !== "object") {
@@ -470,6 +476,37 @@ export function createDataController({
     return false;
   }
 
+  function applyVillagerStatePatch(villagerId, payload) {
+    const targetId = String(villagerId || "").trim();
+    if (!targetId || !payload || typeof payload !== "object") return;
+    const nextItems = Array.isArray(state.renderedVillagers) ? state.renderedVillagers : [];
+    nextItems.forEach((row) => {
+      if (String(row?.id || "").trim() !== targetId) return;
+      Object.assign(row, payload);
+    });
+  }
+
+  function removeVillagerCardFromCurrentView(villagerId, cardEl) {
+    const targetId = String(villagerId || "").trim();
+    if (!targetId) return;
+    const card = cardEl && typeof cardEl.remove === "function"
+      ? cardEl
+      : document.querySelector(`#list .card[data-item-id="${targetId}"]`);
+    if (card) {
+      const active = document.activeElement;
+      if (active && card.contains(active) && typeof active.blur === "function") {
+        active.blur();
+      }
+      card.remove();
+    }
+    state.renderedVillagers = (state.renderedVillagers || []).filter(
+      (row) => String(row?.id || "").trim() !== targetId
+    );
+    state.activeCatalogItemIds = state.renderedVillagers.map((v) => String(v.id || ""));
+    resultCount.textContent = `${state.renderedVillagers.length}명`;
+    if (onSyncDetailNav) onSyncDetailNav();
+  }
+
   function needsCatalogReloadAfterToggle(nextOwned) {
     if (state.activeCatalogTab === "owned" && nextOwned === false) return true;
     if (state.activeCatalogTab === "unowned" && nextOwned === true) return true;
@@ -707,7 +744,7 @@ export function createDataController({
       ...tabFilters,
     });
 
-    const cacheKey = query || "__all__";
+    const cacheKey = `${state.currentIslandId || 1}:${query || "__all__"}`;
     let data = villagerQueryCache.get(cacheKey);
     if (!data) {
       data = await getJSON(`/api/villagers?${query}`);
@@ -726,12 +763,14 @@ export function createDataController({
 
     renderVillagers(sortVillagers(finalItems, sortBySelect.value || "name", sortOrderSelect.value || "asc"), {
       onSyncDetailNav: safeSyncDetailNav,
-      onToggleState: async (villagerId, payload) => {
+      onToggleState: async (villagerId, payload, context = {}) => {
         await updateVillagerState(villagerId, payload);
         villagerQueryCache.clear();
+        applyVillagerStatePatch(villagerId, payload);
         if (needsVillagerReloadAfterToggle(payload)) {
-          await loadCurrentModeData();
+          removeVillagerCardFromCurrentView(villagerId, context.card || null);
         }
+        notifyVillagerStateChanged();
       },
       onOpenDetail: (villager) => {
         safeOpenVillagerDetail(villager);
@@ -1181,6 +1220,7 @@ export function createDataController({
   }
 
   return {
+    invalidateVillagerCache: () => villagerQueryCache.clear(),
     loadVillagerMeta,
     loadCatalogPage,
     loadCurrentModeData,

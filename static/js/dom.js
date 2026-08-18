@@ -25,6 +25,11 @@ export const openSettingsModalBtn = document.getElementById("openSettingsModalBt
 export const settingsModal = document.getElementById("settingsModal");
 export const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
 export const settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
+export const islandSwitcherSelect = document.getElementById("islandSwitcherSelect");
+export const newIslandNameInput = document.getElementById("newIslandNameInput");
+export const createIslandBtn = document.getElementById("createIslandBtn");
+export const deleteIslandBtn = document.getElementById("deleteIslandBtn");
+export const islandSwitcherStatus = document.getElementById("islandSwitcherStatus");
 
 export const islandNameInput = document.getElementById("islandNameInput");
 export const nicknameInput = document.getElementById("nicknameInput");

@@ -1,5 +1,19 @@
+const ISLAND_STORAGE_KEY = "acnh-current-island-id";
+
+function getCurrentIslandId() {
+  const raw = window.localStorage.getItem(ISLAND_STORAGE_KEY) || "1";
+  const id = Number.parseInt(String(raw || "1"), 10);
+  return Number.isFinite(id) && id > 0 ? id : 1;
+}
+
+function withIslandHeaders(options = {}) {
+  const headers = new Headers(options.headers || {});
+  headers.set("X-Island-Id", String(getCurrentIslandId()));
+  return { ...options, headers };
+}
+
 export async function getJSON(url, options = {}) {
-  const res = await fetch(url, options);
+  const res = await fetch(url, withIslandHeaders(options));
   if (!res.ok) {
     const text = await res.text();
     const err = new Error(text || "요청 실패");
@@ -58,6 +72,23 @@ export function getIslandProfile() {
   return getJSON("/api/profile");
 }
 
+export function getIslands() {
+  return getJSON("/api/islands");
+}
+
+export function createIsland(payload) {
+  return postJSON("/api/islands", payload);
+}
+
+export async function deleteIsland(islandId) {
+  const res = await fetch(`/api/islands/${islandId}`, withIslandHeaders({ method: "DELETE" }));
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "섬 삭제 실패");
+  }
+  return res.json();
+}
+
 export function updateIslandProfile(payload) {
   return postJSON("/api/profile", payload);
 }
@@ -97,7 +128,7 @@ export function setMainPlayer(playerId) {
 }
 
 export async function deletePlayer(playerId) {
-  const res = await fetch(`/api/players/${playerId}`, { method: "DELETE" });
+  const res = await fetch(`/api/players/${playerId}`, withIslandHeaders({ method: "DELETE" }));
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "삭제 실패");
@@ -129,7 +160,7 @@ export function setCalendarEntryChecked(entryId, checked) {
 }
 
 export async function deleteCalendarEntry(entryId) {
-  const res = await fetch(`/api/calendar/${entryId}`, { method: "DELETE" });
+  const res = await fetch(`/api/calendar/${entryId}`, withIslandHeaders({ method: "DELETE" }));
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "삭제 실패");

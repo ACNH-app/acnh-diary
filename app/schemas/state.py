@@ -76,6 +76,7 @@ class IslandProfileIn(BaseModel):
 
 
 class IslandProfileOut(BaseModel):
+    island_id: int
     island_name: str
     nickname: str
     representative_fruit: str
@@ -120,3 +121,12 @@ class PlayerOut(BaseModel):
     birthday: str
     is_main: bool
     is_sub: bool
+
+
+class IslandCreateIn(BaseModel):
+    name: str
+
+
+class IslandOut(BaseModel):
+    id: int
+    name: str

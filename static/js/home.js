@@ -21,7 +21,12 @@ import {
   homeResidentSearchInput,
   homeResidentSpeciesSelect,
   homeResidentStatus,
+  islandSwitcherSelect,
+  islandSwitcherStatus,
   islandNameInput,
+  createIslandBtn,
+  deleteIslandBtn,
+  newIslandNameInput,
   playerBirthdayDayInput,
   playerBirthdayMonthInput,
   playerList,
@@ -66,6 +71,30 @@ let residentPickerMetaLoaded = false;
 let homeResidentItems = [];
 let homeCreatureActionBound = false;
 let homeCreatureLoader = null;
+
+function notifyVillagerStateChanged() {
+  window.dispatchEvent(new CustomEvent("acnh:villager-state-changed"));
+}
+
+function persistCurrentIslandId(islandId) {
+  const safeId = Number.parseInt(String(islandId || "1"), 10);
+  const nextId = Number.isFinite(safeId) && safeId > 0 ? safeId : 1;
+  state.currentIslandId = nextId;
+  window.localStorage.setItem("acnh-current-island-id", String(nextId));
+}
+
+function renderIslandSwitcher() {
+  if (!islandSwitcherSelect) return;
+  const items = Array.isArray(state.islands) ? state.islands : [];
+  islandSwitcherSelect.innerHTML = "";
+  items.forEach((island) => {
+    const option = document.createElement("option");
+    option.value = String(island.id);
+    option.textContent = island.name || `Island ${island.id}`;
+    islandSwitcherSelect.appendChild(option);
+  });
+  islandSwitcherSelect.value = String(state.currentIslandId || 1);
+}
 
 function notifyEffectiveDateChanged() {
   window.dispatchEvent(new CustomEvent("acnh:effective-date-changed"));
@@ -338,6 +367,9 @@ function renderResidentPickerList(items, { onAdd } = {}) {
 
 export function applyIslandProfile(profile) {
   const p = profile || {};
+  if (p.island_id) {
+    persistCurrentIslandId(p.island_id);
+  }
   const nowLocal = toDateTimeLocalValue(new Date());
   fillMonthDayOptions(birthdayMonthInput, birthdayDayInput);
   fillMonthDayOptions(playerBirthdayMonthInput, playerBirthdayDayInput);
@@ -360,12 +392,27 @@ export function applyIslandProfile(profile) {
   renderEffectiveDateTime();
   notifyEffectiveDateChanged();
   renderHomeSimpleOverview();
+  renderIslandSwitcher();
 }
 
 export async function loadIslandProfile(getIslandProfile) {
   const profile = await getIslandProfile();
   applyIslandProfile(profile);
   state.islandProfileLoaded = true;
+}
+
+export async function loadIslands(getIslands, { onIslandChange } = {}) {
+  const islands = await getIslands();
+  state.islands = Array.isArray(islands) ? islands : [];
+  const hasCurrent = state.islands.some((item) => Number(item?.id) === Number(state.currentIslandId));
+  if (!hasCurrent && state.islands.length) {
+    persistCurrentIslandId(state.islands[0].id);
+    if (typeof onIslandChange === "function") {
+      await onIslandChange(state.currentIslandId);
+      return;
+    }
+  }
+  renderIslandSwitcher();
 }
 
 function resetPlayerForm() {
@@ -666,6 +713,7 @@ export async function loadHomeIslandResidents(
         homeResidentPickerStatus.textContent = "";
         try {
           await updateVillagerState(String(villager.id || ""), { on_island: true });
+          notifyVillagerStateChanged();
           await refresh();
           await reloadPicker();
         } catch (err) {
@@ -699,6 +747,7 @@ export async function loadHomeIslandResidents(
       homeResidentStatus.textContent = "";
       try {
         await updateVillagerState(String(villager.id || ""), { on_island: false });
+        notifyVillagerStateChanged();
         await refresh();
       } catch (err) {
         homeResidentStatus.textContent = "주민 삭제에 실패했습니다.";
@@ -708,6 +757,7 @@ export async function loadHomeIslandResidents(
       if (!updateIslandResidentOrder) return;
       try {
         await updateIslandResidentOrder(orderedIds);
+        notifyVillagerStateChanged();
         await refresh();
       } catch (err) {
         homeResidentStatus.textContent = "주민 순서 변경에 실패했습니다.";
@@ -742,6 +792,10 @@ export async function loadHomeIslandResidents(
 }
 
 export function bindHomeEvents({
+  getIslands,
+  createIsland,
+  deleteIsland,
+  onIslandChange,
   updateIslandProfile,
   getHomeSummary,
   getHomeCreaturesNow,
@@ -754,6 +808,7 @@ export function bindHomeEvents({
   }
   fillMonthDayOptions(birthdayMonthInput, birthdayDayInput);
   fillMonthDayOptions(playerBirthdayMonthInput, playerBirthdayDayInput);
+  renderIslandSwitcher();
   resetPlayerForm();
   birthdayMonthInput.addEventListener("change", () => updateDayOptions(birthdayMonthInput, birthdayDayInput));
   playerBirthdayMonthInput.addEventListener("change", () =>
@@ -785,6 +840,89 @@ export function bindHomeEvents({
   if (openSettingsModalBtn) {
     openSettingsModalBtn.addEventListener("click", openSettingsModal);
   }
+  islandSwitcherSelect?.addEventListener("change", async () => {
+    const nextId = Number.parseInt(String(islandSwitcherSelect.value || "1"), 10);
+    if (!Number.isFinite(nextId) || nextId <= 0 || nextId === state.currentIslandId) return;
+    islandSwitcherStatus.textContent = "섬 전환 중...";
+    persistCurrentIslandId(nextId);
+    try {
+      if (typeof onIslandChange === "function") {
+        await onIslandChange(nextId);
+      }
+      islandSwitcherStatus.textContent = "섬이 전환되었습니다.";
+    } catch (err) {
+      console.error(err);
+      islandSwitcherStatus.textContent = "섬 전환에 실패했습니다.";
+    }
+  });
+  createIslandBtn?.addEventListener("click", async () => {
+    const name = String(newIslandNameInput?.value || "").trim();
+    if (!name) {
+      islandSwitcherStatus.textContent = "새 섬 이름을 입력해 주세요.";
+      return;
+    }
+    islandSwitcherStatus.textContent = "섬 생성 중...";
+    try {
+      const created = await createIsland({ name });
+      newIslandNameInput.value = "";
+      if (typeof getIslands === "function") {
+        await loadIslands(getIslands);
+      }
+      persistCurrentIslandId(created?.id || state.currentIslandId);
+      renderIslandSwitcher();
+      if (typeof onIslandChange === "function") {
+        await onIslandChange(state.currentIslandId);
+      }
+      islandSwitcherStatus.textContent = "새 섬이 추가되었습니다.";
+    } catch (err) {
+      console.error(err);
+      islandSwitcherStatus.textContent = "섬 추가에 실패했습니다.";
+    }
+  });
+deleteIslandBtn?.addEventListener("click", async () => {
+    let islands = Array.isArray(state.islands) ? state.islands : [];
+    const hasCurrent = islands.some((item) => Number(item?.id) === Number(state.currentIslandId));
+    if (!hasCurrent && typeof getIslands === "function") {
+      await loadIslands(getIslands);
+      islands = Array.isArray(state.islands) ? state.islands : [];
+    }
+    if (islands.length <= 1) {
+      islandSwitcherStatus.textContent = "마지막 섬은 삭제할 수 없습니다.";
+      return;
+    }
+    const current = islands.find((item) => Number(item?.id) === Number(state.currentIslandId));
+    const islandName = current?.name || `Island ${state.currentIslandId}`;
+    const confirmed = window.confirm(
+      `'${islandName}' 섬을 삭제할까요? 이 섬의 주민/카탈로그/달력/플레이어 데이터도 함께 삭제됩니다.`
+    );
+    if (!confirmed) return;
+    islandSwitcherStatus.textContent = "섬 삭제 중...";
+    try {
+      await deleteIsland(state.currentIslandId);
+      const remaining = islands.filter((item) => Number(item?.id) !== Number(state.currentIslandId));
+      const nextIslandId = Number(remaining[0]?.id || 1);
+      persistCurrentIslandId(nextIslandId);
+      if (typeof getIslands === "function") {
+        await loadIslands(getIslands);
+      }
+      renderIslandSwitcher();
+      if (typeof onIslandChange === "function") {
+        await onIslandChange(nextIslandId);
+      }
+      islandSwitcherStatus.textContent = "섬이 삭제되었습니다.";
+    } catch (err) {
+      console.error(err);
+      const message = String(err?.message || "");
+      if (message.includes("island not found") && typeof getIslands === "function") {
+        await loadIslands(getIslands, { onIslandChange });
+      }
+      islandSwitcherStatus.textContent = message.includes("last island")
+        ? "마지막 섬은 삭제할 수 없습니다."
+        : message.includes("island not found")
+          ? "섬 목록을 다시 불러왔습니다. 다시 시도해 주세요."
+          : "섬 삭제에 실패했습니다.";
+    }
+  });
   if (settingsModalBackdrop) {
     settingsModalBackdrop.addEventListener("click", closeSettingsModal);
   }

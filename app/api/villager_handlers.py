@@ -10,6 +10,7 @@ from app.schemas.state import VillagerIslandOrderIn, VillagerStateIn, VillagerSt
 
 def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
     def get_villagers(
+        island_id: int,
         q: str = "",
         personality: str = "",
         species: str = "",
@@ -17,7 +18,7 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
         on_island: bool | None = None,
         former_resident: bool | None = None,
     ) -> dict[str, Any]:
-        villagers = deps.with_villager_state(deps.load_villagers())
+        villagers = deps.with_villager_state(island_id, deps.load_villagers())
 
         q_norm = q.strip().lower()
         if q_norm:
@@ -50,15 +51,19 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
 
         return {"count": len(villagers), "items": villagers}
 
-    def update_villager_state(villager_id: str, payload: VillagerStateIn) -> VillagerStateOut:
+    def update_villager_state(island_id: int, villager_id: str, payload: VillagerStateIn) -> VillagerStateOut:
         deps.init_db()
         if not any(v["id"] == villager_id for v in deps.load_villagers()):
             raise HTTPException(status_code=404, detail="주민을 찾을 수 없습니다.")
 
         with deps.get_db() as conn:
             existing = conn.execute(
-                "SELECT liked, on_island, camping_visited, former_resident, island_order FROM villager_state WHERE villager_id = ?",
-                (villager_id,),
+                """
+                SELECT liked, on_island, camping_visited, former_resident, island_order
+                FROM villager_state
+                WHERE island_id = ? AND villager_id = ?
+                """,
+                (island_id, villager_id),
             ).fetchone()
 
             current_liked = bool(existing["liked"]) if existing else False
@@ -86,15 +91,20 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
                     """
                     SELECT COUNT(*) AS cnt
                     FROM villager_state
-                    WHERE on_island = 1 AND villager_id != ?
+                    WHERE island_id = ? AND on_island = 1 AND villager_id != ?
                     """,
-                    (villager_id,),
+                    (island_id, villager_id),
                 ).fetchone()
                 on_island_count = int(row["cnt"] or 0) if row else 0
                 if on_island_count >= 10:
                     raise HTTPException(status_code=400, detail="현재 섬 주민은 최대 10명까지 등록할 수 있습니다.")
                 max_row = conn.execute(
-                    "SELECT COALESCE(MAX(island_order), 0) AS max_order FROM villager_state WHERE on_island = 1"
+                    """
+                    SELECT COALESCE(MAX(island_order), 0) AS max_order
+                    FROM villager_state
+                    WHERE island_id = ? AND on_island = 1
+                    """,
+                    (island_id,),
                 ).fetchone()
                 next_order = int(max_row["max_order"] or 0) + 1
             elif not new_on_island:
@@ -104,9 +114,9 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
 
             conn.execute(
                 """
-                INSERT INTO villager_state (villager_id, liked, on_island, camping_visited, former_resident, island_order)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(villager_id) DO UPDATE SET
+                INSERT INTO villager_state (island_id, villager_id, liked, on_island, camping_visited, former_resident, island_order)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(island_id, villager_id) DO UPDATE SET
                     liked = excluded.liked,
                     on_island = excluded.on_island,
                     camping_visited = excluded.camping_visited,
@@ -115,6 +125,7 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
                     updated_at = CURRENT_TIMESTAMP
                 """,
                 (
+                    island_id,
                     villager_id,
                     int(new_liked),
                     int(new_on_island),
@@ -132,7 +143,7 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
             former_resident=bool(new_former_resident),
         )
 
-    def update_island_order(payload: VillagerIslandOrderIn) -> dict[str, Any]:
+    def update_island_order(island_id: int, payload: VillagerIslandOrderIn) -> dict[str, Any]:
         deps.init_db()
         ordered_ids = [str(x).strip() for x in (payload.villager_ids or []) if str(x).strip()]
         if not ordered_ids:
@@ -140,15 +151,25 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
 
         with deps.get_db() as conn:
             existing_rows = conn.execute(
-                "SELECT villager_id FROM villager_state WHERE on_island = 1 ORDER BY island_order ASC, updated_at ASC"
+                """
+                SELECT villager_id
+                FROM villager_state
+                WHERE island_id = ? AND on_island = 1
+                ORDER BY island_order ASC, updated_at ASC
+                """,
+                (island_id,),
             ).fetchall()
             existing_ids = [str(r["villager_id"]) for r in existing_rows]
             if set(existing_ids) != set(ordered_ids):
                 raise HTTPException(status_code=400, detail="섬 주민 목록이 일치하지 않아 순서를 저장할 수 없습니다.")
             for idx, villager_id in enumerate(ordered_ids, start=1):
                 conn.execute(
-                    "UPDATE villager_state SET island_order = ?, updated_at = CURRENT_TIMESTAMP WHERE villager_id = ?",
-                    (idx, villager_id),
+                    """
+                    UPDATE villager_state
+                    SET island_order = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE island_id = ? AND villager_id = ?
+                    """,
+                    (idx, island_id, villager_id),
                 )
 
         return {"ok": True, "count": len(ordered_ids)}

@@ -9,25 +9,45 @@ from typing import Any
 from app.core.db import get_db, init_db
 
 _CACHE_LOCK = Lock()
-_CATALOG_STATE_CACHE: dict[str, dict[str, dict[str, Any]]] = {}
-_VARIATION_OWNED_COUNT_CACHE: dict[str, dict[str, int]] = {}
-_VARIATION_QTY_TOTAL_CACHE: dict[str, dict[str, int]] = {}
+_CATALOG_STATE_CACHE: dict[tuple[int, str], dict[str, dict[str, Any]]] = {}
+_VARIATION_OWNED_COUNT_CACHE: dict[tuple[int, str], dict[str, int]] = {}
+_VARIATION_QTY_TOTAL_CACHE: dict[tuple[int, str], dict[str, int]] = {}
 
 
 def _clone_catalog_state_map(src: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {k: dict(v) for k, v in src.items()}
 
 
-def invalidate_catalog_state_caches(catalog_type: str | None = None) -> None:
+def invalidate_catalog_state_caches(catalog_type: str | None = None, island_id: int | None = None) -> None:
     with _CACHE_LOCK:
-        if not catalog_type:
+        if catalog_type is None and island_id is None:
             _CATALOG_STATE_CACHE.clear()
             _VARIATION_OWNED_COUNT_CACHE.clear()
             _VARIATION_QTY_TOTAL_CACHE.clear()
             return
-        _CATALOG_STATE_CACHE.pop(catalog_type, None)
-        _VARIATION_OWNED_COUNT_CACHE.pop(catalog_type, None)
-        _VARIATION_QTY_TOTAL_CACHE.pop(catalog_type, None)
+
+        catalog_keys = list(_CATALOG_STATE_CACHE.keys())
+        count_keys = list(_VARIATION_OWNED_COUNT_CACHE.keys())
+        qty_keys = list(_VARIATION_QTY_TOTAL_CACHE.keys())
+
+        for key in catalog_keys:
+            if island_id is not None and key[0] != island_id:
+                continue
+            if catalog_type is not None and key[1] != catalog_type:
+                continue
+            _CATALOG_STATE_CACHE.pop(key, None)
+        for key in count_keys:
+            if island_id is not None and key[0] != island_id:
+                continue
+            if catalog_type is not None and key[1] != catalog_type:
+                continue
+            _VARIATION_OWNED_COUNT_CACHE.pop(key, None)
+        for key in qty_keys:
+            if island_id is not None and key[0] != island_id:
+                continue
+            if catalog_type is not None and key[1] != catalog_type:
+                continue
+            _VARIATION_QTY_TOTAL_CACHE.pop(key, None)
 
 
 def _exec_with_retry(
@@ -88,11 +108,84 @@ def _normalize_month_day(value: str) -> str:
     return ""
 
 
-def get_villager_state_map() -> dict[str, dict[str, bool]]:
+def _normalize_island_name(value: str) -> str:
+    text = str(value or "").strip()
+    return text if text else "New Island"
+
+
+def list_islands() -> list[dict[str, Any]]:
     init_db()
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT villager_id, liked, on_island, camping_visited, former_resident, island_order FROM villager_state"
+            """
+            SELECT i.id, i.name, p.island_name
+            FROM island i
+            LEFT JOIN island_profile p ON p.island_id = i.id
+            ORDER BY i.id ASC
+            """
+        ).fetchall()
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        profile_name = str(row["island_name"] or "").strip()
+        island_name = profile_name or str(row["name"] or "").strip() or f"Island {int(row['id'])}"
+        items.append({"id": int(row["id"]), "name": island_name})
+    return items
+
+
+def create_island(name: str) -> dict[str, Any]:
+    init_db()
+    display_name = _normalize_island_name(name)
+    with get_db() as conn:
+        conn.execute("INSERT INTO island (name) VALUES (?)", (display_name,))
+        row = conn.execute("SELECT id, name FROM island WHERE id = last_insert_rowid()").fetchone()
+        if not row:
+            raise RuntimeError("island create failed")
+        island_id = int(row["id"])
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO island_profile (
+                island_id, island_name, nickname, representative_fruit, representative_flower, birthday,
+                hemisphere, time_travel_enabled, game_datetime
+            ) VALUES (?, ?, '', '', '', '', 'north', 0, '')
+            """,
+            (island_id, display_name),
+        )
+    return {"id": island_id, "name": display_name}
+
+
+def delete_island(island_id: int) -> dict[str, Any]:
+    init_db()
+    with get_db() as conn:
+        row = conn.execute("SELECT id, name FROM island WHERE id = ?", (island_id,)).fetchone()
+        if not row:
+            raise ValueError("island not found")
+        count_row = conn.execute("SELECT COUNT(*) AS cnt FROM island").fetchone()
+        island_count = int(count_row["cnt"] or 0) if count_row else 0
+        if island_count <= 1:
+            raise ValueError("cannot delete the last island")
+
+        conn.execute("DELETE FROM villager_state WHERE island_id = ?", (island_id,))
+        conn.execute("DELETE FROM catalog_variation_state WHERE island_id = ?", (island_id,))
+        conn.execute("DELETE FROM catalog_state WHERE island_id = ?", (island_id,))
+        conn.execute("DELETE FROM calendar_entry WHERE island_id = ?", (island_id,))
+        conn.execute("DELETE FROM player_profile WHERE island_id = ?", (island_id,))
+        conn.execute("DELETE FROM island_profile WHERE island_id = ?", (island_id,))
+        conn.execute("DELETE FROM island WHERE id = ?", (island_id,))
+
+    invalidate_catalog_state_caches(island_id=island_id)
+    return {"deleted": True, "id": island_id}
+
+
+def get_villager_state_map(island_id: int) -> dict[str, dict[str, bool]]:
+    init_db()
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT villager_id, liked, on_island, camping_visited, former_resident, island_order
+            FROM villager_state
+            WHERE island_id = ?
+            """,
+            (island_id,),
         ).fetchall()
     return {
         str(r["villager_id"]): {
@@ -106,8 +199,8 @@ def get_villager_state_map() -> dict[str, dict[str, bool]]:
     }
 
 
-def with_villager_state(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    state_map = get_villager_state_map()
+def with_villager_state(island_id: int, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    state_map = get_villager_state_map(island_id)
     merged = []
     for item in items:
         s = state_map.get(
@@ -124,17 +217,22 @@ def with_villager_state(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return merged
 
 
-def get_catalog_state_map(catalog_type: str) -> dict[str, dict[str, Any]]:
+def get_catalog_state_map(island_id: int, catalog_type: str) -> dict[str, dict[str, Any]]:
+    cache_key = (island_id, catalog_type)
     with _CACHE_LOCK:
-        cached = _CATALOG_STATE_CACHE.get(catalog_type)
+        cached = _CATALOG_STATE_CACHE.get(cache_key)
         if cached is not None:
             return _clone_catalog_state_map(cached)
 
     init_db()
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT item_id, owned, donated, quantity FROM catalog_state WHERE catalog_type = ?",
-            (catalog_type,),
+            """
+            SELECT item_id, owned, donated, quantity
+            FROM catalog_state
+            WHERE island_id = ? AND catalog_type = ?
+            """,
+            (island_id, catalog_type),
         ).fetchall()
     result = {
         str(r["item_id"]): {
@@ -145,12 +243,12 @@ def get_catalog_state_map(catalog_type: str) -> dict[str, dict[str, Any]]:
         for r in rows
     }
     with _CACHE_LOCK:
-        _CATALOG_STATE_CACHE[catalog_type] = _clone_catalog_state_map(result)
+        _CATALOG_STATE_CACHE[cache_key] = _clone_catalog_state_map(result)
     return result
 
 
-def with_catalog_state(catalog_type: str, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    state_map = get_catalog_state_map(catalog_type)
+def with_catalog_state(island_id: int, catalog_type: str, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    state_map = get_catalog_state_map(island_id, catalog_type)
     merged = []
     for item in items:
         s = state_map.get(item["id"], {"owned": False, "donated": False, "quantity": 0})
@@ -159,7 +257,9 @@ def with_catalog_state(catalog_type: str, items: list[dict[str, Any]]) -> list[d
 
 
 def get_catalog_variation_state_map(
-    catalog_type: str, item_id: str
+    island_id: int,
+    catalog_type: str,
+    item_id: str,
 ) -> dict[str, dict[str, Any]]:
     init_db()
     with get_db() as conn:
@@ -167,9 +267,9 @@ def get_catalog_variation_state_map(
             """
             SELECT variation_id, owned, quantity
             FROM catalog_variation_state
-            WHERE catalog_type = ? AND item_id = ?
+            WHERE island_id = ? AND catalog_type = ? AND item_id = ?
             """,
-            (catalog_type, item_id),
+            (island_id, catalog_type, item_id),
         ).fetchall()
     return {
         str(r["variation_id"]): {
@@ -182,6 +282,7 @@ def get_catalog_variation_state_map(
 
 def upsert_catalog_state(
     conn: sqlite3.Connection,
+    island_id: int,
     catalog_type: str,
     item_id: str,
     owned: bool,
@@ -192,20 +293,21 @@ def upsert_catalog_state(
     _exec_with_retry(
         conn,
         """
-        INSERT INTO catalog_state (catalog_type, item_id, owned, donated, quantity)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(catalog_type, item_id) DO UPDATE SET
+        INSERT INTO catalog_state (island_id, catalog_type, item_id, owned, donated, quantity)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(island_id, catalog_type, item_id) DO UPDATE SET
             owned = excluded.owned,
             donated = excluded.donated,
             quantity = excluded.quantity,
             updated_at = CURRENT_TIMESTAMP
         """,
-        (catalog_type, item_id, int(owned), int(donated), safe_qty),
+        (island_id, catalog_type, item_id, int(owned), int(donated), safe_qty),
     )
 
 
 def upsert_all_variation_states(
     conn: sqlite3.Connection,
+    island_id: int,
     catalog_type: str,
     item_id: str,
     variation_ids: list[str],
@@ -217,19 +319,20 @@ def upsert_all_variation_states(
     _executemany_with_retry(
         conn,
         """
-        INSERT INTO catalog_variation_state (catalog_type, item_id, variation_id, owned, quantity)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(catalog_type, item_id, variation_id) DO UPDATE SET
+        INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
             owned = excluded.owned,
             quantity = excluded.quantity,
             updated_at = CURRENT_TIMESTAMP
         """,
-        [(catalog_type, item_id, vid, int(owned), qty) for vid in variation_ids],
+        [(island_id, catalog_type, item_id, vid, int(owned), qty) for vid in variation_ids],
     )
 
 
 def recalc_item_owned_from_variations(
     conn: sqlite3.Connection,
+    island_id: int,
     catalog_type: str,
     item_id: str,
     variation_ids: list[str],
@@ -238,14 +341,14 @@ def recalc_item_owned_from_variations(
         """
         SELECT donated
         FROM catalog_state
-        WHERE catalog_type = ? AND item_id = ?
+        WHERE island_id = ? AND catalog_type = ? AND item_id = ?
         """,
-        (catalog_type, item_id),
+        (island_id, catalog_type, item_id),
     ).fetchone()
     existing_donated = bool(existing_row["donated"]) if existing_row else False
 
     if not variation_ids:
-        upsert_catalog_state(conn, catalog_type, item_id, False, 0, existing_donated)
+        upsert_catalog_state(conn, island_id, catalog_type, item_id, False, 0, existing_donated)
         return False
     placeholders = ",".join("?" for _ in variation_ids)
     row = conn.execute(
@@ -260,21 +363,30 @@ def recalc_item_owned_from_variations(
                 END
             ) AS quantity_total
         FROM catalog_variation_state
-        WHERE catalog_type = ? AND item_id = ? AND owned = 1
+        WHERE island_id = ? AND catalog_type = ? AND item_id = ? AND owned = 1
           AND variation_id IN ({placeholders})
         """,
-        (catalog_type, item_id, *variation_ids),
+        (island_id, catalog_type, item_id, *variation_ids),
     ).fetchone()
     owned_count = int(row["owned_count"] or 0) if row else 0
     quantity_total = int(row["quantity_total"] or 0) if row else 0
     all_owned = owned_count == len(variation_ids)
-    upsert_catalog_state(conn, catalog_type, item_id, all_owned, quantity_total, existing_donated)
+    upsert_catalog_state(
+        conn,
+        island_id,
+        catalog_type,
+        item_id,
+        all_owned,
+        quantity_total,
+        existing_donated,
+    )
     return all_owned
 
 
-def get_catalog_variation_owned_counts(catalog_type: str) -> dict[str, int]:
+def get_catalog_variation_owned_counts(island_id: int, catalog_type: str) -> dict[str, int]:
+    cache_key = (island_id, catalog_type)
     with _CACHE_LOCK:
-        cached = _VARIATION_OWNED_COUNT_CACHE.get(catalog_type)
+        cached = _VARIATION_OWNED_COUNT_CACHE.get(cache_key)
         if cached is not None:
             return dict(cached)
 
@@ -284,20 +396,21 @@ def get_catalog_variation_owned_counts(catalog_type: str) -> dict[str, int]:
             """
             SELECT item_id, SUM(CASE WHEN owned = 1 THEN 1 ELSE 0 END) AS owned_count
             FROM catalog_variation_state
-            WHERE catalog_type = ?
+            WHERE island_id = ? AND catalog_type = ?
             GROUP BY item_id
             """,
-            (catalog_type,),
+            (island_id, catalog_type),
         ).fetchall()
     result = {str(r["item_id"]): int(r["owned_count"] or 0) for r in rows}
     with _CACHE_LOCK:
-        _VARIATION_OWNED_COUNT_CACHE[catalog_type] = dict(result)
+        _VARIATION_OWNED_COUNT_CACHE[cache_key] = dict(result)
     return result
 
 
-def get_catalog_variation_quantity_totals(catalog_type: str) -> dict[str, int]:
+def get_catalog_variation_quantity_totals(island_id: int, catalog_type: str) -> dict[str, int]:
+    cache_key = (island_id, catalog_type)
     with _CACHE_LOCK:
-        cached = _VARIATION_QTY_TOTAL_CACHE.get(catalog_type)
+        cached = _VARIATION_QTY_TOTAL_CACHE.get(cache_key)
         if cached is not None:
             return dict(cached)
 
@@ -315,22 +428,24 @@ def get_catalog_variation_quantity_totals(catalog_type: str) -> dict[str, int]:
                     END
                 ) AS quantity_total
             FROM catalog_variation_state
-            WHERE catalog_type = ?
+            WHERE island_id = ? AND catalog_type = ?
             GROUP BY item_id
             """,
-            (catalog_type,),
+            (island_id, catalog_type),
         ).fetchall()
     result = {str(r["item_id"]): int(r["quantity_total"] or 0) for r in rows}
     with _CACHE_LOCK:
-        _VARIATION_QTY_TOTAL_CACHE[catalog_type] = dict(result)
+        _VARIATION_QTY_TOTAL_CACHE[cache_key] = dict(result)
     return result
 
 
 def with_catalog_variation_counts(
-    catalog_type: str, items: list[dict[str, Any]]
+    island_id: int,
+    catalog_type: str,
+    items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    count_map = get_catalog_variation_owned_counts(catalog_type)
-    qty_map = get_catalog_variation_quantity_totals(catalog_type)
+    count_map = get_catalog_variation_owned_counts(island_id, catalog_type)
+    qty_map = get_catalog_variation_quantity_totals(island_id, catalog_type)
     return [
         {
             **x,
@@ -341,19 +456,33 @@ def with_catalog_variation_counts(
     ]
 
 
-def get_island_profile() -> dict[str, Any]:
+def get_island_profile(island_id: int) -> dict[str, Any]:
     init_db()
     with get_db() as conn:
         row = conn.execute(
             """
-            SELECT island_name, nickname, representative_fruit, representative_flower, birthday, hemisphere,
-                   time_travel_enabled, game_datetime
-            FROM island_profile
-            WHERE id = 1
-            """
+            SELECT i.id AS island_id, i.name AS island_label, p.island_name, p.nickname, p.representative_fruit,
+                   p.representative_flower, p.birthday, p.hemisphere, p.time_travel_enabled, p.game_datetime
+            FROM island i
+            LEFT JOIN island_profile p ON p.island_id = i.id
+            WHERE i.id = ?
+            """,
+            (island_id,),
         ).fetchone()
+        if not row:
+            row = conn.execute(
+                """
+                SELECT i.id AS island_id, i.name AS island_label, p.island_name, p.nickname, p.representative_fruit,
+                       p.representative_flower, p.birthday, p.hemisphere, p.time_travel_enabled, p.game_datetime
+                FROM island i
+                LEFT JOIN island_profile p ON p.island_id = i.id
+                ORDER BY i.id ASC
+                LIMIT 1
+                """
+            ).fetchone()
     if not row:
         return {
+            "island_id": 1,
             "island_name": "",
             "nickname": "",
             "representative_fruit": "",
@@ -363,8 +492,10 @@ def get_island_profile() -> dict[str, Any]:
             "time_travel_enabled": False,
             "game_datetime": "",
         }
+    island_name = str(row["island_name"] or row["island_label"] or "").strip()
     return {
-        "island_name": str(row["island_name"] or ""),
+        "island_id": int(row["island_id"]),
+        "island_name": island_name,
         "nickname": str(row["nickname"] or ""),
         "representative_fruit": str(row["representative_fruit"] or ""),
         "representative_flower": str(row["representative_flower"] or ""),
@@ -376,6 +507,7 @@ def get_island_profile() -> dict[str, Any]:
 
 
 def upsert_island_profile(
+    island_id: int,
     island_name: str,
     nickname: str,
     representative_fruit: str,
@@ -388,14 +520,23 @@ def upsert_island_profile(
     init_db()
     hemi = "south" if hemisphere == "south" else "north"
     birthday_mmdd = _normalize_month_day(birthday)
+    clean_name = _normalize_island_name(island_name)
     with get_db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO island (id, name) VALUES (?, ?)",
+            (island_id, clean_name),
+        )
+        conn.execute(
+            "UPDATE island SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (clean_name, island_id),
+        )
         conn.execute(
             """
             INSERT INTO island_profile (
-                id, island_name, nickname, representative_fruit, representative_flower, birthday, hemisphere,
-                time_travel_enabled, game_datetime
-            ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET
+                island_id, island_name, nickname, representative_fruit, representative_flower, birthday,
+                hemisphere, time_travel_enabled, game_datetime
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(island_id) DO UPDATE SET
                 island_name = excluded.island_name,
                 nickname = excluded.nickname,
                 representative_fruit = excluded.representative_fruit,
@@ -407,7 +548,8 @@ def upsert_island_profile(
                 updated_at = CURRENT_TIMESTAMP
             """,
             (
-                island_name.strip(),
+                island_id,
+                clean_name,
                 nickname.strip(),
                 representative_fruit.strip(),
                 representative_flower.strip(),
@@ -417,20 +559,20 @@ def upsert_island_profile(
                 game_datetime.strip(),
             ),
         )
-    return get_island_profile()
+    return get_island_profile(island_id)
 
 
-def list_calendar_entries(month: str) -> list[dict[str, Any]]:
+def list_calendar_entries(island_id: int, month: str) -> list[dict[str, Any]]:
     init_db()
     with get_db() as conn:
         rows = conn.execute(
             """
             SELECT id, visit_date, npc_name, note, checked
             FROM calendar_entry
-            WHERE visit_date >= ? AND visit_date < ?
+            WHERE island_id = ? AND visit_date >= ? AND visit_date < ?
             ORDER BY visit_date ASC, id ASC
             """,
-            (f"{month}-01", f"{month}-32"),
+            (island_id, f"{month}-01", f"{month}-32"),
         ).fetchall()
     return [
         {
@@ -444,17 +586,17 @@ def list_calendar_entries(month: str) -> list[dict[str, Any]]:
     ]
 
 
-def list_calendar_entries_by_date(visit_date: str) -> list[dict[str, Any]]:
+def list_calendar_entries_by_date(island_id: int, visit_date: str) -> list[dict[str, Any]]:
     init_db()
     with get_db() as conn:
         rows = conn.execute(
             """
             SELECT id, visit_date, npc_name, note, checked
             FROM calendar_entry
-            WHERE visit_date = ?
+            WHERE island_id = ? AND visit_date = ?
             ORDER BY id ASC
             """,
-            (visit_date,),
+            (island_id, visit_date),
         ).fetchall()
     return [
         {
@@ -469,6 +611,7 @@ def list_calendar_entries_by_date(visit_date: str) -> list[dict[str, Any]]:
 
 
 def upsert_calendar_entry(
+    island_id: int,
     visit_date: str,
     npc_name: str,
     note: str,
@@ -482,28 +625,32 @@ def upsert_calendar_entry(
                 """
                 UPDATE calendar_entry
                 SET visit_date = ?, npc_name = ?, note = ?, checked = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = ? AND island_id = ?
                 """,
-                (visit_date, npc_name.strip(), note.strip(), int(checked), entry_id),
+                (visit_date, npc_name.strip(), note.strip(), int(checked), entry_id, island_id),
             )
             row = conn.execute(
-                "SELECT id, visit_date, npc_name, note, checked FROM calendar_entry WHERE id = ?",
-                (entry_id,),
+                """
+                SELECT id, visit_date, npc_name, note, checked
+                FROM calendar_entry
+                WHERE id = ? AND island_id = ?
+                """,
+                (entry_id, island_id),
             ).fetchone()
         else:
             conn.execute(
                 """
-                INSERT INTO calendar_entry (visit_date, npc_name, note, checked)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO calendar_entry (island_id, visit_date, npc_name, note, checked)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (visit_date, npc_name.strip(), note.strip(), int(checked)),
+                (island_id, visit_date, npc_name.strip(), note.strip(), int(checked)),
             )
             row = conn.execute(
                 """
                 SELECT id, visit_date, npc_name, note, checked
                 FROM calendar_entry
                 WHERE id = last_insert_rowid()
-                """,
+                """
             ).fetchone()
     if not row:
         raise RuntimeError("calendar entry save failed")
@@ -516,20 +663,24 @@ def upsert_calendar_entry(
     }
 
 
-def update_calendar_entry_checked(entry_id: int, checked: bool) -> dict[str, Any]:
+def update_calendar_entry_checked(island_id: int, entry_id: int, checked: bool) -> dict[str, Any]:
     init_db()
     with get_db() as conn:
         conn.execute(
             """
             UPDATE calendar_entry
             SET checked = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = ? AND island_id = ?
             """,
-            (int(checked), entry_id),
+            (int(checked), entry_id, island_id),
         )
         row = conn.execute(
-            "SELECT id, visit_date, npc_name, note, checked FROM calendar_entry WHERE id = ?",
-            (entry_id,),
+            """
+            SELECT id, visit_date, npc_name, note, checked
+            FROM calendar_entry
+            WHERE id = ? AND island_id = ?
+            """,
+            (entry_id, island_id),
         ).fetchone()
     if not row:
         raise RuntimeError("calendar entry not found")
@@ -542,10 +693,10 @@ def update_calendar_entry_checked(entry_id: int, checked: bool) -> dict[str, Any
     }
 
 
-def delete_calendar_entry(entry_id: int) -> dict[str, Any]:
+def delete_calendar_entry(island_id: int, entry_id: int) -> dict[str, Any]:
     init_db()
     with get_db() as conn:
-        conn.execute("DELETE FROM calendar_entry WHERE id = ?", (entry_id,))
+        conn.execute("DELETE FROM calendar_entry WHERE id = ? AND island_id = ?", (entry_id, island_id))
     return {"deleted": True, "id": entry_id}
 
 
@@ -559,20 +710,23 @@ def _normalize_player_row(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
-def list_players() -> list[dict[str, Any]]:
+def list_players(island_id: int) -> list[dict[str, Any]]:
     init_db()
     with get_db() as conn:
         rows = conn.execute(
             """
             SELECT id, name, birthday, is_main, is_sub
             FROM player_profile
+            WHERE island_id = ?
             ORDER BY is_main DESC, id ASC
-            """
+            """,
+            (island_id,),
         ).fetchall()
     return [_normalize_player_row(r) for r in rows]
 
 
 def upsert_player(
+    island_id: int,
     name: str,
     birthday: str,
     is_main: bool = False,
@@ -583,51 +737,62 @@ def upsert_player(
     clean_name = name.strip()
     birthday_mmdd = _normalize_month_day(birthday)
     if not clean_name:
-        raise ValueError("플레이어 이름은 필수입니다.")
+        raise ValueError("player name is required")
 
     with get_db() as conn:
         if player_id:
             exists = conn.execute(
-                "SELECT id FROM player_profile WHERE id = ?",
-                (player_id,),
+                "SELECT id FROM player_profile WHERE id = ? AND island_id = ?",
+                (player_id, island_id),
             ).fetchone()
             if not exists:
-                raise ValueError("플레이어를 찾을 수 없습니다.")
+                raise ValueError("player not found")
 
             if is_main:
-                conn.execute("UPDATE player_profile SET is_main = 0 WHERE id != ?", (player_id,))
+                conn.execute(
+                    "UPDATE player_profile SET is_main = 0 WHERE island_id = ? AND id != ?",
+                    (island_id, player_id),
+                )
             conn.execute(
                 """
                 UPDATE player_profile
                 SET name = ?, birthday = ?, is_main = ?, is_sub = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = ? AND island_id = ?
                 """,
-                (clean_name, birthday_mmdd, int(is_main), int(is_sub), player_id),
+                (clean_name, birthday_mmdd, int(is_main), int(is_sub), player_id, island_id),
             )
             row = conn.execute(
-                "SELECT id, name, birthday, is_main, is_sub FROM player_profile WHERE id = ?",
-                (player_id,),
+                """
+                SELECT id, name, birthday, is_main, is_sub
+                FROM player_profile
+                WHERE id = ? AND island_id = ?
+                """,
+                (player_id, island_id),
             ).fetchone()
         else:
-            count_row = conn.execute("SELECT COUNT(*) AS cnt FROM player_profile").fetchone()
+            count_row = conn.execute(
+                "SELECT COUNT(*) AS cnt FROM player_profile WHERE island_id = ?",
+                (island_id,),
+            ).fetchone()
             count = int(count_row["cnt"] or 0) if count_row else 0
             if count >= 8:
-                raise ValueError("플레이어는 최대 8명까지 등록할 수 있습니다.")
+                raise ValueError("up to 8 players can be registered per island")
 
             has_main_row = conn.execute(
-                "SELECT COUNT(*) AS cnt FROM player_profile WHERE is_main = 1"
+                "SELECT COUNT(*) AS cnt FROM player_profile WHERE island_id = ? AND is_main = 1",
+                (island_id,),
             ).fetchone()
             has_main = int(has_main_row["cnt"] or 0) > 0 if has_main_row else False
             target_main = bool(is_main) or not has_main
             if target_main:
-                conn.execute("UPDATE player_profile SET is_main = 0")
+                conn.execute("UPDATE player_profile SET is_main = 0 WHERE island_id = ?", (island_id,))
 
             conn.execute(
                 """
-                INSERT INTO player_profile (name, birthday, is_main, is_sub)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO player_profile (island_id, name, birthday, is_main, is_sub)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (clean_name, birthday_mmdd, int(target_main), int(is_sub)),
+                (island_id, clean_name, birthday_mmdd, int(target_main), int(is_sub)),
             )
             row = conn.execute(
                 """
@@ -642,49 +807,62 @@ def upsert_player(
     return _normalize_player_row(row)
 
 
-def set_main_player(player_id: int) -> dict[str, Any]:
+def set_main_player(island_id: int, player_id: int) -> dict[str, Any]:
     init_db()
     with get_db() as conn:
         exists = conn.execute(
-            "SELECT id FROM player_profile WHERE id = ?",
-            (player_id,),
+            "SELECT id FROM player_profile WHERE id = ? AND island_id = ?",
+            (player_id, island_id),
         ).fetchone()
         if not exists:
-            raise ValueError("플레이어를 찾을 수 없습니다.")
-        conn.execute("UPDATE player_profile SET is_main = 0")
+            raise ValueError("player not found")
+        conn.execute("UPDATE player_profile SET is_main = 0 WHERE island_id = ?", (island_id,))
         conn.execute(
-            "UPDATE player_profile SET is_main = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (player_id,),
+            """
+            UPDATE player_profile
+            SET is_main = 1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND island_id = ?
+            """,
+            (player_id, island_id),
         )
         row = conn.execute(
-            "SELECT id, name, birthday, is_main, is_sub FROM player_profile WHERE id = ?",
-            (player_id,),
+            """
+            SELECT id, name, birthday, is_main, is_sub
+            FROM player_profile
+            WHERE id = ? AND island_id = ?
+            """,
+            (player_id, island_id),
         ).fetchone()
     if not row:
         raise RuntimeError("main player update failed")
     return _normalize_player_row(row)
 
 
-def delete_player(player_id: int) -> dict[str, Any]:
+def delete_player(island_id: int, player_id: int) -> dict[str, Any]:
     init_db()
     with get_db() as conn:
         row = conn.execute(
-            "SELECT id, is_main FROM player_profile WHERE id = ?",
-            (player_id,),
+            "SELECT id, is_main FROM player_profile WHERE id = ? AND island_id = ?",
+            (player_id, island_id),
         ).fetchone()
         if not row:
-            raise ValueError("플레이어를 찾을 수 없습니다.")
+            raise ValueError("player not found")
 
         was_main = bool(row["is_main"])
-        conn.execute("DELETE FROM player_profile WHERE id = ?", (player_id,))
+        conn.execute("DELETE FROM player_profile WHERE id = ? AND island_id = ?", (player_id, island_id))
 
         if was_main:
             next_row = conn.execute(
-                "SELECT id FROM player_profile ORDER BY id ASC LIMIT 1"
+                "SELECT id FROM player_profile WHERE island_id = ? ORDER BY id ASC LIMIT 1",
+                (island_id,),
             ).fetchone()
             if next_row:
                 conn.execute(
-                    "UPDATE player_profile SET is_main = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    (int(next_row["id"]),),
+                    """
+                    UPDATE player_profile
+                    SET is_main = 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ? AND island_id = ?
+                    """,
+                    (int(next_row["id"]), island_id),
                 )
     return {"deleted": True, "id": player_id}

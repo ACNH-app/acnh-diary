@@ -39,6 +39,7 @@ export function createDetailController({
 }) {
   const villagerImageCache = new Set();
   let photoCatalogRowsPromise = null;
+  let photoCatalogRowsIslandId = null;
   let villagerPhotoPosterRenderToken = 0;
   const favoriteColorMeta = {
     Aqua: { ko: "아쿠아", swatch: "#59dbe0" },
@@ -233,7 +234,9 @@ export function createDetailController({
   }
 
   async function ensurePhotoCatalogRows() {
-    if (!photoCatalogRowsPromise) {
+    const currentIslandId = Number(state.currentIslandId || 1);
+    if (!photoCatalogRowsPromise || photoCatalogRowsIslandId !== currentIslandId) {
+      photoCatalogRowsIslandId = currentIslandId;
       photoCatalogRowsPromise = getJSON("/api/catalog/photos?sort_by=name&sort_order=asc&page=1&page_size=5000")
         .then((payload) => (Array.isArray(payload?.items) ? payload.items : []))
         .catch((err) => {

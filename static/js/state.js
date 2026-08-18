@@ -1,4 +1,6 @@
 export const state = {
+  currentIslandId: Number.parseInt(window.localStorage.getItem("acnh-current-island-id") || "1", 10) || 1,
+  islands: [],
   debounceTimer: null,
   catalogRefreshTimer: null,
   activeMode: "home",

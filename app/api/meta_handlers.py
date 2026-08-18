@@ -64,6 +64,7 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         return False
 
     def _critter_rows_now(
+        island_id: int,
         catalog_type: str,
         hemisphere: str,
         now: datetime,
@@ -71,7 +72,7 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         donated: bool | None,
     ) -> list[dict[str, Any]]:
         rows = deps.load_catalog(catalog_type)
-        state_map = get_catalog_state_map(catalog_type)
+        state_map = get_catalog_state_map(island_id, catalog_type)
         month = int(now.month)
         region_key = "south" if hemisphere == "south" else "north"
         out: list[dict[str, Any]] = []
@@ -162,23 +163,36 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
             "species": [{"en": s, "ko": species_map.get(s, s)} for s in species],
         }
 
-    def get_home_summary() -> dict[str, Any]:
-        profile = deps.get_island_profile()
+    def get_islands() -> list[dict[str, Any]]:
+        return deps.list_islands()
+
+    def create_island(name: str) -> dict[str, Any]:
+        return deps.create_island(name)
+
+    def delete_island(island_id: int) -> dict[str, Any]:
+        try:
+            return deps.delete_island(island_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    def get_home_summary(island_id: int) -> dict[str, Any]:
+        profile = deps.get_island_profile(island_id)
         events = deps.load_catalog("events")
         base = build_home_summary(profile, events)
         base["catalog_progress"] = catalog_progress_summary(
             deps.load_catalog,
-            get_catalog_state_map,
-            get_catalog_variation_owned_counts,
+            lambda catalog_type: get_catalog_state_map(island_id, catalog_type),
+            lambda catalog_type: get_catalog_variation_owned_counts(island_id, catalog_type),
         )
         return base
 
     def get_home_creatures_now(
+        island_id: int,
         catalog_type: str = "all",
         owned: bool | None = None,
         donated: bool | None = None,
     ) -> dict[str, Any]:
-        profile = deps.get_island_profile()
+        profile = deps.get_island_profile(island_id)
         now = parse_effective_now(profile)
         hemisphere = str(profile.get("hemisphere") or "north").strip().lower()
         if hemisphere not in {"north", "south"}:
@@ -192,7 +206,7 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         items: list[dict[str, Any]] = []
         counts: dict[str, int] = {"bugs": 0, "fish": 0, "sea": 0}
         for t in type_list:
-            rows = _critter_rows_now(t, hemisphere, now, owned, donated)
+            rows = _critter_rows_now(island_id, t, hemisphere, now, owned, donated)
             counts[t] = len(rows)
             items.extend(rows)
 
@@ -214,10 +228,11 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
             "items": items,
         }
 
-    def get_island_profile() -> dict[str, Any]:
-        return deps.get_island_profile()
+    def get_island_profile(island_id: int) -> dict[str, Any]:
+        return deps.get_island_profile(island_id)
 
     def update_island_profile(
+        island_id: int,
         island_name: str,
         nickname: str,
         representative_fruit: str,
@@ -228,6 +243,7 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         game_datetime: str,
     ) -> dict[str, Any]:
         return deps.upsert_island_profile(
+            island_id,
             island_name,
             nickname,
             representative_fruit,
@@ -238,11 +254,11 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
             game_datetime,
         )
 
-    def get_calendar_entries(month: str) -> list[dict[str, Any]]:
-        return deps.list_calendar_entries(month)
+    def get_calendar_entries(island_id: int, month: str) -> list[dict[str, Any]]:
+        return deps.list_calendar_entries(island_id, month)
 
-    def get_calendar_annotations(month: str) -> list[dict[str, Any]]:
-        profile = deps.get_island_profile()
+    def get_calendar_annotations(island_id: int, month: str) -> list[dict[str, Any]]:
+        profile = deps.get_island_profile(island_id)
         hemi = str(profile.get("hemisphere") or "north")
         villagers = deps.load_villagers()
         events = deps.load_catalog("events")
@@ -253,28 +269,30 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
             events=events,
         )
 
-    def get_calendar_entries_by_date(visit_date: str) -> list[dict[str, Any]]:
-        return deps.list_calendar_entries_by_date(visit_date)
+    def get_calendar_entries_by_date(island_id: int, visit_date: str) -> list[dict[str, Any]]:
+        return deps.list_calendar_entries_by_date(island_id, visit_date)
 
     def save_calendar_entry(
+        island_id: int,
         entry_id: int | None,
         visit_date: str,
         npc_name: str,
         note: str,
         checked: bool,
     ) -> dict[str, Any]:
-        return deps.upsert_calendar_entry(visit_date, npc_name, note, checked, entry_id)
+        return deps.upsert_calendar_entry(island_id, visit_date, npc_name, note, checked, entry_id)
 
-    def set_calendar_entry_checked(entry_id: int, checked: bool) -> dict[str, Any]:
-        return deps.update_calendar_entry_checked(entry_id, checked)
+    def set_calendar_entry_checked(island_id: int, entry_id: int, checked: bool) -> dict[str, Any]:
+        return deps.update_calendar_entry_checked(island_id, entry_id, checked)
 
-    def remove_calendar_entry(entry_id: int) -> dict[str, Any]:
-        return deps.delete_calendar_entry(entry_id)
+    def remove_calendar_entry(island_id: int, entry_id: int) -> dict[str, Any]:
+        return deps.delete_calendar_entry(island_id, entry_id)
 
-    def get_players() -> list[dict[str, Any]]:
-        return deps.list_players()
+    def get_players(island_id: int) -> list[dict[str, Any]]:
+        return deps.list_players(island_id)
 
     def save_player(
+        island_id: int,
         player_id: int | None,
         name: str,
         birthday: str,
@@ -282,19 +300,19 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         is_sub: bool,
     ) -> dict[str, Any]:
         try:
-            return deps.upsert_player(name, birthday, is_main, is_sub, player_id)
+            return deps.upsert_player(island_id, name, birthday, is_main, is_sub, player_id)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    def set_main_player(player_id: int) -> dict[str, Any]:
+    def set_main_player(island_id: int, player_id: int) -> dict[str, Any]:
         try:
-            return deps.set_main_player(player_id)
+            return deps.set_main_player(island_id, player_id)
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    def remove_player(player_id: int) -> dict[str, Any]:
+    def remove_player(island_id: int, player_id: int) -> dict[str, Any]:
         try:
-            return deps.delete_player(player_id)
+            return deps.delete_player(island_id, player_id)
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -302,6 +320,9 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         home=home,
         get_nav=get_nav,
         get_villager_meta=get_villager_meta,
+        get_islands=get_islands,
+        create_island=create_island,
+        delete_island=delete_island,
         get_home_summary=get_home_summary,
         get_home_creatures_now=get_home_creatures_now,
         get_island_profile=get_island_profile,

@@ -200,6 +200,16 @@
           </header>
           <div class="modal-body">
             <section class="control-group">
+              <h2>섬 선택</h2>
+              <div class="controls home-player-controls">
+                <select id="islandSwitcherSelect" aria-label="현재 섬 선택"></select>
+                <input id="newIslandNameInput" type="text" placeholder="새 섬 이름" />
+                <button id="createIslandBtn" type="button">섬 추가</button>
+                <button id="deleteIslandBtn" type="button">섬 삭제</button>
+              </div>
+              <p id="islandSwitcherStatus" class="profile-status" aria-live="polite"></p>
+            </section>
+            <section class="control-group">
               <h2>섬 정보</h2>
               <div class="island-settings-grid">
                 <input id="islandNameInput" type="text" placeholder="섬 이름" />

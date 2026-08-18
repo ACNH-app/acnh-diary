@@ -154,10 +154,11 @@ def on_startup() -> None:
     build_local_name_maps()
     ensure_art_name_map_from_furniture()
 
-    if not get_api_key():
-        raise RuntimeError(
-            "NOOKIPEDIA_API_KEY가 없습니다. OS 환경변수로 설정하거나 프로젝트 루트의 .env 파일에 "
-            "NOOKIPEDIA_API_KEY=... 형태로 추가하세요."
+    has_api_key = bool(get_api_key())
+    if not has_api_key:
+        print(
+            "Warning: NOOKIPEDIA_API_KEY is missing. "
+            "Startup will continue, but routes that depend on live Nookipedia data may fail."
         )
 
     init_db()
@@ -172,7 +173,7 @@ def on_startup() -> None:
 
     # 첫 요청 지연을 줄이기 위한 프리워밍은 백그라운드에서 실행한다.
     # (startup 블로킹 방지)
-    if _should_prewarm_on_startup():
+    if has_api_key and _should_prewarm_on_startup():
         Thread(target=_prewarm_caches, daemon=True).start()
 
 

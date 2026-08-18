@@ -4,7 +4,7 @@
     "app/index.py": {
       "maxDuration": 30,
       "includeFiles": "{static/**,data/**,content.db}",
-      "excludeFiles": "{.git/**,.github/**,.venv/**,__pycache__/**,docs/**,villagers/**,app.db*,server*.log}"
+      "excludeFiles": "{.git/**,.github/**,.venv/**,__pycache__/**,docs/**,villagers/**,app.db*,server*.log,static/assets/offline/**,data/.cache/**}"
     }
   }
 }

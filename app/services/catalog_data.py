@@ -39,6 +39,7 @@ REACTIONS_TRANSLATION_PATH = (
 RECIPES_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "recipes.json"
 LOCAL_MUSIC_DATA_PATH = BASE_DIR / "data" / "acnhapi" / "music.json"
 NORVIAH_MUSIC_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "Music.json"
+LOCAL_VILLAGERS_DATA_PATH = BASE_DIR / "data" / "acnhapi" / "villagers.json"
 
 RECIPE_SEASON_RULES: list[tuple[str, tuple[str, ...]]] = [
     (
@@ -523,11 +524,92 @@ def load_villagers() -> list[dict[str, Any]]:
     music_ko_map = load_local_music_name_ko_map()
     personality_map = load_personality_map()
     species_map = load_species_map()
-    rows = load_nookipedia_villagers()
+    try:
+        rows = load_nookipedia_villagers()
+    except Exception:
+        rows = []
     try:
         rows_ko = load_nookipedia_villagers("ko")
     except Exception:
         rows_ko = []
+
+    if not rows:
+        try:
+            source = json.loads(LOCAL_VILLAGERS_DATA_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            source = {}
+        if isinstance(source, dict):
+            villagers: list[dict[str, Any]] = []
+            for row in source.values():
+                if not isinstance(row, dict):
+                    continue
+                row_id = str(row.get("id") or "").strip()
+                name_obj = row.get("name") or {}
+                if not isinstance(name_obj, dict):
+                    name_obj = {}
+                name_en = str(name_obj.get("name-USen") or name_obj.get("name-EUen") or "").strip()
+                name_ko = str(name_obj.get("name-KRko") or "").strip()
+                if not row_id or not name_en:
+                    continue
+                personality = str(row.get("personality") or "").strip()
+                species = str(row.get("species") or "").strip()
+                catch_trans = row.get("catch-translations") or {}
+                if not isinstance(catch_trans, dict):
+                    catch_trans = {}
+                catchphrase_ko = str(catch_trans.get("catch-KRko") or "").strip()
+                if not catchphrase_ko:
+                    catchphrase_ko = catchphrase_ko_map.get(normalize_name(name_en), "")
+                birthday_raw = str(row.get("birthday-string") or "").strip()
+                birthday_parts = birthday_raw.replace(",", "").split()
+                birthday_month = birthday_parts[0] if birthday_parts else ""
+                birthday_day = birthday_parts[1] if len(birthday_parts) > 1 else ""
+                villagers.append(
+                    {
+                        "id": row_id,
+                        "name": name_ko or name_en,
+                        "name_ko": name_ko,
+                        "name_en": name_en,
+                        "species": species,
+                        "species_ko": species_map.get(species, species),
+                        "personality": personality,
+                        "personality_ko": personality_map.get(personality, personality),
+                        "sub_personality": str(row.get("subtype") or ""),
+                        "gender": str(row.get("gender") or ""),
+                        "hobby": str(row.get("hobby") or ""),
+                        "sign": "",
+                        "debut": "",
+                        "title_color": str(row.get("bubble-color") or ""),
+                        "text_color": str(row.get("text-color") or ""),
+                        "birthday": birthday_raw,
+                        "birthday_month": birthday_month,
+                        "birthday_day": birthday_day,
+                        "phrase": str(row.get("catch-phrase") or ""),
+                        "prev_phrases": [],
+                        "catchphrase": str(row.get("catch-phrase") or ""),
+                        "catchphrase_ko": catchphrase_ko,
+                        "saying": str(row.get("saying") or ""),
+                        "saying_ko": saying_ko_map.get(normalize_name(name_en), ""),
+                        "favorite_colors": [],
+                        "favorite_styles": [],
+                        "default_clothing": "",
+                        "default_clothing_variation": "",
+                        "default_umbrella": "",
+                        "islander": False,
+                        "appearances": ["nh"],
+                        "photo_url": "",
+                        "house_exterior_url": "",
+                        "house_interior_url": "",
+                        "house_wallpaper": "",
+                        "house_flooring": "",
+                        "house_music": "",
+                        "house_music_ko": "",
+                        "house_music_note": "",
+                        "icon_uri": str(row.get("icon_uri") or ""),
+                        "image_uri": str(row.get("image_uri") or ""),
+                    }
+                )
+            villagers.sort(key=lambda v: (v["name_ko"] or v["name_en"]).lower())
+            return villagers
 
     rows_ko_by_id: dict[str, dict[str, Any]] = {}
     for row_ko in rows_ko:

@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+__pycache__
+docs
+villagers
+app.db
+app.db-shm
+app.db-wal
+server.log
+server.err.log
+server8001.log
+server8001.err.log
+static/assets/offline
+data/.cache

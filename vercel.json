@@ -3,8 +3,8 @@
   "functions": {
     "app/index.py": {
       "maxDuration": 30,
-      "includeFiles": "{static/**,data/**,content.db}",
-      "excludeFiles": "{.git/**,.github/**,.venv/**,__pycache__/**,docs/**,villagers/**,app.db*,server*.log,static/assets/offline/**,data/.cache/**}"
+      "includeFiles": "{static/index.html,static/app.js,static/styles.css,static/js/**,static/icons/**,static/no-image.svg,static/assets/music/**,data/**,content.db}",
+      "excludeFiles": "{.git/**,.github/**,.venv/**,__pycache__/**,docs/**,villagers/**,app.db*,server*.log,data/.cache/**}"
     }
   }
 }

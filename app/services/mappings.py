@@ -24,6 +24,7 @@ from app.core.config import (
     SEA_NAME_MAP_PATH,
     SPECIES_MAP_PATH,
     VILLAGER_SAYING_MAP_PATH,
+    is_running_on_vercel,
 )
 from app.utils.text import normalize_name
 
@@ -42,6 +43,8 @@ def load_json_map(path: Path) -> dict[str, str]:
 
 def ensure_map_file(path: Path, default_map: dict[str, str]) -> None:
     if path.exists():
+        return
+    if is_running_on_vercel():
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -139,6 +142,8 @@ def build_local_name_maps() -> None:
                     existing = {}
                 if existing:
                     return
+            if is_running_on_vercel():
+                return
             ensure_map_file(path, data)
             if path.exists() and load_json_map(path) != data:
                 path.write_text(
@@ -171,6 +176,8 @@ def ensure_art_name_map_from_furniture() -> None:
 
     # 미술품 전용 맵이 비어 있으면, 기존 가구 한글 맵을 기본값으로 채운다.
     if art_map:
+        return
+    if is_running_on_vercel():
         return
     ART_NAME_MAP_PATH.write_text(
         json.dumps(furniture_map, ensure_ascii=False, indent=2) + "\n",

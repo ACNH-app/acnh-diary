@@ -10,9 +10,9 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from app.core.config import BASE_DIR, CATALOG_TYPES, NOOKIPEDIA_BASE_URL, get_api_key
+from app.core.config import BASE_DIR, CATALOG_TYPES, NOOKIPEDIA_BASE_URL, get_api_key, is_running_on_vercel
 
-CACHE_DIR = BASE_DIR / "data" / ".cache" / "nookipedia"
+CACHE_DIR = Path("/tmp/nookipedia-cache") if is_running_on_vercel() else BASE_DIR / "data" / ".cache" / "nookipedia"
 DEFAULT_CACHE_TTL_SEC = 60 * 60 * 24  # 24h
 
 

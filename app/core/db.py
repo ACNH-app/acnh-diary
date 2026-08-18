@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from threading import Lock
 
-from app.core.config import get_db_path
+from app.core.config import get_db_path, is_running_on_vercel
 
 _INIT_LOCK = Lock()
 _INIT_DONE = False
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS player_profile (
 def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(get_db_path(), timeout=10.0)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA journal_mode = WAL" if not is_running_on_vercel() else "PRAGMA journal_mode = DELETE")
     conn.execute("PRAGMA synchronous = NORMAL")
     conn.execute("PRAGMA busy_timeout = 10000")
     return conn

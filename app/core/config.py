@@ -72,12 +72,17 @@ def _env(key: str, default: str = "") -> str:
     return str(_load_dotenv().get(key, default)).strip()
 
 
+def is_running_on_vercel() -> bool:
+    return _env("VERCEL", "").lower() in {"1", "true", "yes"} or bool(_env("VERCEL_ENV", ""))
+
+
 def get_api_key() -> str:
     return _env("NOOKIPEDIA_API_KEY", "")
 
 
 def get_db_path() -> Path:
-    raw = _env("DB_PATH", str(DB_PATH))
+    default_path = "/tmp/app.db" if is_running_on_vercel() else str(DB_PATH)
+    raw = _env("DB_PATH", default_path)
     return Path(raw).expanduser()
 
 

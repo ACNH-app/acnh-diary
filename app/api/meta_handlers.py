@@ -154,8 +154,8 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         villagers = deps.load_villagers()
         personality_map = deps.load_personality_map()
         species_map = deps.load_species_map()
-        personalities = sorted({v["personality"] for v in villagers})
-        species = sorted({v["species"] for v in villagers})
+        personalities = sorted({str(v.get("personality") or "").strip() for v in villagers if str(v.get("personality") or "").strip()})
+        species = sorted({str(v.get("species") or "").strip() for v in villagers if str(v.get("species") or "").strip()})
         return {
             "personalities": [
                 {"en": p, "ko": personality_map.get(p, p)} for p in personalities

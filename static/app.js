@@ -201,6 +201,9 @@ async function navigateToMode(mode) {
       state.activeMode = nextMode;
       window.__acnhCurrentMode = state.activeMode;
       updatePanels();
+      if (state.activeMode === "villagers") {
+        await dataController.loadVillagerMeta();
+      }
       if (state.activeMode === "home") {
         await ensureHomeProfileLoaded();
         await ensureHomeIslandResidentsLoaded();
@@ -220,7 +223,11 @@ async function navigateToMode(mode) {
     await ensureHomeSummaryLoaded();
     await ensurePlayersLoaded();
     await ensureCalendarLoaded();
+    commitViewHistory("push");
     return;
+  }
+  if (state.activeMode === "villagers") {
+    await dataController.loadVillagerMeta();
   }
   await dataController.loadCurrentModeData();
   commitViewHistory("push");

@@ -583,6 +583,9 @@ export function createDataController({
       opt.textContent = `${s.ko} (${s.en})`;
       speciesSelect.appendChild(opt);
     });
+    speciesSelect.classList.remove("hidden");
+    speciesSelect.setAttribute("aria-hidden", "false");
+    speciesSelect.removeAttribute("tabindex");
 
     const syncVillagerSpeciesTabs = () => {
       if (!villagerSpeciesTabs) return;

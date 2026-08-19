@@ -6,7 +6,7 @@
     <title>모동숲 다이어리</title>
     <link rel="stylesheet" href="/static/styles.css?v=20260218iosfab3" />
   </head>
-  <body>
+  <body data-active-mode="home">
     <main class="container">
       <header class="site-header">
         <button id="brandHomeBtn" type="button" class="brand-home-btn">모동숲 다이어리</button>
@@ -274,7 +274,7 @@
         </article>
       </section>
 
-      <section id="villagerPanel">
+      <section id="villagerPanel" class="hidden">
         <section class="control-groups">
           <div class="control-group">
             <h2>필터/정렬</h2>
@@ -361,8 +361,8 @@
         <section id="subCategoryTabs" class="sub-category-tabs hidden"></section>
       </section>
 
-      <p id="resultCount">0개</p>
-      <section id="list" class="grid"></section>
+      <p id="resultCount" class="hidden">0개</p>
+      <section id="list" class="grid hidden"></section>
       <div id="loadMoreWrap" class="load-more-wrap hidden">
         <button id="loadMoreBtn" type="button">더보기</button>
       </div>

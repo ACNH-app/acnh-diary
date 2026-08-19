@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sqlite3
 import time
+from collections.abc import Callable
 from threading import Lock
 from typing import Any
 
@@ -910,6 +911,29 @@ def _int_value(value: Any, default: int = 0) -> int:
         return int(default)
 
 
+def _is_supabase_state_runtime_error(exc: Exception) -> bool:
+    text = str(exc or "").lower()
+    return "supabase state request failed" in text or "supabase state base url" in text
+
+
+def _run_with_sqlite_fallback(action: Callable[[], Any], fallback: Callable[[], Any]) -> Any:
+    try:
+        return action()
+    except RuntimeError as exc:
+        if not _is_supabase_state_runtime_error(exc):
+            raise
+        init_db(force_sqlite=True)
+        return fallback()
+
+
+def _init_sqlite_fallback() -> None:
+    init_db(force_sqlite=True)
+
+
+def _get_sqlite_db() -> sqlite3.Connection:
+    return get_db(force_sqlite=True)
+
+
 def _ensure_default_island_supabase() -> dict[str, Any]:
     rows = fetch_rows("island", select="id,name", order="id.asc", limit=1)
     if rows:
@@ -964,9 +988,9 @@ def _ensure_default_island_supabase() -> dict[str, Any]:
 
 
 def list_islands() -> list[dict[str, Any]]:
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> list[dict[str, Any]]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             rows = conn.execute(
                 """
                 SELECT i.id, i.name, p.island_name
@@ -982,25 +1006,30 @@ def list_islands() -> list[dict[str, Any]]:
             }
             for row in rows
         ]
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    _ensure_default_island_supabase()
-    islands = fetch_rows("island", select="id,name", order="id.asc")
-    profiles = fetch_rows("island_profile", select="island_id,island_name")
-    profile_map = {_int_value(row.get("island_id")): str(row.get("island_name") or "").strip() for row in profiles}
-    return [
-        {
-            "id": _int_value(row.get("id")),
-            "name": profile_map.get(_int_value(row.get("id"))) or str(row.get("name") or "").strip() or f"Island {_int_value(row.get('id'))}",
-        }
-        for row in islands
-    ]
+    def _supabase() -> list[dict[str, Any]]:
+        _ensure_default_island_supabase()
+        islands = fetch_rows("island", select="id,name", order="id.asc")
+        profiles = fetch_rows("island_profile", select="island_id,island_name")
+        profile_map = {_int_value(row.get("island_id")): str(row.get("island_name") or "").strip() for row in profiles}
+        return [
+            {
+                "id": _int_value(row.get("id")),
+                "name": profile_map.get(_int_value(row.get("id"))) or str(row.get("name") or "").strip() or f"Island {_int_value(row.get('id'))}",
+            }
+            for row in islands
+        ]
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def create_island(name: str) -> dict[str, Any]:
-    if not _use_supabase_state_mode():
-        init_db()
+    def _sqlite() -> dict[str, Any]:
+        _init_sqlite_fallback()
         display_name = _normalize_island_name(name)
-        with get_db() as conn:
+        with _get_sqlite_db() as conn:
             conn.execute("INSERT INTO island (name) VALUES (?)", (display_name,))
             row = conn.execute("SELECT id, name FROM island WHERE id = last_insert_rowid()").fetchone()
             if not row:
@@ -1016,34 +1045,39 @@ def create_island(name: str) -> dict[str, Any]:
                 (island_id, display_name),
             )
         return {"id": island_id, "name": display_name}
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    display_name = _normalize_island_name(name)
-    row = insert_row("island", {"name": display_name})
-    island_id = _int_value(row.get("id"))
-    upsert_rows(
-        "island_profile",
-        [
-            {
-                "island_id": island_id,
-                "island_name": display_name,
-                "nickname": "",
-                "representative_fruit": "",
-                "representative_flower": "",
-                "birthday": "",
-                "hemisphere": "north",
-                "time_travel_enabled": False,
-                "game_datetime": "",
-            }
-        ],
-        "island_id",
-    )
-    return {"id": island_id, "name": display_name}
+    def _supabase() -> dict[str, Any]:
+        display_name = _normalize_island_name(name)
+        row = insert_row("island", {"name": display_name})
+        island_id = _int_value(row.get("id"))
+        upsert_rows(
+            "island_profile",
+            [
+                {
+                    "island_id": island_id,
+                    "island_name": display_name,
+                    "nickname": "",
+                    "representative_fruit": "",
+                    "representative_flower": "",
+                    "birthday": "",
+                    "hemisphere": "north",
+                    "time_travel_enabled": False,
+                    "game_datetime": "",
+                }
+            ],
+            "island_id",
+        )
+        return {"id": island_id, "name": display_name}
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def delete_island(island_id: int) -> dict[str, Any]:
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, Any]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             row = conn.execute("SELECT id, name FROM island WHERE id = ?", (island_id,)).fetchone()
             if not row:
                 raise ValueError("island not found")
@@ -1060,21 +1094,26 @@ def delete_island(island_id: int) -> dict[str, Any]:
             conn.execute("DELETE FROM island WHERE id = ?", (island_id,))
         invalidate_catalog_state_caches(island_id=island_id)
         return {"deleted": True, "id": island_id}
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    islands = list_islands()
-    if not any(int(row["id"]) == island_id for row in islands):
-        raise ValueError("island not found")
-    if len(islands) <= 1:
-        raise ValueError("cannot delete the last island")
-    delete_rows("island", {"id": _eq(island_id)})
-    invalidate_catalog_state_caches(island_id=island_id)
-    return {"deleted": True, "id": island_id}
+    def _supabase() -> dict[str, Any]:
+        islands = list_islands()
+        if not any(int(row["id"]) == island_id for row in islands):
+            raise ValueError("island not found")
+        if len(islands) <= 1:
+            raise ValueError("cannot delete the last island")
+        delete_rows("island", {"id": _eq(island_id)})
+        invalidate_catalog_state_caches(island_id=island_id)
+        return {"deleted": True, "id": island_id}
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def get_villager_state_map(island_id: int) -> dict[str, dict[str, bool]]:
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, dict[str, bool]]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             rows = conn.execute(
                 """
                 SELECT villager_id, liked, on_island, camping_visited, former_resident, island_order
@@ -1093,23 +1132,28 @@ def get_villager_state_map(island_id: int) -> dict[str, dict[str, bool]]:
             }
             for r in rows
         }
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    rows = fetch_rows(
-        "villager_state",
-        select="villager_id,liked,on_island,camping_visited,former_resident,island_order",
-        filters={"island_id": _eq(island_id)},
-    )
-    return {
-        str(r.get("villager_id") or ""): {
-            "liked": _bool_value(r.get("liked")),
-            "on_island": _bool_value(r.get("on_island")),
-            "camping_visited": _bool_value(r.get("camping_visited")),
-            "former_resident": _bool_value(r.get("former_resident")),
-            "island_order": _int_value(r.get("island_order")),
+    def _supabase() -> dict[str, dict[str, bool]]:
+        rows = fetch_rows(
+            "villager_state",
+            select="villager_id,liked,on_island,camping_visited,former_resident,island_order",
+            filters={"island_id": _eq(island_id)},
+        )
+        return {
+            str(r.get("villager_id") or ""): {
+                "liked": _bool_value(r.get("liked")),
+                "on_island": _bool_value(r.get("on_island")),
+                "camping_visited": _bool_value(r.get("camping_visited")),
+                "former_resident": _bool_value(r.get("former_resident")),
+                "island_order": _int_value(r.get("island_order")),
+            }
+            for r in rows
+            if str(r.get("villager_id") or "")
         }
-        for r in rows
-        if str(r.get("villager_id") or "")
-    }
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def get_catalog_state_map(island_id: int, catalog_type: str) -> dict[str, dict[str, Any]]:
@@ -1119,9 +1163,9 @@ def get_catalog_state_map(island_id: int, catalog_type: str) -> dict[str, dict[s
         if cached is not None:
             return _clone_catalog_state_map(cached)
 
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, dict[str, Any]]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             rows = conn.execute(
                 """
                 SELECT item_id, owned, donated, quantity
@@ -1138,30 +1182,34 @@ def get_catalog_state_map(island_id: int, catalog_type: str) -> dict[str, dict[s
             }
             for r in rows
         }
+    if not _use_supabase_state_mode():
+        result = _sqlite()
     else:
-        rows = fetch_rows(
-            "catalog_state",
-            select="item_id,owned,donated,quantity",
-            filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type)},
-        )
-        result = {
-            str(r.get("item_id") or ""): {
-                "owned": _bool_value(r.get("owned")),
-                "donated": _bool_value(r.get("donated")),
-                "quantity": max(0, _int_value(r.get("quantity"))),
+        def _supabase() -> dict[str, dict[str, Any]]:
+            rows = fetch_rows(
+                "catalog_state",
+                select="item_id,owned,donated,quantity",
+                filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type)},
+            )
+            return {
+                str(r.get("item_id") or ""): {
+                    "owned": _bool_value(r.get("owned")),
+                    "donated": _bool_value(r.get("donated")),
+                    "quantity": max(0, _int_value(r.get("quantity"))),
+                }
+                for r in rows
+                if str(r.get("item_id") or "")
             }
-            for r in rows
-            if str(r.get("item_id") or "")
-        }
+        result = _run_with_sqlite_fallback(_supabase, _sqlite)
     with _CACHE_LOCK:
         _CATALOG_STATE_CACHE[cache_key] = _clone_catalog_state_map(result)
     return result
 
 
 def get_catalog_variation_state_map(island_id: int, catalog_type: str, item_id: str) -> dict[str, dict[str, Any]]:
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, dict[str, Any]]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             rows = conn.execute(
                 """
                 SELECT variation_id, owned, quantity
@@ -1177,20 +1225,25 @@ def get_catalog_variation_state_map(island_id: int, catalog_type: str, item_id: 
             }
             for r in rows
         }
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    rows = fetch_rows(
-        "catalog_variation_state",
-        select="variation_id,owned,quantity",
-        filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type), "item_id": _eq(item_id)},
-    )
-    return {
-        str(r.get("variation_id") or ""): {
-            "owned": _bool_value(r.get("owned")),
-            "quantity": max(0, _int_value(r.get("quantity"))),
+    def _supabase() -> dict[str, dict[str, Any]]:
+        rows = fetch_rows(
+            "catalog_variation_state",
+            select="variation_id,owned,quantity",
+            filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type), "item_id": _eq(item_id)},
+        )
+        return {
+            str(r.get("variation_id") or ""): {
+                "owned": _bool_value(r.get("owned")),
+                "quantity": max(0, _int_value(r.get("quantity"))),
+            }
+            for r in rows
+            if str(r.get("variation_id") or "")
         }
-        for r in rows
-        if str(r.get("variation_id") or "")
-    }
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def get_catalog_variation_owned_counts(island_id: int, catalog_type: str) -> dict[str, int]:
@@ -1199,9 +1252,9 @@ def get_catalog_variation_owned_counts(island_id: int, catalog_type: str) -> dic
         cached = _VARIATION_OWNED_COUNT_CACHE.get(cache_key)
         if cached is not None:
             return dict(cached)
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, int]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             rows = conn.execute(
                 """
                 SELECT item_id, SUM(CASE WHEN owned = 1 THEN 1 ELSE 0 END) AS owned_count
@@ -1211,19 +1264,24 @@ def get_catalog_variation_owned_counts(island_id: int, catalog_type: str) -> dic
                 """,
                 (island_id, catalog_type),
             ).fetchall()
-        result = {str(r["item_id"]): int(r["owned_count"] or 0) for r in rows}
+        return {str(r["item_id"]): int(r["owned_count"] or 0) for r in rows}
+    if not _use_supabase_state_mode():
+        result = _sqlite()
     else:
-        rows = fetch_rows(
-            "catalog_variation_state",
-            select="item_id,owned",
-            filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type)},
-        )
-        result: dict[str, int] = {}
-        for row in rows:
-            item_id = str(row.get("item_id") or "")
-            if not item_id:
-                continue
-            result[item_id] = result.get(item_id, 0) + (1 if _bool_value(row.get("owned")) else 0)
+        def _supabase() -> dict[str, int]:
+            rows = fetch_rows(
+                "catalog_variation_state",
+                select="item_id,owned",
+                filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type)},
+            )
+            result: dict[str, int] = {}
+            for row in rows:
+                item_id = str(row.get("item_id") or "")
+                if not item_id:
+                    continue
+                result[item_id] = result.get(item_id, 0) + (1 if _bool_value(row.get("owned")) else 0)
+            return result
+        result = _run_with_sqlite_fallback(_supabase, _sqlite)
     with _CACHE_LOCK:
         _VARIATION_OWNED_COUNT_CACHE[cache_key] = dict(result)
     return result
@@ -1235,9 +1293,9 @@ def get_catalog_variation_quantity_totals(island_id: int, catalog_type: str) -> 
         cached = _VARIATION_QTY_TOTAL_CACHE.get(cache_key)
         if cached is not None:
             return dict(cached)
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, int]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             rows = conn.execute(
                 """
                 SELECT
@@ -1255,31 +1313,36 @@ def get_catalog_variation_quantity_totals(island_id: int, catalog_type: str) -> 
                 """,
                 (island_id, catalog_type),
             ).fetchall()
-        result = {str(r["item_id"]): int(r["quantity_total"] or 0) for r in rows}
+        return {str(r["item_id"]): int(r["quantity_total"] or 0) for r in rows}
+    if not _use_supabase_state_mode():
+        result = _sqlite()
     else:
-        rows = fetch_rows(
-            "catalog_variation_state",
-            select="item_id,owned,quantity",
-            filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type)},
-        )
-        result: dict[str, int] = {}
-        for row in rows:
-            item_id = str(row.get("item_id") or "")
-            if not item_id:
-                continue
-            qty = _int_value(row.get("quantity"))
-            if qty <= 0 and _bool_value(row.get("owned")):
-                qty = 1
-            result[item_id] = result.get(item_id, 0) + max(0, qty)
+        def _supabase() -> dict[str, int]:
+            rows = fetch_rows(
+                "catalog_variation_state",
+                select="item_id,owned,quantity",
+                filters={"island_id": _eq(island_id), "catalog_type": _eq(catalog_type)},
+            )
+            result: dict[str, int] = {}
+            for row in rows:
+                item_id = str(row.get("item_id") or "")
+                if not item_id:
+                    continue
+                qty = _int_value(row.get("quantity"))
+                if qty <= 0 and _bool_value(row.get("owned")):
+                    qty = 1
+                result[item_id] = result.get(item_id, 0) + max(0, qty)
+            return result
+        result = _run_with_sqlite_fallback(_supabase, _sqlite)
     with _CACHE_LOCK:
         _VARIATION_QTY_TOTAL_CACHE[cache_key] = dict(result)
     return result
 
 
 def get_island_profile(island_id: int) -> dict[str, Any]:
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite() -> dict[str, Any]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             row = conn.execute(
                 """
                 SELECT i.id AS island_id, i.name AS island_label, p.island_name, p.nickname, p.representative_fruit,
@@ -1325,23 +1388,28 @@ def get_island_profile(island_id: int) -> dict[str, Any]:
             "time_travel_enabled": bool(row["time_travel_enabled"]),
             "game_datetime": str(row["game_datetime"] or ""),
         }
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    ensured = _ensure_default_island_supabase()
-    islands = fetch_rows("island", select="id,name", filters={"id": _eq(island_id)}, limit=1)
-    island = islands[0] if islands else {"id": ensured["id"], "name": ensured["name"]}
-    profiles = fetch_rows("island_profile", select="*", filters={"island_id": _eq(_int_value(island.get("id")))} , limit=1)
-    profile = profiles[0] if profiles else {}
-    return {
-        "island_id": _int_value(island.get("id"), 1),
-        "island_name": str(profile.get("island_name") or island.get("name") or "").strip(),
-        "nickname": str(profile.get("nickname") or ""),
-        "representative_fruit": str(profile.get("representative_fruit") or ""),
-        "representative_flower": str(profile.get("representative_flower") or ""),
-        "birthday": _normalize_month_day(str(profile.get("birthday") or "")),
-        "hemisphere": str(profile.get("hemisphere") or "north"),
-        "time_travel_enabled": _bool_value(profile.get("time_travel_enabled")),
-        "game_datetime": str(profile.get("game_datetime") or ""),
-    }
+    def _supabase() -> dict[str, Any]:
+        ensured = _ensure_default_island_supabase()
+        islands = fetch_rows("island", select="id,name", filters={"id": _eq(island_id)}, limit=1)
+        island = islands[0] if islands else {"id": ensured["id"], "name": ensured["name"]}
+        profiles = fetch_rows("island_profile", select="*", filters={"island_id": _eq(_int_value(island.get("id")))} , limit=1)
+        profile = profiles[0] if profiles else {}
+        return {
+            "island_id": _int_value(island.get("id"), 1),
+            "island_name": str(profile.get("island_name") or island.get("name") or "").strip(),
+            "nickname": str(profile.get("nickname") or ""),
+            "representative_fruit": str(profile.get("representative_fruit") or ""),
+            "representative_flower": str(profile.get("representative_flower") or ""),
+            "birthday": _normalize_month_day(str(profile.get("birthday") or "")),
+            "hemisphere": str(profile.get("hemisphere") or "north"),
+            "time_travel_enabled": _bool_value(profile.get("time_travel_enabled")),
+            "game_datetime": str(profile.get("game_datetime") or ""),
+        }
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def upsert_island_profile(
@@ -1355,12 +1423,12 @@ def upsert_island_profile(
     time_travel_enabled: bool = False,
     game_datetime: str = "",
 ) -> dict[str, Any]:
-    if not _use_supabase_state_mode():
-        init_db()
+    def _sqlite() -> dict[str, Any]:
+        _init_sqlite_fallback()
         hemi = "south" if hemisphere == "south" else "north"
         birthday_mmdd = _normalize_month_day(birthday)
         clean_name = _normalize_island_name(island_name)
-        with get_db() as conn:
+        with _get_sqlite_db() as conn:
             conn.execute(
                 "INSERT OR IGNORE INTO island (id, name) VALUES (?, ?)",
                 (island_id, clean_name),
@@ -1399,29 +1467,34 @@ def upsert_island_profile(
                 ),
             )
         return get_island_profile(island_id)
+    if not _use_supabase_state_mode():
+        return _sqlite()
 
-    clean_name = _normalize_island_name(island_name)
-    hemi = "south" if hemisphere == "south" else "north"
-    birthday_mmdd = _normalize_month_day(birthday)
-    upsert_rows("island", [{"id": island_id, "name": clean_name}], "id")
-    upsert_rows(
-        "island_profile",
-        [
-            {
-                "island_id": island_id,
-                "island_name": clean_name,
-                "nickname": nickname.strip(),
-                "representative_fruit": representative_fruit.strip(),
-                "representative_flower": representative_flower.strip(),
-                "birthday": birthday_mmdd,
-                "hemisphere": hemi,
-                "time_travel_enabled": bool(time_travel_enabled),
-                "game_datetime": game_datetime.strip(),
-            }
-        ],
-        "island_id",
-    )
-    return get_island_profile(island_id)
+    def _supabase() -> dict[str, Any]:
+        clean_name = _normalize_island_name(island_name)
+        hemi = "south" if hemisphere == "south" else "north"
+        birthday_mmdd = _normalize_month_day(birthday)
+        upsert_rows("island", [{"id": island_id, "name": clean_name}], "id")
+        upsert_rows(
+            "island_profile",
+            [
+                {
+                    "island_id": island_id,
+                    "island_name": clean_name,
+                    "nickname": nickname.strip(),
+                    "representative_fruit": representative_fruit.strip(),
+                    "representative_flower": representative_flower.strip(),
+                    "birthday": birthday_mmdd,
+                    "hemisphere": hemi,
+                    "time_travel_enabled": bool(time_travel_enabled),
+                    "game_datetime": game_datetime.strip(),
+                }
+            ],
+            "island_id",
+        )
+        return get_island_profile(island_id)
+
+    return _run_with_sqlite_fallback(_supabase, _sqlite)
 
 
 def list_calendar_entries(island_id: int, month: str) -> list[dict[str, Any]]:
@@ -1922,9 +1995,9 @@ def save_villager_state(
     else:
         next_order = int(current.get("island_order") or 0)
 
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite_write() -> dict[str, Any]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             conn.execute(
                 """
                 INSERT INTO villager_state (island_id, villager_id, liked, on_island, camping_visited, former_resident, island_order)
@@ -1939,7 +2012,17 @@ def save_villager_state(
                 """,
                 (island_id, villager_id, _bool_int(new_liked), _bool_int(new_on_island), _bool_int(new_camping), _bool_int(new_former), next_order),
             )
-    else:
+        return {
+            "villager_id": villager_id,
+            "liked": new_liked,
+            "on_island": new_on_island,
+            "camping_visited": new_camping,
+            "former_resident": new_former,
+        }
+    if not _use_supabase_state_mode():
+        return _sqlite_write()
+
+    def _supabase_write() -> dict[str, Any]:
         upsert_rows(
             "villager_state",
             [
@@ -1955,13 +2038,15 @@ def save_villager_state(
             ],
             "island_id,villager_id",
         )
-    return {
-        "villager_id": villager_id,
-        "liked": new_liked,
-        "on_island": new_on_island,
-        "camping_visited": new_camping,
-        "former_resident": new_former,
-    }
+        return {
+            "villager_id": villager_id,
+            "liked": new_liked,
+            "on_island": new_on_island,
+            "camping_visited": new_camping,
+            "former_resident": new_former,
+        }
+
+    return _run_with_sqlite_fallback(_supabase_write, _sqlite_write)
 
 
 def save_villager_island_order(island_id: int, ordered_ids: list[str]) -> dict[str, Any]:
@@ -1969,9 +2054,9 @@ def save_villager_island_order(island_id: int, ordered_ids: list[str]) -> dict[s
     existing_ids = [villager_id for villager_id, row in current.items() if row.get("on_island")]
     if set(existing_ids) != set(ordered_ids):
         raise ValueError("island villager ids do not match current on-island list")
-    if not _use_supabase_state_mode():
-        init_db()
-        with get_db() as conn:
+    def _sqlite_write() -> dict[str, Any]:
+        _init_sqlite_fallback()
+        with _get_sqlite_db() as conn:
             for idx, villager_id in enumerate(ordered_ids, start=1):
                 conn.execute(
                     """
@@ -1981,14 +2066,20 @@ def save_villager_island_order(island_id: int, ordered_ids: list[str]) -> dict[s
                     """,
                     (idx, island_id, villager_id),
                 )
-    else:
+        return {"ok": True, "count": len(ordered_ids)}
+    if not _use_supabase_state_mode():
+        return _sqlite_write()
+
+    def _supabase_write() -> dict[str, Any]:
         for idx, villager_id in enumerate(ordered_ids, start=1):
             patch_rows(
                 "villager_state",
                 {"island_id": _eq(island_id), "villager_id": _eq(villager_id)},
                 {"island_order": idx},
             )
-    return {"ok": True, "count": len(ordered_ids)}
+        return {"ok": True, "count": len(ordered_ids)}
+
+    return _run_with_sqlite_fallback(_supabase_write, _sqlite_write)
 
 
 def save_catalog_state(

@@ -100,8 +100,8 @@ CREATE TABLE IF NOT EXISTS player_profile (
 """
 
 
-def get_db() -> sqlite3.Connection:
-    if _use_supabase_state_mode():
+def get_db(*, force_sqlite: bool = False) -> sqlite3.Connection:
+    if _use_supabase_state_mode() and not force_sqlite:
         raise RuntimeError("SQLite state DB is disabled when STATE_BACKEND uses Supabase")
     conn = sqlite3.connect(get_db_path(), timeout=10.0)
     conn.row_factory = sqlite3.Row
@@ -446,8 +446,8 @@ def _migrate_player_profile(conn: sqlite3.Connection) -> None:
     conn.execute("DROP TABLE player_profile_old")
 
 
-def init_db() -> None:
-    if _use_supabase_state_mode():
+def init_db(*, force_sqlite: bool = False) -> None:
+    if _use_supabase_state_mode() and not force_sqlite:
         return
     global _INIT_DONE
     if _INIT_DONE:
@@ -456,7 +456,7 @@ def init_db() -> None:
     with _INIT_LOCK:
         if _INIT_DONE:
             return
-        with get_db() as conn:
+        with get_db(force_sqlite=force_sqlite) as conn:
             _migrate_islands(conn)
             _migrate_villager_state(conn)
             _migrate_catalog_state(conn)

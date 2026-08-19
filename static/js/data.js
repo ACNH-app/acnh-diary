@@ -86,6 +86,15 @@ export function createDataController({
   const safeOpenVillagerDetail = (villager) => {
     if (onOpenVillagerDetail) onOpenVillagerDetail(villager);
   };
+  const setLoadErrorState = (message) => {
+    state.renderedCatalogItems = [];
+    state.renderedVillagers = [];
+    state.activeCatalogItemIds = [];
+    state.catalogHasMore = false;
+    resultCount.textContent = String(message || "데이터를 불러오지 못했습니다.");
+    const listEl = document.querySelector("#list");
+    if (listEl) listEl.innerHTML = "";
+  };
   const textKoSort = (a, b) => compareNamePriority(a, b);
   const catalogName = (x) => x?.name_ko || x?.name || x?.name_en || "";
   const getExtraFilterValue = () => {
@@ -515,19 +524,56 @@ export function createDataController({
 
   /** Load villager filter metadata into select boxes. */
   async function loadVillagerMeta() {
-    const meta = await getJSON("/api/meta");
+    let meta = null;
+    let villagersPayload = null;
+    try {
+      [meta, villagersPayload] = await Promise.all([
+        getJSON("/api/meta").catch(() => null),
+        getJSON("/api/villagers"),
+      ]);
+    } catch (err) {
+      console.error(err);
+      return;
+    }
+    const villagerRows = Array.isArray(villagersPayload?.items) ? villagersPayload.items : [];
+    const personalityRows = Array.isArray(meta?.personalities)
+      ? meta.personalities
+      : Array.from(
+        new Map(
+          villagerRows
+            .map((row) => {
+              const en = String(row?.personality || "").trim();
+              if (!en) return null;
+              return [en, { en, ko: String(row?.personality_ko || en).trim() || en }];
+            })
+            .filter(Boolean)
+        ).values()
+      ).sort((a, b) => (a.ko || a.en).localeCompare(b.ko || b.en, "ko"));
+    const speciesRows = Array.isArray(meta?.species)
+      ? meta.species
+      : Array.from(
+        new Map(
+          villagerRows
+            .map((row) => {
+              const en = String(row?.species || "").trim();
+              if (!en) return null;
+              return [en, { en, ko: String(row?.species_ko || en).trim() || en }];
+            })
+            .filter(Boolean)
+        ).values()
+      );
 
     personalitySelect.innerHTML = '<option value="">성격 전체</option>';
     speciesSelect.innerHTML = '<option value="">종 전체</option>';
 
-    meta.personalities.forEach((p) => {
+    personalityRows.forEach((p) => {
       const opt = document.createElement("option");
       opt.value = p.en;
       opt.textContent = `${p.ko} (${p.en})`;
       personalitySelect.appendChild(opt);
     });
 
-    const sortedSpecies = [...meta.species].sort((a, b) =>
+    const sortedSpecies = [...speciesRows].sort((a, b) =>
       (a.ko || a.en).localeCompare(b.ko || b.en, "ko")
     );
 
@@ -573,8 +619,6 @@ export function createDataController({
     syncVillagerSpeciesTabs();
     window.__acnhSyncVillagerSpeciesTabs = syncVillagerSpeciesTabs;
 
-    const villagersPayload = await getJSON("/api/villagers");
-    const villagerRows = Array.isArray(villagersPayload?.items) ? villagersPayload.items : [];
     const subtypeMap = new Map();
     villagerRows.forEach((row) => {
       const raw = String(row?.sub_personality || "").trim();
@@ -645,7 +689,17 @@ export function createDataController({
 
   /** Apply catalog metadata to filter controls and sub-category tabs. */
   async function applyCatalogMeta(catalogType) {
-    const meta = await ensureCatalogMeta(catalogType);
+    let meta = null;
+    try {
+      meta = await ensureCatalogMeta(catalogType);
+    } catch (err) {
+      console.error(err);
+      meta = {
+        label: String(catalogType || ""),
+        status_label: "보유",
+        categories: [],
+      };
+    }
     catalogSearchInput.placeholder = `${meta.label} 이름/출처 검색 (한글/영문)`;
     const prevExtraValue = catalogExtraSelect.value;
     const prevExtraType = catalogExtraSelect.dataset.extraType || "";
@@ -747,8 +801,14 @@ export function createDataController({
     const cacheKey = `${state.currentIslandId || 1}:${query || "__all__"}`;
     let data = villagerQueryCache.get(cacheKey);
     if (!data) {
-      data = await getJSON(`/api/villagers?${query}`);
-      villagerQueryCache.set(cacheKey, data);
+      try {
+        data = await getJSON(`/api/villagers?${query}`);
+        villagerQueryCache.set(cacheKey, data);
+      } catch (err) {
+        console.error(err);
+        setLoadErrorState("주민 데이터를 불러오지 못했습니다.");
+        return;
+      }
     }
 
     const sourceItems = Array.isArray(data.items) ? data.items : [];
@@ -824,7 +884,9 @@ export function createDataController({
       await ensureCatalogRows(catalogType);
     } catch (err) {
       if (err?.name === "AbortError") return;
-      throw err;
+      console.error(err);
+      setLoadErrorState(`${catalogType} 데이터를 불러오지 못했습니다.`);
+      return;
     }
     if (requestSeq !== catalogFetchSeq) return;
 

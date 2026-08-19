@@ -502,12 +502,12 @@ if (brandHomeBtn) {
     });
     updatePanels();
 
+    await dataController.loadVillagerMeta();
     await ensureHomeProfileLoaded();
     await ensureHomeIslandResidentsLoaded();
     await ensureHomeSummaryLoaded();
     await ensurePlayersLoaded();
     await ensureCalendarLoaded();
-    await dataController.loadVillagerMeta();
     if (state.activeMode !== "home") {
       await dataController.loadCurrentModeData();
     }

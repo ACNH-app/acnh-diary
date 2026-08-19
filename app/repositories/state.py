@@ -987,6 +987,17 @@ def _ensure_default_island_supabase() -> dict[str, Any]:
     return {"id": island_id, "name": "Default Island"}
 
 
+def _ensure_parent_island_supabase(island_id: int) -> None:
+    if island_id == 1:
+        _ensure_default_island_supabase()
+        return
+
+    rows = fetch_rows("island", select="id", filters={"id": _eq(island_id)}, limit=1)
+    if rows:
+        return
+    raise ValueError("island not found")
+
+
 def list_islands() -> list[dict[str, Any]]:
     def _sqlite() -> list[dict[str, Any]]:
         _init_sqlite_fallback()
@@ -1650,6 +1661,7 @@ def upsert_calendar_entry(
         )
         row = rows[0] if rows else {}
     else:
+        _ensure_parent_island_supabase(island_id)
         row = insert_row(
             "calendar_entry",
             {
@@ -1854,6 +1866,7 @@ def upsert_player(
         )
         row = rows[0] if rows else {}
     else:
+        _ensure_parent_island_supabase(island_id)
         row = insert_row(
             "player_profile",
             {
@@ -2024,6 +2037,7 @@ def save_villager_state(
         return _sqlite_write()
 
     def _supabase_write() -> dict[str, Any]:
+        _ensure_parent_island_supabase(island_id)
         upsert_rows(
             "villager_state",
             [
@@ -2099,6 +2113,7 @@ def save_catalog_state(
             upsert_catalog_state(conn, island_id, catalog_type, item_id, owned, qty, donated)
         invalidate_catalog_state_caches(catalog_type, island_id)
         return
+    _ensure_parent_island_supabase(island_id)
     upsert_rows(
         "catalog_state",
         [
@@ -2142,6 +2157,7 @@ def save_all_variation_states(
             upsert_all_variation_states(conn, island_id, catalog_type, item_id, variation_ids, owned)
         invalidate_catalog_state_caches(catalog_type, island_id)
         return
+    _ensure_parent_island_supabase(island_id)
     upsert_rows("catalog_variation_state", rows, "island_id,catalog_type,item_id,variation_id")
     invalidate_catalog_state_caches(catalog_type, island_id)
 
@@ -2175,6 +2191,7 @@ def save_catalog_variation_state(
             item_owned = recalc_item_owned_from_variations(conn, island_id, catalog_type, item_id, all_variation_ids)
         invalidate_catalog_state_caches(catalog_type, island_id)
         return item_owned
+    _ensure_parent_island_supabase(island_id)
     upsert_rows(
         "catalog_variation_state",
         [
@@ -2234,6 +2251,7 @@ def save_catalog_variation_batch(
             item_owned = recalc_item_owned_from_variations(conn, island_id, catalog_type, item_id, all_variation_ids)
         invalidate_catalog_state_caches(catalog_type, island_id)
         return item_owned
+    _ensure_parent_island_supabase(island_id)
     upsert_rows("catalog_variation_state", rows, "island_id,catalog_type,item_id,variation_id")
     item_owned = recalc_item_owned_from_variation_map(island_id, catalog_type, item_id, all_variation_ids)
     invalidate_catalog_state_caches(catalog_type, island_id)

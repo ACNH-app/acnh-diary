@@ -472,5 +472,5 @@ def _use_supabase_state_mode() -> bool:
     if backend == "sqlite":
         return False
     if backend == "supabase":
-        return is_supabase_state_available()
+        return True
     return is_supabase_state_available()

@@ -883,8 +883,12 @@ def _use_supabase_state_mode() -> bool:
     if backend == "sqlite":
         return False
     if backend == "supabase":
-        return is_supabase_state_available()
+        return True
     return is_supabase_state_available()
+
+
+def _supabase_state_required() -> bool:
+    return get_state_backend() == "supabase"
 
 
 def _eq(value: Any) -> str:
@@ -921,6 +925,8 @@ def _run_with_sqlite_fallback(action: Callable[[], Any], fallback: Callable[[], 
         return action()
     except RuntimeError as exc:
         if not _is_supabase_state_runtime_error(exc):
+            raise
+        if _supabase_state_required():
             raise
         init_db(force_sqlite=True)
         return fallback()

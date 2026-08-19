@@ -72,6 +72,7 @@ from app.repositories.state import (
     with_catalog_variation_counts,
     with_villager_state,
 )
+from app.services.supabase_state import fetch_rows as fetch_supabase_state_rows
 from app.services.catalog_data import (
     _build_variations,
     _catalog_detail_payload,
@@ -284,3 +285,37 @@ app.include_router(
 @app.get("/api/debug/runtime-config")
 def debug_runtime_config() -> dict[str, object]:
     return get_runtime_config_diagnostics()
+
+
+@app.get("/api/debug/state-probe")
+def debug_state_probe() -> dict[str, object]:
+    result: dict[str, object] = {
+        "ok": False,
+        "tables": {},
+    }
+    for table_name, select in (
+        ("island", "id,name"),
+        ("island_profile", "island_id,island_name"),
+        ("villager_state", "island_id,villager_id"),
+    ):
+        try:
+            rows = fetch_supabase_state_rows(table_name, select=select, limit=3)
+            result["tables"] = {
+                **dict(result["tables"]),
+                table_name: {
+                    "ok": True,
+                    "count": len(rows),
+                    "sample": rows,
+                },
+            }
+        except Exception as exc:
+            result["tables"] = {
+                **dict(result["tables"]),
+                table_name: {
+                    "ok": False,
+                    "error": str(exc),
+                },
+            }
+    table_map = dict(result["tables"])
+    result["ok"] = all(bool(info.get("ok")) for info in table_map.values())
+    return result

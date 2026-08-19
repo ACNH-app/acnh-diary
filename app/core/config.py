@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -158,6 +159,51 @@ def get_cors_origins() -> list[str]:
 
 def get_app_timezone() -> str:
     return _env("APP_TIMEZONE", "Asia/Seoul")
+
+
+def _mask_secret(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if len(text) <= 8:
+        return "*" * len(text)
+    return f"{text[:4]}...{text[-4:]}"
+
+
+def _value_source(key: str) -> str:
+    env_val = os.environ.get(key, "").strip()
+    if env_val:
+        return "env"
+    dotenv_val = str(_load_dotenv().get(key, "")).strip()
+    if dotenv_val:
+        return "dotenv"
+    return "default"
+
+
+def get_runtime_config_diagnostics() -> dict[str, Any]:
+    supabase_url = get_supabase_url().strip()
+    parsed = urlparse(supabase_url) if supabase_url else None
+    return {
+        "is_running_on_vercel": is_running_on_vercel(),
+        "state_backend": get_state_backend(),
+        "content_backend": get_content_backend(),
+        "asset_backend": get_asset_backend(),
+        "db_path": str(get_db_path()),
+        "content_db_path": str(get_content_db_path()),
+        "supabase": {
+            "url_present": bool(supabase_url),
+            "url_source": _value_source("SUPABASE_URL"),
+            "url_host": parsed.netloc if parsed else "",
+            "anon_key_present": bool(get_supabase_anon_key().strip()),
+            "anon_key_source": _value_source("SUPABASE_ANON_KEY"),
+            "anon_key_masked": _mask_secret(get_supabase_anon_key()),
+            "service_role_key_present": bool(get_supabase_service_role_key().strip()),
+            "service_role_key_source": _value_source("SUPABASE_SERVICE_ROLE_KEY"),
+            "service_role_key_masked": _mask_secret(get_supabase_service_role_key()),
+            "asset_bucket": get_supabase_asset_bucket(),
+            "asset_prefix": get_supabase_asset_prefix(),
+        },
+    }
 
 
 DEFAULT_PERSONALITY_MAP = {

@@ -44,6 +44,7 @@ from app.core.config import (
     VILLAGER_SAYING_MAP_PATH,
     get_api_key,
     get_cors_origins,
+    get_runtime_config_diagnostics,
 )
 from app.core.db import get_db, init_db
 from app.domain.catalog import category_ko_for, order_categories
@@ -278,3 +279,8 @@ app.include_router(
         update_catalog_variation_state_batch_handler=handlers.catalog.update_catalog_variation_state_batch,
     )
 )
+
+
+@app.get("/api/debug/runtime-config")
+def debug_runtime_config() -> dict[str, object]:
+    return get_runtime_config_diagnostics()

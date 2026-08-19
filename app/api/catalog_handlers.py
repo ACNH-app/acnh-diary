@@ -5,6 +5,13 @@ from typing import Any
 from fastapi import HTTPException
 
 from app.api.deps import CatalogHandlerDeps, CatalogHandlers
+from app.repositories.state import (
+    get_catalog_state_map,
+    save_all_variation_states,
+    save_catalog_state,
+    save_catalog_variation_batch,
+    save_catalog_variation_state,
+)
 from app.schemas.state import (
     CatalogStateBulkIn,
     CatalogStateIn,
@@ -49,12 +56,11 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 row_id = str(row.get("id") or "")
                 if row_id:
                     merged_by_id[row_id] = row
-
         return [merged_by_id.get(str(item.get("id") or ""), item) for item in items]
 
     def get_catalog_meta(catalog_type: str) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
+            raise HTTPException(status_code=404, detail="Catalog not found.")
 
         rows = deps.load_catalog(catalog_type)
         category_values = {x["category"] for x in rows if x["category"]}
@@ -64,10 +70,7 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 if isinstance(filters, list):
                     category_values.update(str(v).strip() for v in filters if str(v).strip())
         categories = deps.order_categories(catalog_type, list(category_values))
-        category_rows = [
-            {"en": c, "ko": deps.category_ko_for(catalog_type, c)} for c in categories
-        ]
-
+        category_rows = [{"en": c, "ko": deps.category_ko_for(catalog_type, c)} for c in categories]
         if catalog_type == "photos":
             category_rows = []
 
@@ -76,36 +79,27 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             "status_label": deps.catalog_types[catalog_type]["status_label"],
             "categories": category_rows,
         }
-
         if catalog_type == "clothing":
             style_map = deps.load_clothing_style_map()
             label_theme_map = deps.load_clothing_label_theme_map()
             styles = sorted({s for x in rows for s in x.get("styles", [])})
             label_themes = sorted({t for x in rows for t in x.get("label_themes", [])})
             response["styles"] = [{"en": s, "ko": style_map.get(s, s)} for s in styles]
-            response["label_themes"] = [
-                {"en": t, "ko": label_theme_map.get(t, t)} for t in label_themes
-            ]
-
+            response["label_themes"] = [{"en": t, "ko": label_theme_map.get(t, t)} for t in label_themes]
         if catalog_type == "events":
-            event_types = sorted({x["event_type"] for x in rows if x["event_type"]})
-            response["event_types"] = event_types
+            response["event_types"] = sorted({x["event_type"] for x in rows if x["event_type"]})
         if catalog_type == "art":
             response["authenticity_types"] = [
                 {"en": "genuine_only", "ko": "진품만"},
                 {"en": "has_fake", "ko": "가품 있음"},
             ]
-
         return response
 
     def get_recipe_tags(catalog_type: str) -> dict[str, Any]:
         if catalog_type != "recipes":
-            raise HTTPException(status_code=404, detail="레시피 태그는 recipes 카탈로그에서만 지원합니다.")
+            raise HTTPException(status_code=404, detail="Recipe tags are only available for recipes.")
         rows = deps.load_recipe_tags() or []
-        return {
-            "count": len(rows),
-            "items": rows,
-        }
+        return {"count": len(rows), "items": rows}
 
     def get_catalog(
         island_id: int,
@@ -124,12 +118,10 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         page_size: int = 60,
     ) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
+            raise HTTPException(status_code=404, detail="Catalog not found.")
 
         page = max(1, int(page or 1))
         page_size = max(1, min(200, int(page_size or 60)))
-
-        # 먼저 정적 필터를 적용해 후보군을 줄인 뒤 상태/보유 집계를 붙이면 응답 속도가 빨라진다.
         items = deps.load_catalog(catalog_type)
 
         q_norm = q.strip().lower()
@@ -143,19 +135,9 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 or q_norm in str(x.get("source") or "").lower()
                 or q_norm in str(x.get("source_notes") or "").lower()
             ]
-
         if category:
-            if catalog_type == "recipes" and (
-                category.startswith("season:")
-                or category.startswith("event:")
-                or category.startswith("npc:")
-                or category.startswith("ingredient:")
-            ):
-                items = [
-                    x
-                    for x in items
-                    if category in (x.get("recipe_filters") or [])
-                ]
+            if catalog_type == "recipes" and category.startswith(("season:", "event:", "npc:", "ingredient:")):
+                items = [x for x in items if category in (x.get("recipe_filters") or [])]
             else:
                 items = [x for x in items if x["category"] == category]
         if style:
@@ -180,51 +162,42 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
                 x
                 for x in items
                 if int(x.get("variation_total") or 0) > 0
-                and int(x.get("variation_owned_count") or 0)
-                == int(x.get("variation_total") or 0)
+                and int(x.get("variation_owned_count") or 0) == int(x.get("variation_total") or 0)
             ]
         elif variation_scope == "partial":
             items = [
                 x
                 for x in items
                 if int(x.get("variation_total") or 0) > 0
-                and 0
-                < int(x.get("variation_owned_count") or 0)
-                < int(x.get("variation_total") or 0)
+                and 0 < int(x.get("variation_owned_count") or 0) < int(x.get("variation_total") or 0)
             ]
 
         items = deps.sort_catalog_items(items, sort_by=sort_by, sort_order=sort_order)
         total_count = len(items)
         start = (page - 1) * page_size
         end = start + page_size
-        paged_items = items[start:end]
-        has_more = end < total_count
         return {
             "count": total_count,
             "total_count": total_count,
             "page": page,
             "page_size": page_size,
-            "has_more": has_more,
-            "items": paged_items,
+            "has_more": end < total_count,
+            "items": items[start:end],
         }
 
     def get_catalog_detail(island_id: int, catalog_type: str, item_id: str) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
-
+            raise HTTPException(status_code=404, detail="Catalog not found.")
         item = next((x for x in deps.load_catalog(catalog_type) if x["id"] == item_id), None)
         if not item:
-            raise HTTPException(status_code=404, detail="아이템을 찾을 수 없습니다.")
+            raise HTTPException(status_code=404, detail="Item not found.")
         state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
-
         base_row = deps.find_catalog_row(catalog_type, item_id)
         if not base_row:
-            raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
+            raise HTTPException(status_code=404, detail="Source row not found.")
 
         detail_row = base_row
         from_single = False
-        # art는 목록 응답에 real_info/fake_info가 충분히 포함되므로
-        # single endpoint 추가 호출을 생략해 상세 열기 속도를 개선한다.
         should_fetch_single = state_catalog_type != "art" and len(deps.build_variations(base_row)) == 0
         if should_fetch_single:
             name_en = str(base_row.get("event") or base_row.get("name") or "").strip()
@@ -245,54 +218,28 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             variation_state_map=variation_state_map,
         )
 
-    def update_catalog_state(
-        island_id: int,
-        catalog_type: str, item_id: str, payload: CatalogStateIn
-    ) -> CatalogStateOut:
+    def update_catalog_state(island_id: int, catalog_type: str, item_id: str, payload: CatalogStateIn) -> CatalogStateOut:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
-
+            raise HTTPException(status_code=404, detail="Catalog not found.")
         state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
-
-        deps.init_db()
         if not deps.find_catalog_row(catalog_type, item_id):
-            raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
+            raise HTTPException(status_code=404, detail="Item source row not found.")
+
         variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
+        existing = get_catalog_state_map(island_id, state_catalog_type).get(item_id, {})
+        new_owned = payload.owned if payload.owned is not None else bool(existing.get("owned"))
+        new_donated = payload.donated if payload.donated is not None else bool(existing.get("donated"))
+        new_qty = max(0, int(payload.quantity)) if payload.quantity is not None else max(0, int(existing.get("quantity") or 0))
 
-        with deps.get_db() as conn:
-            existing = conn.execute(
-                """
-                SELECT owned, donated, quantity
-                FROM catalog_state
-                WHERE island_id = ? AND catalog_type = ? AND item_id = ?
-                """,
-                (island_id, state_catalog_type, item_id),
-            ).fetchone()
-
-            current_owned = bool(existing["owned"]) if existing else False
-            current_donated = bool(existing["donated"]) if existing else False
-            current_qty = max(0, int((existing["quantity"] if existing else 0) or 0))
-            new_owned = payload.owned if payload.owned is not None else current_owned
-            new_donated = (
-                payload.donated if payload.donated is not None else current_donated
-            )
-            new_qty = (
-                max(0, int(payload.quantity))
-                if payload.quantity is not None
-                else current_qty
-            )
-            deps.upsert_catalog_state(
-                conn,
-                island_id,
-                state_catalog_type,
-                item_id,
-                bool(new_owned),
-                int(new_qty),
-                bool(new_donated),
-            )
-            deps.upsert_all_variation_states(
-                conn, island_id, state_catalog_type, item_id, variation_ids, bool(new_owned)
-            )
+        save_catalog_state(
+            island_id,
+            state_catalog_type,
+            item_id,
+            owned=bool(new_owned),
+            donated=bool(new_donated),
+            quantity=int(new_qty),
+        )
+        save_all_variation_states(island_id, state_catalog_type, item_id, variation_ids, bool(new_owned))
         deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
         if _is_special_items_mode(catalog_type):
             deps.invalidate_catalog_state_caches(catalog_type, island_id)
@@ -305,177 +252,45 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
             quantity=int(new_qty),
         )
 
-    def update_catalog_state_bulk(
-        island_id: int,
-        catalog_type: str,
-        payload: CatalogStateBulkIn,
-    ) -> dict[str, Any]:
+    def update_catalog_state_bulk(island_id: int, catalog_type: str, payload: CatalogStateBulkIn) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
+            raise HTTPException(status_code=404, detail="Catalog not found.")
         item_ids = [str(x).strip() for x in (payload.item_ids or []) if str(x).strip()]
         if not item_ids:
             return {"updated": 0, "owned": bool(payload.owned)}
 
-        # 현재 모드 목록에 있는 id만 허용
         loaded_rows = deps.load_catalog(catalog_type)
         valid_ids = {str(x.get("id") or "") for x in loaded_rows if str(x.get("id") or "")}
         target_ids = [item_id for item_id in item_ids if item_id in valid_ids]
         if not target_ids:
             return {"updated": 0, "owned": bool(payload.owned)}
 
-        deps.init_db()
-        state_type_map = {
-            item_id: _resolve_state_catalog_type(catalog_type, item_id) for item_id in target_ids
-        }
-        variation_map = {
-            item_id: deps.variation_ids_for_item(state_type_map[item_id], item_id)
-            for item_id in target_ids
-        }
+        state_type_map = {item_id: _resolve_state_catalog_type(catalog_type, item_id) for item_id in target_ids}
+        updated_total = 0
+        for item_id in target_ids:
+            state_catalog_type = state_type_map[item_id]
+            variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
+            existing = get_catalog_state_map(island_id, state_catalog_type).get(item_id, {})
+            donated = bool(existing.get("donated"))
+            current_qty = max(0, int(existing.get("quantity") or 0))
+            quantity = max(1, current_qty) if state_catalog_type == "furniture" and not variation_ids and payload.owned else (0 if state_catalog_type == "furniture" and not variation_ids else current_qty)
+            save_catalog_state(
+                island_id,
+                state_catalog_type,
+                item_id,
+                owned=bool(payload.owned),
+                donated=donated,
+                quantity=quantity,
+            )
+            save_all_variation_states(island_id, state_catalog_type, item_id, variation_ids, bool(payload.owned))
+            deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
+            updated_total += 1
 
         if _is_special_items_mode(catalog_type):
-            groups: dict[str, list[str]] = {}
-            for item_id in target_ids:
-                groups.setdefault(state_type_map[item_id], []).append(item_id)
-            updated_total = 0
-            for state_catalog_type, grouped_item_ids in groups.items():
-                with deps.get_db() as conn:
-                    placeholders = ",".join("?" for _ in grouped_item_ids)
-                    existing_rows = conn.execute(
-                        f"""
-                        SELECT item_id, donated, quantity
-                        FROM catalog_state
-                        WHERE island_id = ? AND catalog_type = ? AND item_id IN ({placeholders})
-                        """,
-                        (island_id, state_catalog_type, *grouped_item_ids),
-                    ).fetchall()
-                    existing_map = {
-                        str(r["item_id"]): {
-                            "donated": bool(r["donated"]),
-                            "quantity": max(0, int(r["quantity"] or 0)),
-                        }
-                        for r in existing_rows
-                    }
-
-                    state_rows = []
-                    for item_id in grouped_item_ids:
-                        prev = existing_map.get(item_id, {"donated": False, "quantity": 0})
-                        donated = bool(prev["donated"])
-                        current_qty = int(prev["quantity"])
-                        variation_ids = variation_map[item_id]
-                        has_variations = len(variation_ids) > 0
-                        if state_catalog_type == "furniture" and not has_variations:
-                            quantity = max(1, current_qty) if payload.owned else 0
-                        else:
-                            quantity = current_qty
-                        state_rows.append(
-                            (island_id, state_catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
-                        )
-
-                    conn.executemany(
-                        """
-                        INSERT INTO catalog_state (island_id, catalog_type, item_id, owned, donated, quantity)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        ON CONFLICT(island_id, catalog_type, item_id) DO UPDATE SET
-                            owned = excluded.owned,
-                            donated = excluded.donated,
-                            quantity = excluded.quantity,
-                            updated_at = CURRENT_TIMESTAMP
-                        """,
-                        state_rows,
-                    )
-
-                    variation_rows = []
-                    for item_id in grouped_item_ids:
-                        for variation_id in variation_map[item_id]:
-                            qty = 1 if payload.owned else 0
-                            variation_rows.append(
-                                (island_id, state_catalog_type, item_id, variation_id, int(payload.owned), int(qty))
-                            )
-                    if variation_rows:
-                        conn.executemany(
-                            """
-                            INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                            ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
-                                owned = excluded.owned,
-                                quantity = excluded.quantity,
-                                updated_at = CURRENT_TIMESTAMP
-                            """,
-                            variation_rows,
-                        )
-                deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
-                updated_total += len(grouped_item_ids)
             deps.invalidate_catalog_state_caches(catalog_type, island_id)
-            return {"updated": updated_total, "owned": bool(payload.owned)}
-
-        with deps.get_db() as conn:
-            placeholders = ",".join("?" for _ in target_ids)
-            existing_rows = conn.execute(
-                f"""
-                SELECT item_id, donated, quantity
-                FROM catalog_state
-                WHERE island_id = ? AND catalog_type = ? AND item_id IN ({placeholders})
-                """,
-                (island_id, catalog_type, *target_ids),
-            ).fetchall()
-            existing_map = {
-                str(r["item_id"]): {
-                    "donated": bool(r["donated"]),
-                    "quantity": max(0, int(r["quantity"] or 0)),
-                }
-                for r in existing_rows
-            }
-
-            state_rows = []
-            for item_id in target_ids:
-                prev = existing_map.get(item_id, {"donated": False, "quantity": 0})
-                donated = bool(prev["donated"])
-                current_qty = int(prev["quantity"])
-                variation_ids = variation_map[item_id]
-                has_variations = len(variation_ids) > 0
-                if catalog_type == "furniture" and not has_variations:
-                    quantity = max(1, current_qty) if payload.owned else 0
-                else:
-                    quantity = current_qty
-                state_rows.append(
-                    (island_id, catalog_type, item_id, int(payload.owned), int(donated), int(quantity))
-                )
-
-            conn.executemany(
-                """
-                INSERT INTO catalog_state (island_id, catalog_type, item_id, owned, donated, quantity)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(island_id, catalog_type, item_id) DO UPDATE SET
-                    owned = excluded.owned,
-                    donated = excluded.donated,
-                    quantity = excluded.quantity,
-                    updated_at = CURRENT_TIMESTAMP
-                """,
-                state_rows,
-            )
-
-            variation_rows = []
-            for item_id in target_ids:
-                for variation_id in variation_map[item_id]:
-                    qty = 1 if payload.owned else 0
-                    variation_rows.append(
-                        (island_id, catalog_type, item_id, variation_id, int(payload.owned), int(qty))
-                    )
-            if variation_rows:
-                conn.executemany(
-                    """
-                    INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
-                        owned = excluded.owned,
-                        quantity = excluded.quantity,
-                        updated_at = CURRENT_TIMESTAMP
-                    """,
-                    variation_rows,
-                )
-        deps.invalidate_catalog_state_caches(catalog_type, island_id)
-
-        return {"updated": len(target_ids), "owned": bool(payload.owned)}
+        else:
+            deps.invalidate_catalog_state_caches(catalog_type, island_id)
+        return {"updated": updated_total, "owned": bool(payload.owned)}
 
     def update_catalog_variation_state(
         island_id: int,
@@ -485,51 +300,31 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         payload: CatalogVariationStateIn,
     ) -> CatalogVariationStateOut:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
-
+            raise HTTPException(status_code=404, detail="Catalog not found.")
         state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
-
         if not deps.find_catalog_row(catalog_type, item_id):
-            raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
+            raise HTTPException(status_code=404, detail="Item source row not found.")
         variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
-        variation_id_set = set(variation_ids)
-        if variation_id not in variation_id_set:
-            raise HTTPException(status_code=404, detail="변형을 찾을 수 없습니다.")
+        if variation_id not in set(variation_ids):
+            raise HTTPException(status_code=404, detail="Variation not found.")
 
-        deps.init_db()
-        with deps.get_db() as conn:
-            existing = conn.execute(
-                """
-                SELECT owned, quantity
-                FROM catalog_variation_state
-                WHERE island_id = ? AND catalog_type = ? AND item_id = ? AND variation_id = ?
-                """,
-                (island_id, state_catalog_type, item_id, variation_id),
-            ).fetchone()
+        existing = deps.get_catalog_variation_state_map(island_id, state_catalog_type, item_id).get(variation_id, {})
+        current_owned = bool(existing.get("owned"))
+        current_qty = max(0, int(existing.get("quantity") or 0))
+        new_owned = payload.owned if payload.owned is not None else current_owned
+        new_qty = max(0, int(payload.quantity)) if payload.quantity is not None else current_qty
+        if payload.quantity is not None:
+            new_owned = new_qty > 0
 
-            current_owned = bool(existing["owned"]) if existing else False
-            current_qty = max(0, int((existing["quantity"] if existing else 0) or 0))
-            new_owned = payload.owned if payload.owned is not None else current_owned
-            new_qty = (
-                max(0, int(payload.quantity))
-                if payload.quantity is not None
-                else current_qty
-            )
-            if payload.quantity is not None:
-                new_owned = new_qty > 0
-
-            conn.execute(
-                """
-                INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
-                    owned = excluded.owned,
-                    quantity = excluded.quantity,
-                    updated_at = CURRENT_TIMESTAMP
-                """,
-                (island_id, state_catalog_type, item_id, variation_id, int(new_owned), int(new_qty)),
-            )
-            deps.recalc_item_owned_from_variations(conn, island_id, state_catalog_type, item_id, variation_ids)
+        save_catalog_variation_state(
+            island_id,
+            state_catalog_type,
+            item_id,
+            variation_id,
+            owned=bool(new_owned),
+            quantity=int(new_qty),
+            all_variation_ids=variation_ids,
+        )
         deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
         if _is_special_items_mode(catalog_type):
             deps.invalidate_catalog_state_caches(catalog_type, island_id)
@@ -549,52 +344,32 @@ def create_catalog_handlers(deps: CatalogHandlerDeps) -> CatalogHandlers:
         payload: CatalogVariationStateBatchIn,
     ) -> dict[str, Any]:
         if catalog_type not in deps.catalog_types:
-            raise HTTPException(status_code=404, detail="알 수 없는 카탈로그입니다.")
+            raise HTTPException(status_code=404, detail="Catalog not found.")
         if not payload.items:
             return {"updated": 0}
 
         state_catalog_type = _resolve_state_catalog_type(catalog_type, item_id)
-
         if not deps.find_catalog_row(catalog_type, item_id):
-            raise HTTPException(status_code=404, detail="아이템 원본 데이터를 찾을 수 없습니다.")
+            raise HTTPException(status_code=404, detail="Item source row not found.")
         variation_ids = deps.variation_ids_for_item(state_catalog_type, item_id)
         variation_id_set = set(variation_ids)
         for row in payload.items:
             if row.variation_id not in variation_id_set:
-                raise HTTPException(
-                    status_code=404, detail=f"변형을 찾을 수 없습니다: {row.variation_id}"
-                )
+                raise HTTPException(status_code=404, detail=f"Variation not found: {row.variation_id}")
 
-        deps.init_db()
-        with deps.get_db() as conn:
-            conn.executemany(
-                """
-                INSERT INTO catalog_variation_state (island_id, catalog_type, item_id, variation_id, owned, quantity)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(island_id, catalog_type, item_id, variation_id) DO UPDATE SET
-                    owned = excluded.owned,
-                    quantity = excluded.quantity,
-                    updated_at = CURRENT_TIMESTAMP
-                """,
-                [
-                    (
-                        island_id,
-                        state_catalog_type,
-                        item_id,
-                        row.variation_id,
-                        int((max(0, int(row.quantity)) > 0) if row.quantity is not None else row.owned),
-                        int(max(0, int(row.quantity)) if row.quantity is not None else (1 if row.owned else 0)),
-                    )
-                    for row in payload.items
-                ],
-            )
-            item_owned = deps.recalc_item_owned_from_variations(
-                conn, island_id, state_catalog_type, item_id, variation_ids
-            )
+        item_owned = save_catalog_variation_batch(
+            island_id,
+            state_catalog_type,
+            item_id,
+            [
+                {"variation_id": row.variation_id, "owned": row.owned, "quantity": row.quantity}
+                for row in payload.items
+            ],
+            variation_ids,
+        )
         deps.invalidate_catalog_state_caches(state_catalog_type, island_id)
         if _is_special_items_mode(catalog_type):
             deps.invalidate_catalog_state_caches(catalog_type, island_id)
-
         return {"updated": len(payload.items), "item_owned": item_owned}
 
     return CatalogHandlers(

@@ -3,7 +3,8 @@ from __future__ import annotations
 import sqlite3
 from threading import Lock
 
-from app.core.config import get_db_path, is_running_on_vercel
+from app.core.config import get_db_path, get_state_backend, is_running_on_vercel
+from app.services.supabase_state import is_supabase_state_available
 
 _INIT_LOCK = Lock()
 _INIT_DONE = False
@@ -100,6 +101,8 @@ CREATE TABLE IF NOT EXISTS player_profile (
 
 
 def get_db() -> sqlite3.Connection:
+    if _use_supabase_state_mode():
+        raise RuntimeError("SQLite state DB is disabled when STATE_BACKEND uses Supabase")
     conn = sqlite3.connect(get_db_path(), timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL" if not is_running_on_vercel() else "PRAGMA journal_mode = DELETE")
@@ -444,6 +447,8 @@ def _migrate_player_profile(conn: sqlite3.Connection) -> None:
 
 
 def init_db() -> None:
+    if _use_supabase_state_mode():
+        return
     global _INIT_DONE
     if _INIT_DONE:
         return
@@ -460,3 +465,12 @@ def init_db() -> None:
             _migrate_calendar_entry(conn)
             _migrate_player_profile(conn)
         _INIT_DONE = True
+
+
+def _use_supabase_state_mode() -> bool:
+    backend = get_state_backend()
+    if backend == "sqlite":
+        return False
+    if backend == "supabase":
+        return is_supabase_state_available()
+    return is_supabase_state_available()

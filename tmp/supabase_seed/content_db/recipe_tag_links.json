@@ -1,0 +1,1972 @@
+[
+  {
+    "recipe_item_id": "92655cfe90fe434a",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a84a9589dd9d65ac",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "dd492b7a98b3dad3",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d194fbc128025d2e",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c7f695a958181703",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e88efa93ed15deb7",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "071507faf5fc1adf",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2c53f72d75a7ee3f",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c0fb8d0c1c010244",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c38eab721b4e23f9",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "311a6ce57ebacd11",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9114788818841b4a",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "30b206083544f577",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a50e0a8230e7926c",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "227cdab2b18cb654",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0782e16778c2946a",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8bd00e2419cdb9f4",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9c363438951b2e83",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "49828df89f72deb8",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4cfd614345149aa3",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8967ce9635f95c82",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "248f8228fc176934",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "67009e5230f29269",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "80990818abee43f5",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d9a8726a0a24ebe8",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d9a8726a0a24ebe8",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c88575e5b1cb9c9f",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "121e0c6504455e86",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "12d9517c033210d8",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5785086416bc7bba",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ad549b6a9bb03543",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1d0dbf342cb5fa02",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c370c7361a201821",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "24b38a7de7d8dffc",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b0bfc09c7609f83c",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d215a6f78184b8a7",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2141710d990a6af0",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3a64d4c8aaa142bb",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "af84b2956f5c163e",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2dafce3de4a2b97e",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "34bbec71ad17fd66",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "cdb47b2c6cbee2e9",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "dbf058d152539e30",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7f77bf21f77da44b",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "549d92f38fd9be36",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "081b36f1535c1a44",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2f23fa0a81702135",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5cefee63623e302a",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "eb13b6a7d6401aca",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "72b388cdf873dd42",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "cd33fbf9c3f92d95",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a229ec90ae66c669",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "bf18af0ffe5d2bef",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4b485dcb3230a9c3",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6e96d46a5292ef6c",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7e06b36582057409",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2d5122b311d00807",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c2fda55f41ea1305",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1b44d059f9131a6d",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "544291ccc2d79abb",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d8f112b91e56e91a",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "eac88c7fbc94245f",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "347cdf50f3c12348",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "210a760e48129a43",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7c317715abf38a51",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d28344e26e235504",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "274565b7095b2771",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "dd0660a1904c110c",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "40626310b96beaf2",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "39d13721d2627761",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "dd097888649dd8b7",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3457279b20f06bf1",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2a218bbd4d8c134b",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "19e8b240b9d7e6c1",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "03166488de5f7983",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f124e64f80a145b9",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4274fd76a5e641f0",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3498a86331935c44",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "423d41d54d3c661c",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "02ed42d5d95b01a5",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "882515afb7e31bbb",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5d2e4b87a05660b5",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c8e351f6e14f33a6",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "45546bf3df06a535",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7c51bea76300aa38",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "82cc4602ab6ebaad",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "086e12daa62b3a62",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "864ec9028be7360f",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "48782a522b8225e9",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7aabe3f46a98cd27",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "19704ec3c811ae26",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a12443b256f35c38",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a9e9a597d8914281",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "559ad011dcb4a035",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "adc3f76c52757403",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "de7dda92a657dfcf",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "bc5b84876687b432",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1a1246264377ceda",
+    "tag_key": "npc:pascal",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "66a62b9cb0fcf200",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "309022245e736240",
+    "tag_key": "event:festivale",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "02ae21bd35840911",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3733e19243503e6e",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f78b5f2ff4fc652d",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d56342a714f06e47",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "544b77fe0d8f78a6",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "95b3432daf6e638d",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e1372d5fdb0d1bf2",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "259f35a52be898e5",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "45dda2941cbd6a45",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "90202e98a0ec26a6",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e252a8504feffa1e",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "309f338105a323b6",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "01d4fe299899e3b2",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6a9f82e715c0402b",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "eaa3e8e62b067968",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "28f07d4a5bbdb8ca",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6823866a98f16831",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8c50272f1cfc7372",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a5d456871787d19a",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6dec6a30ecb9e883",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b4c00ef690c8fa15",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4603e0b1ee5ac268",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "99e95e510e91f3da",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "991599eaab6ac545",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ff65168c35da8ec9",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d55f02445112cf9a",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "90295f9c66ee411b",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c6d68f8fb4f5a3f1",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "22e7bc93854aa011",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2236aa3182afafe2",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "721ca134defb0175",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4a19bcaaabf3205a",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "772c36bf3798ec5d",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "cb98b09a39419e38",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3e972952a5f4f848",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "940ccd8a41002354",
+    "tag_key": "season:mushroom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "13ad094cfd21c9b7",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a8cd9260cb492a32",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "791c4187ca7ca12e",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e7b97e5270d3fbf7",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "92ca83f68e95f132",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5e85174a4563da06",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d9b34a490c4fd385",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0c68ec2627209ab5",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8f46f89180db8fb1",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "123c4bd7353775df",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f7fd714298b3f0f3",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1a867572e74d8ff9",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "167d4d327e05f819",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "08d4db36fe8c5c18",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0dc0291dd1f5790c",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e5b2d66ea68fc272",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7a1f01613b4aaf34",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b60bfad1b869e068",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "549eaa535ca08657",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "06396017b7911cab",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "193cc2e4004e8920",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a2a75b45724f8d45",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ba523acb1fe51efa",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ba2cc4b6bfd51513",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "57f49e4b314eac98",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8fa695bd4f900e39",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "46d9ed87224d454e",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0ef0ca7ad06047e7",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c8fdd9c97a850c41",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8d1fb12bd7a06b69",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "fd55eb8bde22e14b",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8d238cf4ebd82f4c",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "96c9ebf3a2288482",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5161dc7517e71e12",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "beda31fc6d47685f",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "fc7ca7ff8ba0a578",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ef75a54ed3bb32b7",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "483f716cc81ebb93",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ced276f9738c6b96",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "489d8f58ee910153",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ccb61fed4d879541",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d86a5ddc02388b4b",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f841d903f1f9ff93",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "46564a371453582a",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d927fe3704e1d624",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b27de6890cde2717",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2f2a410bff73c882",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "77d8efad09c2446b",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f08a57a103ef25f3",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a228a097687f3bf2",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f415625e27f6aabe",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "31d76019994595a4",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9e499c0aa2ed498e",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "66832c0990778954",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "62ce230090838eb3",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6f56b8aae71d40e5",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2f37283e4a8b4ecd",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4fba8048085f7671",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8dafad36da12f95f",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "404c34a5ce80d99e",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "605770f62edaa456",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "919d399fe445bc8f",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8a50e6ed7300137b",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1e94c2afa4d570b3",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b1ac5b5d2c6bcdb7",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "19edd95002984022",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "27dd7784b382a32c",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "55ff7c2b248c8065",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c4d042c5ff54fb7b",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d50b40de5a574c00",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "64e4c26c1569b1e4",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5cda800603533a02",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3a3537557b933126",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b9723fb664141947",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ce2bea83cba9dd8a",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "695a39901b7dba80",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e70f89afbdb53b59",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "16d8029f36df972c",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d6ad89444f350cbd",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5d2800e3b28578af",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0944697cbfc12e93",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c3834158373f4032",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3a5daf5e7e6cdd93",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ccc8edaf76e8684c",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "fe408834b0f1c957",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "54eed538735ebb2c",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b7dbdc6f4e685d03",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3f69fe7fd2e68fba",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1e10ca4e974b004c",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "73393d62d3c1ee3e",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "abf58b0e52bc24fa",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6620b139de5ee52a",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "798fe6eb7916b77a",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7f927357b679fc18",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d91236ab7b46b1a6",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0eae168531be9e3f",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3211837d0513f894",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "769248a75502436b",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a40b06af7ac04ca7",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "da1e0fe1617608aa",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "06da19ceddf3bdf4",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c416073450e725c9",
+    "tag_key": "season:winter_snowflake",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0be3dd326f2a5518",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "49e4d0577bd45202",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a93f3a218ceddae7",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "93f5ec0cc46d1396",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "24aec71fc17c610f",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e15a373a187e0748",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "85eabe1726c0900a",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a6a41d8e8fb652e8",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "996ccf987311260c",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "010eaa7135469134",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3a990c7ac0b5d550",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "cbfe9dae86aa205b",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e5b7f74661d0efc1",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "161d4a0c190febb1",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9b2a93f75b7f74e9",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b9476577e37663c3",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2c72dad77dd84215",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d4ffa116aaa80196",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "101def283e5c007f",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f17b0d0543ac56c9",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3819d47efeed7e16",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e1c33f5dc9cff5fa",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9f8de973548c06fc",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "73a8cb4be7ead2d7",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "299e266ea41ea2ad",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9adb108e48ba89b6",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "faa599553fe989f1",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4c13dd205d7c339a",
+    "tag_key": "event:wedding_season",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "253248dc9222e640",
+    "tag_key": "event:wedding_season",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "68d306dc1be300be",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6b3fb283ad534517",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f2e61a1d8a503f6d",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6b9f72f661d45fb8",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5195d322002843e9",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4a68a158a0c015ff",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5c8081aa33f80686",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8269de4d18633a7e",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "77e3154db3d4fded",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8e3881aa17cf91b0",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5c731cf96d9173ca",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "bc2b003812d8241a",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "de50cf5c414f2f4d",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "abbb57ec53185e6f",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e7666ba902fd52cc",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1322029271668df1",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7d272c2bf9e0fd22",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "307192c377e61c39",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "58a58ebcdd9c2df2",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5e4b5641564f8dba",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "66ac4f572f8d6607",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f1547abcda9d2cca",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "836427bcd0a80541",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c1d193528b9779a9",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5e3f89cb561305e4",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "501a37872db189a9",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8a11393d14de96f9",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1ed19e242c04de4d",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "26b4dc65a9bd95d8",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2c460a53ffe3b466",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9db119a15f298a12",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "70e28aca2a4e8972",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "fd4c08a2766bb2c5",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0dce965674c7ee16",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f4b96748901f99fd",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "cd88fbcddb3d3140",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "35bf6260e129c857",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7d6a7f13048abbf1",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9517bda5554756a4",
+    "tag_key": "ingredient:shell_non_mermaid",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1ab7637018ea5387",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4094d3f572f882ca",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1d1ce6527db4a420",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0a9e026587ddce3d",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a2c0689f3670235e",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6686812278b3ef39",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0995d02428b66289",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c50dbed6046b774f",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "4555d742a18bb594",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8802e0ea48d5279a",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b10f0871da9d3602",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5b5376da46efd8b1",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a78dcb27aaf2eacd",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e10267f022257fbd",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "550a53fc1ecb8f75",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5868ead7ef5a8b7d",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b133120325909cbb",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "34293610baba8740",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1dea2c7b6749a719",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "04f901a40f305565",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "fcc60707e34d8c98",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "36503f427fade484",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8d11f79ba35a3d56",
+    "tag_key": "season:maple_leaf",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8d11f79ba35a3d56",
+    "tag_key": "season:tree_bounty",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0491611e737f052f",
+    "tag_key": "ingredient:vine_moss",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8b57361305a085d7",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "19a33ecf375a3e8d",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8bbd0009e7bc3306",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8bbd0009e7bc3306",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "58f4276adbd2478c",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "671b9990b5a16835",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3a854bf6422a7a7e",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "3b550466268868d6",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "84b2ea1ed38ef4eb",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6ea12d1df6a7d071",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5fba1a463fa4528e",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e5432b065e6c1fb4",
+    "tag_key": "ingredient:flower",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0e100e2b8fe80e8e",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "99cb3f750ba7fe11",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a679078c4f0f77f8",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "bc274c6636a3f191",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d12f407a615c7e7f",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ee98d01853ac8dc2",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1eee86f38bb16543",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e3f8bc153d30b36f",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d7d5aa75d723ccd6",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "24594547840e2217",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "c7d21532dfd47e51",
+    "tag_key": "season:christmas_ornament",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9d67cd87cb6ae0c5",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "40c2afc70b86234a",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1f245d60b33babf7",
+    "tag_key": "ingredient:fruit",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f0f2bd18ee3ccd0c",
+    "tag_key": "season:cherry_blossom",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5788ffcd03e540f2",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "e955e5b745f8d041",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "11ac5bed268120b3",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "618de98478daf381",
+    "tag_key": "event:bunny_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "2f55237458e3dd18",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "934fe090f3b2d8d9",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1e1a19a97d016243",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b4eac2060e92cfbd",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5532305c3f8bad18",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "a8d500a939b402de",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "426d23bf0447405c",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f88bc3b40437c32a",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "20de74a63b3456ff",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d71b74b76df9ffaf",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6b8c5f8fdccb8401",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "13d988b5171628a5",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7c3d27a7ae79458f",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "6a17774c6e3b46c2",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7f9f1dd7e7ce7e58",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "acacebea5be46d0b",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8c1e05159f3ec02a",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "db62046b0cd556ca",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "0c74cb3129385c1d",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "1b8f981fe0c1a50a",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ce01c559c875bd39",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "48edf813a0a17ada",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "07db2aae12e64e6f",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "5666e463e76731ef",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "f2fedf4f4ddc23a8",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ca28a3ec29a1617d",
+    "tag_key": "event:halloween",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "d72c2c6014f51a4d",
+    "tag_key": "season:summer_shell",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "b366643205e2be9b",
+    "tag_key": "event:turkey_day",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "ce6090c9935b7dcc",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "9f6285cee17d1aa2",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "7a2d0326f1c2644f",
+    "tag_key": "season:young_spring_bamboo",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "recipe_item_id": "8956d9312a381861",
+    "tag_key": "npc:celeste",
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "key": "built_at_utc",
+    "value": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "key": "catalog_types",
+    "value": "17"
+  },
+  {
+    "key": "catalog_items",
+    "value": "9187"
+  },
+  {
+    "key": "catalog_variations",
+    "value": "24897"
+  },
+  {
+    "key": "villagers",
+    "value": "417"
+  },
+  {
+    "key": "builder",
+    "value": "scripts/build_content_db.py"
+  }
+]

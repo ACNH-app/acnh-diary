@@ -1,0 +1,121 @@
+[
+  {
+    "catalog_type": "clothing",
+    "status_label": "보유",
+    "item_count": 1527,
+    "variation_count": 5540,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "furniture",
+    "status_label": "보유",
+    "item_count": 2076,
+    "variation_count": 13674,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "items",
+    "status_label": "보유",
+    "item_count": 365,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "tools",
+    "status_label": "보유",
+    "item_count": 150,
+    "variation_count": 314,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "interior",
+    "status_label": "보유",
+    "item_count": 737,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "gyroids",
+    "status_label": "보유",
+    "item_count": 36,
+    "variation_count": 189,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "fossils",
+    "status_label": "보유",
+    "item_count": 73,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "bugs",
+    "status_label": "보유",
+    "item_count": 80,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "fish",
+    "status_label": "보유",
+    "item_count": 80,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "sea",
+    "status_label": "보유",
+    "item_count": 40,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "recipes",
+    "status_label": "보유",
+    "item_count": 924,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "events",
+    "status_label": "완료",
+    "item_count": 1428,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "photos",
+    "status_label": "보유",
+    "item_count": 966,
+    "variation_count": 4319,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "art",
+    "status_label": "보유",
+    "item_count": 43,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "reactions",
+    "status_label": "습득",
+    "item_count": 88,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "music",
+    "status_label": "보유",
+    "item_count": 110,
+    "variation_count": 0,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  },
+  {
+    "catalog_type": "special_items",
+    "status_label": "보유",
+    "item_count": 464,
+    "variation_count": 861,
+    "built_at_utc": "2026-08-18T08:39:38.380903+00:00"
+  }
+]

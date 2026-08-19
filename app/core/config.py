@@ -80,6 +80,10 @@ def get_api_key() -> str:
     return _env("NOOKIPEDIA_API_KEY", "")
 
 
+def get_database_url() -> str:
+    return _env("DATABASE_URL", "")
+
+
 def get_db_path() -> Path:
     default_path = "/tmp/app.db" if is_running_on_vercel() else str(DB_PATH)
     raw = _env("DB_PATH", default_path)
@@ -89,6 +93,60 @@ def get_db_path() -> Path:
 def get_content_db_path() -> Path:
     raw = _env("CONTENT_DB_PATH", str(CONTENT_DB_PATH))
     return Path(raw).expanduser()
+
+
+def get_content_backend() -> str:
+    raw = _env("CONTENT_BACKEND", "auto").strip().lower()
+    return raw if raw in {"auto", "sqlite", "supabase"} else "auto"
+
+
+def get_state_backend() -> str:
+    raw = _env("STATE_BACKEND", "auto").strip().lower()
+    return raw if raw in {"auto", "sqlite", "supabase"} else "auto"
+
+
+def get_supabase_url() -> str:
+    return _env("SUPABASE_URL", "")
+
+
+def get_supabase_anon_key() -> str:
+    return _env("SUPABASE_ANON_KEY", "")
+
+
+def get_supabase_service_role_key() -> str:
+    return _env("SUPABASE_SERVICE_ROLE_KEY", "")
+
+
+def get_asset_backend() -> str:
+    raw = _env("ASSET_BACKEND", "local").strip().lower()
+    return raw if raw in {"local", "supabase", "auto"} else "local"
+
+
+def get_supabase_asset_bucket() -> str:
+    return _env("SUPABASE_ASSET_BUCKET", "acnh-assets")
+
+
+def get_supabase_asset_prefix() -> str:
+    return _env("SUPABASE_ASSET_PREFIX", "").strip().strip("/")
+
+
+def use_supabase_assets() -> bool:
+    backend = get_asset_backend()
+    if backend == "local":
+        return False
+    if backend == "supabase":
+        return bool(get_supabase_url() and get_supabase_asset_bucket())
+    return bool(get_supabase_url() and get_supabase_asset_bucket())
+
+
+def get_supabase_asset_public_base_url() -> str:
+    base = get_supabase_url().rstrip("/")
+    bucket = get_supabase_asset_bucket().strip().strip("/")
+    prefix = get_supabase_asset_prefix()
+    if not base or not bucket:
+        return ""
+    storage_base = f"{base}/storage/v1/object/public/{bucket}"
+    return f"{storage_base}/{prefix}" if prefix else storage_base
 
 
 def get_cors_origins() -> list[str]:

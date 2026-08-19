@@ -1,0 +1,26 @@
+[
+  {
+    "island_id": 2,
+    "island_name": "수원삼섬",
+    "nickname": "그랑",
+    "representative_fruit": "apple",
+    "representative_flower": "rose",
+    "birthday": "12-15",
+    "hemisphere": "north",
+    "time_travel_enabled": 0,
+    "game_datetime": "2026-08-18T14:54",
+    "updated_at": "2026-08-18 06:16:53"
+  },
+  {
+    "island_id": 3,
+    "island_name": "우리땅독도",
+    "nickname": "오리죠",
+    "representative_fruit": "peach",
+    "representative_flower": "hyacinth",
+    "birthday": "02-11",
+    "hemisphere": "north",
+    "time_travel_enabled": 0,
+    "game_datetime": "2026-08-18T16:10",
+    "updated_at": "2026-08-18 07:10:54"
+  }
+]

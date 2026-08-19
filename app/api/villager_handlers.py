@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from app.api.deps import VillagerHandlerDeps, VillagerHandlers
+from app.repositories.state import save_villager_island_order, save_villager_state
 from app.schemas.state import VillagerIslandOrderIn, VillagerStateIn, VillagerStateOut
 
 
@@ -52,127 +53,35 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
         return {"count": len(villagers), "items": villagers}
 
     def update_villager_state(island_id: int, villager_id: str, payload: VillagerStateIn) -> VillagerStateOut:
-        deps.init_db()
         if not any(v["id"] == villager_id for v in deps.load_villagers()):
-            raise HTTPException(status_code=404, detail="주민을 찾을 수 없습니다.")
-
-        with deps.get_db() as conn:
-            existing = conn.execute(
-                """
-                SELECT liked, on_island, camping_visited, former_resident, island_order
-                FROM villager_state
-                WHERE island_id = ? AND villager_id = ?
-                """,
-                (island_id, villager_id),
-            ).fetchone()
-
-            current_liked = bool(existing["liked"]) if existing else False
-            current_on_island = bool(existing["on_island"]) if existing else False
-            current_camping_visited = bool(existing["camping_visited"]) if existing else False
-            current_former_resident = bool(existing["former_resident"]) if existing else False
-            current_island_order = int(existing["island_order"] or 0) if existing else 0
-
-            new_liked = payload.liked if payload.liked is not None else current_liked
-            new_on_island = payload.on_island if payload.on_island is not None else current_on_island
-            new_camping_visited = (
-                payload.camping_visited
-                if payload.camping_visited is not None
-                else current_camping_visited
+            raise HTTPException(status_code=404, detail="Villager not found.")
+        try:
+            result = save_villager_state(
+                island_id,
+                villager_id,
+                liked=payload.liked,
+                on_island=payload.on_island,
+                camping_visited=payload.camping_visited,
+                former_resident=payload.former_resident,
             )
-            new_former_resident = (
-                payload.former_resident
-                if payload.former_resident is not None
-                else current_former_resident
-            )
-
-            # 우리 섬 주민은 최대 10명까지만 허용
-            if new_on_island and not current_on_island:
-                row = conn.execute(
-                    """
-                    SELECT COUNT(*) AS cnt
-                    FROM villager_state
-                    WHERE island_id = ? AND on_island = 1 AND villager_id != ?
-                    """,
-                    (island_id, villager_id),
-                ).fetchone()
-                on_island_count = int(row["cnt"] or 0) if row else 0
-                if on_island_count >= 10:
-                    raise HTTPException(status_code=400, detail="현재 섬 주민은 최대 10명까지 등록할 수 있습니다.")
-                max_row = conn.execute(
-                    """
-                    SELECT COALESCE(MAX(island_order), 0) AS max_order
-                    FROM villager_state
-                    WHERE island_id = ? AND on_island = 1
-                    """,
-                    (island_id,),
-                ).fetchone()
-                next_order = int(max_row["max_order"] or 0) + 1
-            elif not new_on_island:
-                next_order = 0
-            else:
-                next_order = current_island_order or 0
-
-            conn.execute(
-                """
-                INSERT INTO villager_state (island_id, villager_id, liked, on_island, camping_visited, former_resident, island_order)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(island_id, villager_id) DO UPDATE SET
-                    liked = excluded.liked,
-                    on_island = excluded.on_island,
-                    camping_visited = excluded.camping_visited,
-                    former_resident = excluded.former_resident,
-                    island_order = excluded.island_order,
-                    updated_at = CURRENT_TIMESTAMP
-                """,
-                (
-                    island_id,
-                    villager_id,
-                    int(new_liked),
-                    int(new_on_island),
-                    int(new_camping_visited),
-                    int(new_former_resident),
-                    int(next_order),
-                ),
-            )
-
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         return VillagerStateOut(
             villager_id=villager_id,
-            liked=bool(new_liked),
-            on_island=bool(new_on_island),
-            camping_visited=bool(new_camping_visited),
-            former_resident=bool(new_former_resident),
+            liked=bool(result["liked"]),
+            on_island=bool(result["on_island"]),
+            camping_visited=bool(result["camping_visited"]),
+            former_resident=bool(result["former_resident"]),
         )
 
     def update_island_order(island_id: int, payload: VillagerIslandOrderIn) -> dict[str, Any]:
-        deps.init_db()
         ordered_ids = [str(x).strip() for x in (payload.villager_ids or []) if str(x).strip()]
         if not ordered_ids:
             return {"ok": True}
-
-        with deps.get_db() as conn:
-            existing_rows = conn.execute(
-                """
-                SELECT villager_id
-                FROM villager_state
-                WHERE island_id = ? AND on_island = 1
-                ORDER BY island_order ASC, updated_at ASC
-                """,
-                (island_id,),
-            ).fetchall()
-            existing_ids = [str(r["villager_id"]) for r in existing_rows]
-            if set(existing_ids) != set(ordered_ids):
-                raise HTTPException(status_code=400, detail="섬 주민 목록이 일치하지 않아 순서를 저장할 수 없습니다.")
-            for idx, villager_id in enumerate(ordered_ids, start=1):
-                conn.execute(
-                    """
-                    UPDATE villager_state
-                    SET island_order = ?, updated_at = CURRENT_TIMESTAMP
-                    WHERE island_id = ? AND villager_id = ?
-                    """,
-                    (idx, island_id, villager_id),
-                )
-
-        return {"ok": True, "count": len(ordered_ids)}
+        try:
+            return save_villager_island_order(island_id, ordered_ids)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return VillagerHandlers(
         get_villagers=get_villagers,

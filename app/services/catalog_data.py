@@ -8,7 +8,13 @@ from functools import lru_cache
 from typing import Any
 from urllib.parse import quote
 
-from app.core.config import BASE_DIR, CATALOG_SINGLE_PATHS, CATALOG_TYPES, get_content_db_path
+from app.core.config import (
+    BASE_DIR,
+    CATALOG_SINGLE_PATHS,
+    CATALOG_TYPES,
+    get_content_backend,
+    get_content_db_path,
+)
 from app.core.content_db import get_content_db
 from app.domain.catalog import category_ko_for, normalize_furniture_category, normalize_recipe_category
 from app.services.mappings import (
@@ -28,7 +34,16 @@ from app.services.nookipedia_client import (
     load_nookipedia_catalog,
     load_nookipedia_villagers,
 )
+from app.services.asset_urls import resolve_public_asset_url
 from app.services.source import extract_source_pair, extract_source_pairs, translate_source_value_to_ko
+from app.services.supabase_content import (
+    fetch_catalog_items,
+    fetch_catalog_variations,
+    fetch_recipe_tag_links,
+    fetch_recipe_tags,
+    fetch_villagers as fetch_supabase_villagers,
+    is_supabase_content_available,
+)
 from app.utils.text import normalize_name
 
 REACTIONS_DATA_PATH = BASE_DIR / "data" / "norviah-animal-crossing" / "reactions.json"
@@ -157,6 +172,10 @@ RECIPE_VINE_MOSS_MATERIALS = {
 
 
 def _use_content_db_mode() -> bool:
+    if get_content_backend() == "sqlite":
+        return get_content_db_path().is_file()
+    if get_content_backend() == "supabase":
+        return False
     raw = os.environ.get("USE_CONTENT_DB", "auto").strip().lower()
     if raw in {"0", "false", "no", "off"}:
         return False
@@ -167,75 +186,101 @@ def _use_content_db_mode() -> bool:
     return path.exists() and path.is_file()
 
 
+def _use_supabase_content_mode() -> bool:
+    backend = get_content_backend()
+    if backend == "sqlite":
+        return False
+    if backend == "supabase":
+        return is_supabase_content_available()
+    return (not _use_content_db_mode()) and is_supabase_content_available()
+
+
+def _json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return {}
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    return {}
+
+
 @lru_cache(maxsize=None)
 def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
-    if not _use_content_db_mode():
-        return ([], {})
     items: list[dict[str, Any]] = []
     row_index: dict[str, dict[str, Any]] = {}
+    rows: list[dict[str, Any]] = []
+    recipe_tag_map: dict[str, list[str]] = {}
     try:
-        with get_content_db() as conn:
-            item_cols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_items)").fetchall()}
-            has_source_ko = "source_ko" in item_cols
-            has_source_notes_ko = "source_notes_ko" in item_cols
-            select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
-            select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
-            rows = conn.execute(
-                f"""
-                SELECT item_id, item_json, raw_json, source, {select_source_ko}, source_notes, {select_source_notes_ko}
-                FROM catalog_items
-                WHERE catalog_type = ?
-                """,
-                (catalog_type,),
-            ).fetchall()
-            recipe_tag_map: dict[str, list[str]] = {}
+        if _use_content_db_mode():
+            with get_content_db() as conn:
+                item_cols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_items)").fetchall()}
+                has_source_ko = "source_ko" in item_cols
+                has_source_notes_ko = "source_notes_ko" in item_cols
+                select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
+                select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
+                rows = [
+                    dict(row)
+                    for row in conn.execute(
+                        f"""
+                        SELECT item_id, item_json, raw_json, source, {select_source_ko}, source_notes, {select_source_notes_ko}
+                        FROM catalog_items
+                        WHERE catalog_type = ?
+                        """,
+                        (catalog_type,),
+                    ).fetchall()
+                ]
+                if catalog_type == "recipes":
+                    tbls = {
+                        str(r["name"])
+                        for r in conn.execute(
+                            "SELECT name FROM sqlite_master WHERE type='table'"
+                        ).fetchall()
+                    }
+                    if "recipe_tag_links" in tbls:
+                        tag_rows = conn.execute(
+                            """
+                            SELECT recipe_item_id, tag_key
+                            FROM recipe_tag_links
+                            ORDER BY recipe_item_id, tag_key
+                            """
+                        ).fetchall()
+                        for tr in tag_rows:
+                            rid = str(tr["recipe_item_id"] or "").strip()
+                            tkey = str(tr["tag_key"] or "").strip()
+                            if not rid or not tkey:
+                                continue
+                            recipe_tag_map.setdefault(rid, []).append(tkey)
+        elif _use_supabase_content_mode():
+            rows = fetch_catalog_items(catalog_type)
             if catalog_type == "recipes":
-                tbls = {
-                    str(r["name"])
-                    for r in conn.execute(
-                        "SELECT name FROM sqlite_master WHERE type='table'"
-                    ).fetchall()
-                }
-                if "recipe_tag_links" in tbls:
-                    tag_rows = conn.execute(
-                        """
-                        SELECT recipe_item_id, tag_key
-                        FROM recipe_tag_links
-                        ORDER BY recipe_item_id, tag_key
-                        """
-                    ).fetchall()
-                    for tr in tag_rows:
-                        rid = str(tr["recipe_item_id"] or "").strip()
-                        tkey = str(tr["tag_key"] or "").strip()
-                        if not rid or not tkey:
-                            continue
-                        recipe_tag_map.setdefault(rid, []).append(tkey)
+                for tr in fetch_recipe_tag_links():
+                    rid = str(tr.get("recipe_item_id") or "").strip()
+                    tkey = str(tr.get("tag_key") or "").strip()
+                    if not rid or not tkey:
+                        continue
+                    recipe_tag_map.setdefault(rid, []).append(tkey)
+        else:
+            return ([], {})
     except Exception:
         return ([], {})
 
     for row in rows:
-        item_id = str(row["item_id"] or "").strip()
+        item_id = str(row.get("item_id") or "").strip()
         if not item_id:
             continue
-        item_raw = str(row["item_json"] or "").strip()
-        raw_raw = str(row["raw_json"] or "").strip()
-        try:
-            item = json.loads(item_raw) if item_raw else {}
-        except Exception:
-            item = {}
-        try:
-            raw = json.loads(raw_raw) if raw_raw else {}
-        except Exception:
-            raw = {}
-        if not isinstance(item, dict):
-            item = {}
-        if not isinstance(raw, dict):
-            raw = {}
+        item = _json_object(row.get("item_json"))
+        raw = _json_object(row.get("raw_json"))
         item["id"] = item_id
-        source_ko = str(row["source_ko"] or "").strip()
-        source_notes_ko = str(row["source_notes_ko"] or "").strip()
-        source_raw = str(row["source"] or "").strip()
-        source_notes_raw = str(row["source_notes"] or "").strip()
+        source_ko = str(row.get("source_ko") or "").strip()
+        source_notes_ko = str(row.get("source_notes_ko") or "").strip()
+        source_raw = str(row.get("source") or "").strip()
+        source_notes_raw = str(row.get("source_notes") or "").strip()
         if source_ko == "굉장한 도구 레시피":
             source_ko = "언제나 쓸 수 있는 도구 레시피"
         source_pairs_raw = extract_source_pairs(raw)
@@ -260,6 +305,11 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
         item["source"] = source_ko or str(item.get("source") or source_raw or "")
         item["source_notes"] = source_notes_ko or str(item.get("source_notes") or source_notes_raw or "")
         item["source_pairs"] = source_pairs
+        item["image_url"] = resolve_public_asset_url(str(item.get("image_url") or ""))
+        if item.get("real_image_url"):
+            item["real_image_url"] = resolve_public_asset_url(str(item.get("real_image_url") or ""))
+        if item.get("fake_image_url"):
+            item["fake_image_url"] = resolve_public_asset_url(str(item.get("fake_image_url") or ""))
         # DB에 저장된 과거 not_for_sale 값과 무관하게 현재 규칙으로 재계산한다.
         item["not_for_sale"] = _is_not_for_sale(raw, item)
         if catalog_type == "recipes":
@@ -365,6 +415,17 @@ def _content_db_villagers() -> list[dict[str, Any]]:
         except Exception:
             continue
         if isinstance(v, dict):
+            for key in (
+                "image_url",
+                "icon_url",
+                "photo_url",
+                "house_exterior_url",
+                "house_interior_url",
+                "image_uri",
+                "icon_uri",
+            ):
+                if v.get(key):
+                    v[key] = resolve_public_asset_url(str(v.get(key) or ""))
             out.append(v)
     return out
 
@@ -453,9 +514,9 @@ def load_local_music_catalog() -> list[dict[str, Any]]:
                 "number": int(row.get("id") or 0),
                 "buy": int(row.get("buy-price") or 0),
                 "sell": int(row.get("sell-price") or 0),
-                "image_url": f"/static/assets/music/{int(row.get('id') or 0)}.png",
-                "icon_url": f"/static/assets/music/{int(row.get('id') or 0)}.png",
-                "framed_image_url": f"/static/assets/music/{int(row.get('id') or 0)}.png",
+                "image_url": resolve_public_asset_url(f"/static/assets/music/{int(row.get('id') or 0)}.png"),
+                "icon_url": resolve_public_asset_url(f"/static/assets/music/{int(row.get('id') or 0)}.png"),
+                "framed_image_url": resolve_public_asset_url(f"/static/assets/music/{int(row.get('id') or 0)}.png"),
                 "music_url": "",
                 "is_orderable": bool(row.get("isOrderable")),
                 "file_name": str(row.get("file-name") or ""),
@@ -499,9 +560,9 @@ def load_local_music_catalog() -> list[dict[str, Any]]:
                         "number": next_number,
                         "buy": 0,
                         "sell": 0,
-                        "image_url": f"/static/assets/music/{next_number}.png",
-                        "icon_url": f"/static/assets/music/{next_number}.png",
-                        "framed_image_url": f"/static/assets/music/{next_number}.png",
+                        "image_url": resolve_public_asset_url(f"/static/assets/music/{next_number}.png"),
+                        "icon_url": resolve_public_asset_url(f"/static/assets/music/{next_number}.png"),
+                        "framed_image_url": resolve_public_asset_url(f"/static/assets/music/{next_number}.png"),
                         "music_url": "",
                         "is_orderable": False,
                         "file_name": str(erow.get("Id") or ""),
@@ -604,8 +665,8 @@ def load_villagers() -> list[dict[str, Any]]:
                         "house_music": "",
                         "house_music_ko": "",
                         "house_music_note": "",
-                        "icon_uri": str(row.get("icon_uri") or ""),
-                        "image_uri": str(row.get("image_uri") or ""),
+                        "icon_uri": resolve_public_asset_url(str(row.get("icon_uri") or "")),
+                        "image_uri": resolve_public_asset_url(str(row.get("image_uri") or "")),
                     }
                 )
             villagers.sort(key=lambda v: (v["name_ko"] or v["name_en"]).lower())
@@ -687,8 +748,8 @@ def load_villagers() -> list[dict[str, Any]]:
                 "house_music": house_music,
                 "house_music_ko": house_music_ko,
                 "house_music_note": str(nh.get("house_music_note") or ""),
-                "icon_uri": str(nh.get("icon_url") or ""),
-                "image_uri": str(nh.get("image_url") or row.get("image_url") or ""),
+                "icon_uri": resolve_public_asset_url(str(nh.get("icon_url") or "")),
+                "image_uri": resolve_public_asset_url(str(nh.get("image_url") or row.get("image_url") or "")),
             }
         )
 
@@ -724,28 +785,28 @@ def _extract_image_url(row: dict[str, Any]) -> str:
     if image_url.startswith("//"):
         image_url = f"https:{image_url}"
     if image_url:
-        return image_url
+        return resolve_public_asset_url(image_url)
     real_info = row.get("real_info")
     if isinstance(real_info, dict):
         nested = str(real_info.get("image_url") or real_info.get("texture_url") or "").strip()
         if nested.startswith("//"):
             nested = f"https:{nested}"
         if nested:
-            return nested
+            return resolve_public_asset_url(nested)
     fake_info = row.get("fake_info")
     if isinstance(fake_info, dict):
         nested = str(fake_info.get("image_url") or fake_info.get("texture_url") or "").strip()
         if nested.startswith("//"):
             nested = f"https:{nested}"
         if nested:
-            return nested
+            return resolve_public_asset_url(nested)
     variations = row.get("variations")
     if isinstance(variations, list):
         for v in variations:
             if isinstance(v, dict):
                 candidate = str(v.get("image_url") or v.get("icon_url") or "").strip()
                 if candidate:
-                    return candidate
+                    return resolve_public_asset_url(candidate)
     return ""
 
 
@@ -1517,7 +1578,9 @@ def _content_db_variations(catalog_type: str, item_id: str) -> list[dict[str, An
             {
                 "id": variation_id,
                 "label": str(row["label"] or raw_obj.get("variation") or raw_obj.get("name") or ""),
-                "image_url": str(row["image_url"] or raw_obj.get("image_url") or raw_obj.get("icon_url") or ""),
+                "image_url": resolve_public_asset_url(
+                    str(row["image_url"] or raw_obj.get("image_url") or raw_obj.get("icon_url") or "")
+                ),
                 "color1": str(row["color1"] or raw_obj.get("color_1") or raw_obj.get("color1") or ""),
                 "color2": str(row["color2"] or raw_obj.get("color_2") or raw_obj.get("color2") or ""),
                 "pattern": str(row["pattern"] or raw_obj.get("pattern") or ""),
@@ -2017,6 +2080,199 @@ def _catalog_detail_payload(
         "variations": variations,
         "raw_fields": _raw_top_level_fields(detail),
     }
+
+
+@lru_cache(maxsize=1)
+def load_recipe_tags() -> list[dict[str, Any]]:
+    if not _use_content_db_mode() and not _use_supabase_content_mode():
+        rows = load_catalog("recipes")
+        counts: dict[str, int] = {}
+        for row in rows:
+            for tag in row.get("recipe_filters") or []:
+                key = str(tag or "").strip()
+                if not key:
+                    continue
+                counts[key] = counts.get(key, 0) + 1
+        out = []
+        for idx, key in enumerate(sorted(counts.keys())):
+            tag_type = key.split(":", 1)[0] if ":" in key else "custom"
+            out.append(
+                {
+                    "tag_key": key,
+                    "tag_type": tag_type,
+                    "name_ko": str(category_ko_for("recipes", key) or key),
+                    "name_en": key.split(":", 1)[1] if ":" in key else key,
+                    "sort_order": idx + 1,
+                    "recipe_count": int(counts.get(key) or 0),
+                }
+            )
+        return out
+
+    try:
+        if _use_content_db_mode():
+            with get_content_db() as conn:
+                tbls = {
+                    str(r["name"])
+                    for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+                }
+                if "recipe_tags" not in tbls or "recipe_tag_links" not in tbls:
+                    return []
+                rows = [
+                    dict(row)
+                    for row in conn.execute(
+                        """
+                        SELECT
+                            t.tag_key,
+                            t.tag_type,
+                            t.name_ko,
+                            t.name_en,
+                            t.sort_order,
+                            COUNT(l.recipe_item_id) AS recipe_count
+                        FROM recipe_tags t
+                        LEFT JOIN recipe_tag_links l
+                          ON l.tag_key = t.tag_key
+                        GROUP BY t.tag_key, t.tag_type, t.name_ko, t.name_en, t.sort_order
+                        ORDER BY t.sort_order ASC, t.tag_key ASC
+                        """
+                    ).fetchall()
+                ]
+        else:
+            counts: dict[str, int] = {}
+            for link in fetch_recipe_tag_links():
+                tag_key = str(link.get("tag_key") or "").strip()
+                if not tag_key:
+                    continue
+                counts[tag_key] = counts.get(tag_key, 0) + 1
+            rows = [
+                {**row, "recipe_count": counts.get(str(row.get("tag_key") or "").strip(), 0)}
+                for row in fetch_recipe_tags()
+            ]
+    except Exception:
+        return []
+
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        out.append(
+            {
+                "tag_key": str(row.get("tag_key") or "").strip(),
+                "tag_type": str(row.get("tag_type") or "").strip(),
+                "name_ko": str(row.get("name_ko") or "").strip(),
+                "name_en": str(row.get("name_en") or "").strip(),
+                "sort_order": int(row.get("sort_order") or 0),
+                "recipe_count": int(row.get("recipe_count") or 0),
+            }
+        )
+    return out
+
+
+@lru_cache(maxsize=1)
+def _content_db_villagers() -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    try:
+        if _use_content_db_mode():
+            with get_content_db() as conn:
+                rows = [dict(row) for row in conn.execute("SELECT raw_json FROM villagers").fetchall()]
+        elif _use_supabase_content_mode():
+            rows = fetch_supabase_villagers()
+        else:
+            return []
+    except Exception:
+        return []
+
+    for row in rows:
+        villager = _json_object(row.get("raw_json"))
+        if not isinstance(villager, dict):
+            continue
+        for key in (
+            "image_url",
+            "icon_url",
+            "photo_url",
+            "house_exterior_url",
+            "house_interior_url",
+            "image_uri",
+            "icon_uri",
+        ):
+            if villager.get(key):
+                villager[key] = resolve_public_asset_url(str(villager.get(key) or ""))
+        out.append(villager)
+    return out
+
+
+@lru_cache(maxsize=4096)
+def _fetch_single_catalog_row(catalog_type: str, name_en: str) -> dict[str, Any] | None:
+    if _use_content_db_mode() or _use_supabase_content_mode():
+        return None
+    pattern = CATALOG_SINGLE_PATHS.get(catalog_type)
+    if not pattern or not name_en:
+        return None
+    path = pattern.format(name=quote(name_en, safe=""))
+    result = fetch_nookipedia(path)
+    if isinstance(result, dict):
+        return result
+    return None
+
+
+@lru_cache(maxsize=16384)
+def _content_db_variations(catalog_type: str, item_id: str) -> list[dict[str, Any]]:
+    if not catalog_type or not item_id:
+        return []
+    try:
+        if _use_content_db_mode():
+            with get_content_db() as conn:
+                vcols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_variations)").fetchall()}
+                has_source_ko = "source_ko" in vcols
+                has_source_notes_ko = "source_notes_ko" in vcols
+                select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
+                select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
+                rows = [
+                    dict(row)
+                    for row in conn.execute(
+                        f"""
+                        SELECT variation_id, raw_json, label, image_url, color1, color2, pattern,
+                               source, {select_source_ko}, source_notes, {select_source_notes_ko}, price
+                        FROM catalog_variations
+                        WHERE catalog_type = ? AND item_id = ?
+                        ORDER BY variation_id ASC
+                        """,
+                        (catalog_type, item_id),
+                    ).fetchall()
+                ]
+        elif _use_supabase_content_mode():
+            rows = fetch_catalog_variations(catalog_type, item_id)
+        else:
+            return []
+    except Exception:
+        return []
+
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        raw_obj = _json_object(row.get("raw_json"))
+        variation_id = str(row.get("variation_id") or "").strip() or str(raw_obj.get("internal_id") or "").strip()
+        if not variation_id:
+            continue
+        out.append(
+            {
+                "id": variation_id,
+                "label": str(row.get("label") or raw_obj.get("variation") or raw_obj.get("name") or ""),
+                "image_url": resolve_public_asset_url(
+                    str(row.get("image_url") or raw_obj.get("image_url") or raw_obj.get("icon_url") or "")
+                ),
+                "color1": str(row.get("color1") or raw_obj.get("color_1") or raw_obj.get("color1") or ""),
+                "color2": str(row.get("color2") or raw_obj.get("color_2") or raw_obj.get("color2") or ""),
+                "pattern": str(row.get("pattern") or raw_obj.get("pattern") or ""),
+                "source_ko": str(row.get("source_ko") or ""),
+                "source_notes_ko": str(row.get("source_notes_ko") or ""),
+                "source": str(row.get("source_ko") or row.get("source") or raw_obj.get("source") or ""),
+                "source_notes": str(
+                    row.get("source_notes_ko") or row.get("source_notes") or raw_obj.get("source_notes") or ""
+                ),
+                "price": _safe_int(
+                    row.get("price"),
+                    _safe_int(raw_obj.get("buy"), _safe_int(raw_obj.get("sell"), 0)),
+                ),
+            }
+        )
+    return out
 
 
 @lru_cache(maxsize=None)

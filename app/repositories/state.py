@@ -1182,6 +1182,7 @@ def get_catalog_state_map(island_id: int, catalog_type: str) -> dict[str, dict[s
             }
             for r in rows
         }
+        return result
     if not _use_supabase_state_mode():
         result = _sqlite()
     else:

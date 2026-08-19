@@ -195,6 +195,11 @@ def _use_supabase_content_mode() -> bool:
     return (not _use_content_db_mode()) and is_supabase_content_available()
 
 
+def _can_fallback_to_local_content_db() -> bool:
+    path = get_content_db_path()
+    return path.exists() and path.is_file()
+
+
 def _json_object(value: Any) -> dict[str, Any]:
     if isinstance(value, dict):
         return value
@@ -217,7 +222,8 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
     rows: list[dict[str, Any]] = []
     recipe_tag_map: dict[str, list[str]] = {}
     try:
-        if _use_content_db_mode():
+        use_local_db = _use_content_db_mode()
+        if use_local_db:
             with get_content_db() as conn:
                 item_cols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_items)").fetchall()}
                 has_source_ko = "source_ko" in item_cols
@@ -258,13 +264,53 @@ def _content_db_catalog_bundle(catalog_type: str) -> tuple[list[dict[str, Any]],
                             recipe_tag_map.setdefault(rid, []).append(tkey)
         elif _use_supabase_content_mode():
             rows = fetch_catalog_items(catalog_type)
-            if catalog_type == "recipes":
-                for tr in fetch_recipe_tag_links():
-                    rid = str(tr.get("recipe_item_id") or "").strip()
-                    tkey = str(tr.get("tag_key") or "").strip()
-                    if not rid or not tkey:
-                        continue
-                    recipe_tag_map.setdefault(rid, []).append(tkey)
+            if rows:
+                if catalog_type == "recipes":
+                    for tr in fetch_recipe_tag_links():
+                        rid = str(tr.get("recipe_item_id") or "").strip()
+                        tkey = str(tr.get("tag_key") or "").strip()
+                        if not rid or not tkey:
+                            continue
+                        recipe_tag_map.setdefault(rid, []).append(tkey)
+            elif _can_fallback_to_local_content_db():
+                with get_content_db() as conn:
+                    item_cols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_items)").fetchall()}
+                    has_source_ko = "source_ko" in item_cols
+                    has_source_notes_ko = "source_notes_ko" in item_cols
+                    select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
+                    select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
+                    rows = [
+                        dict(row)
+                        for row in conn.execute(
+                            f"""
+                            SELECT item_id, item_json, raw_json, source, {select_source_ko}, source_notes, {select_source_notes_ko}
+                            FROM catalog_items
+                            WHERE catalog_type = ?
+                            """,
+                            (catalog_type,),
+                        ).fetchall()
+                    ]
+                    if catalog_type == "recipes":
+                        tbls = {
+                            str(r["name"])
+                            for r in conn.execute(
+                                "SELECT name FROM sqlite_master WHERE type='table'"
+                            ).fetchall()
+                        }
+                        if "recipe_tag_links" in tbls:
+                            tag_rows = conn.execute(
+                                """
+                                SELECT recipe_item_id, tag_key
+                                FROM recipe_tag_links
+                                ORDER BY recipe_item_id, tag_key
+                                """
+                            ).fetchall()
+                            for tr in tag_rows:
+                                rid = str(tr["recipe_item_id"] or "").strip()
+                                tkey = str(tr["tag_key"] or "").strip()
+                                if not rid or not tkey:
+                                    continue
+                                recipe_tag_map.setdefault(rid, []).append(tkey)
         else:
             return ([], {})
     except Exception:
@@ -2138,14 +2184,56 @@ def load_recipe_tags() -> list[dict[str, Any]]:
                 ]
         else:
             counts: dict[str, int] = {}
-            for link in fetch_recipe_tag_links():
+            supabase_links = fetch_recipe_tag_links()
+            supabase_tags = fetch_recipe_tags()
+            if not supabase_tags and _can_fallback_to_local_content_db():
+                with get_content_db() as conn:
+                    tbls = {
+                        str(r["name"])
+                        for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+                    }
+                    if "recipe_tags" not in tbls or "recipe_tag_links" not in tbls:
+                        return []
+                    rows = [
+                        dict(row)
+                        for row in conn.execute(
+                            """
+                            SELECT
+                                t.tag_key,
+                                t.tag_type,
+                                t.name_ko,
+                                t.name_en,
+                                t.sort_order,
+                                COUNT(l.recipe_item_id) AS recipe_count
+                            FROM recipe_tags t
+                            LEFT JOIN recipe_tag_links l
+                              ON l.tag_key = t.tag_key
+                            GROUP BY t.tag_key, t.tag_type, t.name_ko, t.name_en, t.sort_order
+                            ORDER BY t.sort_order ASC, t.tag_key ASC
+                            """
+                        ).fetchall()
+                    ]
+                out: list[dict[str, Any]] = []
+                for row in rows:
+                    out.append(
+                        {
+                            "tag_key": str(row.get("tag_key") or "").strip(),
+                            "tag_type": str(row.get("tag_type") or "").strip(),
+                            "name_ko": str(row.get("name_ko") or "").strip(),
+                            "name_en": str(row.get("name_en") or "").strip(),
+                            "sort_order": int(row.get("sort_order") or 0),
+                            "recipe_count": int(row.get("recipe_count") or 0),
+                        }
+                    )
+                return out
+            for link in supabase_links:
                 tag_key = str(link.get("tag_key") or "").strip()
                 if not tag_key:
                     continue
                 counts[tag_key] = counts.get(tag_key, 0) + 1
             rows = [
                 {**row, "recipe_count": counts.get(str(row.get("tag_key") or "").strip(), 0)}
-                for row in fetch_recipe_tags()
+                for row in supabase_tags
             ]
     except Exception:
         return []
@@ -2174,6 +2262,9 @@ def _content_db_villagers() -> list[dict[str, Any]]:
                 rows = [dict(row) for row in conn.execute("SELECT raw_json FROM villagers").fetchall()]
         elif _use_supabase_content_mode():
             rows = fetch_supabase_villagers()
+            if not rows and _can_fallback_to_local_content_db():
+                with get_content_db() as conn:
+                    rows = [dict(row) for row in conn.execute("SELECT raw_json FROM villagers").fetchall()]
         else:
             return []
     except Exception:
@@ -2239,6 +2330,26 @@ def _content_db_variations(catalog_type: str, item_id: str) -> list[dict[str, An
                 ]
         elif _use_supabase_content_mode():
             rows = fetch_catalog_variations(catalog_type, item_id)
+            if not rows and _can_fallback_to_local_content_db():
+                with get_content_db() as conn:
+                    vcols = {str(r["name"]) for r in conn.execute("PRAGMA table_info(catalog_variations)").fetchall()}
+                    has_source_ko = "source_ko" in vcols
+                    has_source_notes_ko = "source_notes_ko" in vcols
+                    select_source_ko = "source_ko" if has_source_ko else "'' AS source_ko"
+                    select_source_notes_ko = "source_notes_ko" if has_source_notes_ko else "'' AS source_notes_ko"
+                    rows = [
+                        dict(row)
+                        for row in conn.execute(
+                            f"""
+                            SELECT variation_id, raw_json, label, image_url, color1, color2, pattern,
+                                   source, {select_source_ko}, source_notes, {select_source_notes_ko}, price
+                            FROM catalog_variations
+                            WHERE catalog_type = ? AND item_id = ?
+                            ORDER BY variation_id ASC
+                            """,
+                            (catalog_type, item_id),
+                        ).fetchall()
+                    ]
         else:
             return []
     except Exception:

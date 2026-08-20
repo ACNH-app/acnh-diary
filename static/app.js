@@ -8,6 +8,7 @@ import {
   getJSON,
   getIslands,
   getHomeSummary,
+  getHomeCatalogProgress,
   getHomeCreaturesNow,
   getHomeIslandResidents,
   getVillagerMeta,
@@ -56,6 +57,7 @@ import {
   bindHomeEvents,
   loadIslands,
   loadHomeIslandResidents,
+  loadHomeCatalogProgress,
   loadHomeSummary,
   loadHomeCreaturesNow,
   loadIslandProfile,
@@ -325,7 +327,8 @@ async function ensureHomeProfileLoaded() {
 
 async function ensureHomeSummaryLoaded() {
   await loadHomeSummary(getHomeSummary);
-  await loadHomeCreaturesNow(getHomeCreaturesNow);
+  loadHomeCatalogProgress(getHomeCatalogProgress).catch((err) => console.error(err));
+  loadHomeCreaturesNow(getHomeCreaturesNow).catch((err) => console.error(err));
 }
 
 async function ensureHomeIslandResidentsLoaded() {
@@ -359,10 +362,13 @@ async function ensurePlayersLoaded() {
 async function ensureCalendarLoaded() {
   if (state.calendarLoaded) return;
   initializeCalendarState();
+  let loadDay = async () => {};
   const reloadMonth = async () => {
-    await loadCalendarMonth(getCalendarEntries, getCalendarAnnotations);
+    await loadCalendarMonth(getCalendarEntries, getCalendarAnnotations, async () => {
+      await loadDay();
+    });
   };
-  const loadDay = createDayLoader({
+  loadDay = createDayLoader({
     getCalendarEntriesByDate,
     setCalendarEntryChecked,
     deleteCalendarEntry,

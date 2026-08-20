@@ -41,6 +41,7 @@ def create_meta_router(
     create_island_handler: Callable[[str], dict[str, Any]],
     delete_island_handler: Callable[[int], dict[str, Any]],
     home_summary_handler: Callable[[int], dict[str, Any]],
+    home_catalog_progress_handler: Callable[[int], list[dict[str, Any]]],
     home_creatures_now_handler: Callable[..., dict[str, Any]],
     island_profile_handler: Callable[[int], dict[str, Any]],
     update_island_profile_handler: Callable[..., dict[str, Any]],
@@ -84,6 +85,10 @@ def create_meta_router(
     @router.get("/api/home/summary")
     def get_home_summary(x_island_id: str | None = Header(default=None)) -> dict[str, Any]:
         return home_summary_handler(_resolve_island_id(x_island_id))
+
+    @router.get("/api/home/catalog-progress")
+    def get_home_catalog_progress(x_island_id: str | None = Header(default=None)) -> list[dict[str, Any]]:
+        return home_catalog_progress_handler(_resolve_island_id(x_island_id))
 
     @router.get("/api/home/creatures-now")
     def get_home_creatures_now(

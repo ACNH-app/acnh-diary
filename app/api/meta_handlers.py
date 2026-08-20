@@ -178,13 +178,14 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
     def get_home_summary(island_id: int) -> dict[str, Any]:
         profile = deps.get_island_profile(island_id)
         events = deps.load_catalog("events")
-        base = build_home_summary(profile, events)
-        base["catalog_progress"] = catalog_progress_summary(
+        return build_home_summary(profile, events)
+
+    def get_home_catalog_progress(island_id: int) -> list[dict[str, Any]]:
+        return catalog_progress_summary(
             deps.load_catalog,
             lambda catalog_type: get_catalog_state_map(island_id, catalog_type),
             lambda catalog_type: get_catalog_variation_owned_counts(island_id, catalog_type),
         )
-        return base
 
     def get_home_creatures_now(
         island_id: int,
@@ -324,6 +325,7 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         create_island=create_island,
         delete_island=delete_island,
         get_home_summary=get_home_summary,
+        get_home_catalog_progress=get_home_catalog_progress,
         get_home_creatures_now=get_home_creatures_now,
         get_island_profile=get_island_profile,
         update_island_profile=update_island_profile,

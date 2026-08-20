@@ -246,6 +246,7 @@ app.include_router(
         create_island_handler=handlers.meta.create_island,
         delete_island_handler=handlers.meta.delete_island,
         home_summary_handler=handlers.meta.get_home_summary,
+        home_catalog_progress_handler=handlers.meta.get_home_catalog_progress,
         home_creatures_now_handler=handlers.meta.get_home_creatures_now,
         island_profile_handler=handlers.meta.get_island_profile,
         update_island_profile_handler=handlers.meta.update_island_profile,

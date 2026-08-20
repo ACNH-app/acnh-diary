@@ -1,4 +1,4 @@
-import {
+﻿import {
   addSubPlayerBtn,
   cancelSubPlayerBtn,
   clearPlayerFormBtn,
@@ -121,7 +121,7 @@ function fillMonthDayOptions(monthSelect, daySelect) {
     for (let month = 1; month <= 12; month += 1) {
       const opt = document.createElement("option");
       opt.value = String(month).padStart(2, "0");
-      opt.textContent = `${month}월`;
+      opt.textContent = `${month}??;
       monthSelect.appendChild(opt);
     }
   }
@@ -132,11 +132,11 @@ function updateDayOptions(monthSelect, daySelect) {
   if (!monthSelect || !daySelect) return;
   const maxDay = daysInMonth(monthSelect.value);
   const prev = String(daySelect.value || "");
-  daySelect.innerHTML = '<option value="">일</option>';
+  daySelect.innerHTML = '<option value="">??/option>';
   for (let day = 1; day <= maxDay; day += 1) {
     const opt = document.createElement("option");
     opt.value = String(day).padStart(2, "0");
-    opt.textContent = `${day}일`;
+    opt.textContent = `${day}??;
     daySelect.appendChild(opt);
   }
   if (prev && Number(prev) <= maxDay) {
@@ -178,17 +178,17 @@ function closeSettingsModal() {
 
 function renderEffectiveDateTime() {
   const now = getEffectiveNow(state);
-  const source = state.timeTravelEnabled ? "타임슬립 기준" : "실시간 기준";
+  const source = state.timeTravelEnabled ? "??꾩뒳由?湲곗?" : "?ㅼ떆媛?湲곗?";
   effectiveDateTimeText.textContent = `${source}: ${now.toLocaleString("ko-KR")}`;
 }
 
 function renderHomeSimpleOverview() {
-  homeIslandNameText.textContent = `섬 이름: ${state.homeIslandName || "미설정"}`;
+  homeIslandNameText.textContent = `???대쫫: ${state.homeIslandName || "誘몄꽕??}`;
   const mainPlayer = (state.players || []).find((p) => p.is_main) || null;
-  const repName = mainPlayer?.name || state.homeRepresentativeName || "미등록";
+  const repName = mainPlayer?.name || state.homeRepresentativeName || "誘몃벑濡?;
   const repBirthday = mainPlayer?.birthday || state.homeRepresentativeBirthday || "-";
-  homeMainPlayerText.textContent = `주민대표: ${repName}`;
-  homeMainPlayerBirthdayText.textContent = `주민대표 생일: ${repBirthday}`;
+  homeMainPlayerText.textContent = `二쇰???? ${repName}`;
+  homeMainPlayerBirthdayText.textContent = `二쇰?????앹씪: ${repBirthday}`;
 }
 
 function renderHomeIslandResidents(
@@ -203,7 +203,7 @@ function renderHomeIslandResidents(
   if (!items.length) {
     const p = document.createElement("p");
     p.className = "profile-status";
-    p.textContent = "현재 섬 주민이 없습니다.";
+    p.textContent = "?꾩옱 ??二쇰????놁뒿?덈떎.";
     homeIslandResidents.appendChild(p);
   } else {
     items.forEach((v, idx) => {
@@ -213,7 +213,7 @@ function renderHomeIslandResidents(
       card.dataset.villagerId = cardId;
       card.draggable = Boolean(onReorder);
       const img = document.createElement("img");
-      img.alt = "주민 이미지";
+      img.alt = "二쇰? ?대?吏";
       img.src = v.icon_uri || v.image_uri || "/static/no-image.svg";
       img.addEventListener("error", () => {
         img.src = "/static/no-image.svg";
@@ -225,8 +225,8 @@ function renderHomeIslandResidents(
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.className = "home-resident-remove-btn";
-      removeBtn.setAttribute("aria-label", "섬 주민 삭제");
-      removeBtn.textContent = "×";
+      removeBtn.setAttribute("aria-label", "??二쇰? ??젣");
+      removeBtn.textContent = "횞";
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         if (onRemoveResident) await onRemoveResident(v);
@@ -278,7 +278,7 @@ function renderHomeIslandResidents(
     const addCard = document.createElement("button");
     addCard.type = "button";
     addCard.className = "home-resident-add-card";
-    addCard.setAttribute("aria-label", "섬 주민 추가");
+    addCard.setAttribute("aria-label", "??二쇰? 異붽?");
     addCard.textContent = "+";
     addCard.addEventListener("click", () => {
       if (onOpenPicker) onOpenPicker();
@@ -325,7 +325,7 @@ function renderResidentPickerList(items, { onAdd } = {}) {
   if (!candidates.length) {
     const p = document.createElement("p");
     p.className = "profile-status";
-    p.textContent = "조건에 맞는 주민이 없습니다.";
+    p.textContent = "議곌굔??留욌뒗 二쇰????놁뒿?덈떎.";
     homeResidentPickerList.appendChild(p);
     return;
   }
@@ -334,7 +334,7 @@ function renderResidentPickerList(items, { onAdd } = {}) {
     card.className = "home-resident-picker-card";
 
     const img = document.createElement("img");
-    img.alt = "주민 이미지";
+    img.alt = "二쇰? ?대?吏";
     img.src = v.icon_uri || v.image_uri || "/static/no-image.svg";
     img.addEventListener("error", () => {
       img.src = "/static/no-image.svg";
@@ -354,7 +354,7 @@ function renderResidentPickerList(items, { onAdd } = {}) {
 
     const addBtn = document.createElement("button");
     addBtn.type = "button";
-    addBtn.textContent = "등록";
+    addBtn.textContent = "?깅줉";
     addBtn.disabled = residents.length >= 10;
     addBtn.addEventListener("click", async () => {
       if (onAdd) await onAdd(v);
@@ -419,7 +419,7 @@ function resetPlayerForm() {
   editingPlayerId = null;
   playerNameInput.value = "";
   setMonthDayValue(playerBirthdayMonthInput, playerBirthdayDayInput, "");
-  savePlayerBtn.textContent = "부주 등록";
+  savePlayerBtn.textContent = "遺二??깅줉";
 }
 
 function openSubPlayerForm() {
@@ -438,7 +438,7 @@ function renderPlayerList(players, handlers = {}) {
   playerList.innerHTML = "";
   if (!rows.length) {
     const li = document.createElement("li");
-    li.textContent = "등록된 부주 플레이어가 없습니다.";
+    li.textContent = "?깅줉??遺二??뚮젅?댁뼱媛 ?놁뒿?덈떎.";
     playerList.appendChild(li);
     return;
   }
@@ -447,23 +447,23 @@ function renderPlayerList(players, handlers = {}) {
     const li = document.createElement("li");
     const parts = [];
     parts.push(p.name || "-");
-    if (p.birthday) parts.push(`(생일: ${p.birthday})`);
+    if (p.birthday) parts.push(`(?앹씪: ${p.birthday})`);
     li.append(document.createTextNode(parts.join(" ")));
 
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.textContent = "편집";
+    editBtn.textContent = "?몄쭛";
     editBtn.addEventListener("click", () => {
       openSubPlayerForm();
       editingPlayerId = p.id;
       playerNameInput.value = p.name || "";
       setMonthDayValue(playerBirthdayMonthInput, playerBirthdayDayInput, p.birthday || "");
-      savePlayerBtn.textContent = "부주 수정";
+      savePlayerBtn.textContent = "遺二??섏젙";
     });
 
     const delBtn = document.createElement("button");
     delBtn.type = "button";
-    delBtn.textContent = "삭제";
+    delBtn.textContent = "??젣";
     delBtn.addEventListener("click", async () => {
       if (handlers.onDelete) await handlers.onDelete(p.id);
     });
@@ -504,10 +504,10 @@ function renderHomeSummary(summary) {
   };
 
   const events = Array.isArray(data.upcoming_events) ? data.upcoming_events : [];
-  renderEventList(summaryUpcomingEvents, events, "예정 이벤트 없음");
+  renderEventList(summaryUpcomingEvents, events, "?덉젙 ?대깽???놁쓬");
 
   const shopping = Array.isArray(data.nook_shopping_today) ? data.nook_shopping_today : [];
-  renderEventList(summaryNookShopping, shopping, "오늘 너굴 쇼핑 항목 없음");
+  renderEventList(summaryNookShopping, shopping, "?ㅻ뒛 ?덇뎬 ?쇳븨 ??ぉ ?놁쓬");
 
   const toRecipeLabel = (value) => {
     if (!value) return "";
@@ -524,7 +524,7 @@ function renderHomeSummary(summary) {
   summarySeasonalRecipes.innerHTML = "";
   if (!recipes.length) {
     const li = document.createElement("li");
-    li.textContent = "현재 가능한 시즌 레시피 없음";
+    li.textContent = "?꾩옱 媛?ν븳 ?쒖쫵 ?덉떆???놁쓬";
     summarySeasonalRecipes.appendChild(li);
   } else {
     recipes.forEach((name) => {
@@ -537,17 +537,17 @@ function renderHomeSummary(summary) {
     const recipeNames = recipes.slice(0, 2).map((name) => String(name)).filter(Boolean);
     summarySeasonalRecipesText.textContent = recipeNames.length
       ? recipeNames.join(", ")
-      : "없음";
+      : "?놁쓬";
   }
 
   summaryBloomingShrubs.innerHTML = "";
   const shrubs = Array.isArray(data.blooming_shrubs_now) ? data.blooming_shrubs_now : [];
   if (summaryBloomingShrubsText) {
-    summaryBloomingShrubsText.textContent = shrubs.length ? shrubs.join(", ") : "없음";
+    summaryBloomingShrubsText.textContent = shrubs.length ? shrubs.join(", ") : "?놁쓬";
   }
   if (!shrubs.length) {
     const li = document.createElement("li");
-    li.textContent = "현재 개화 중인 낮은 나무 없음";
+    li.textContent = "?꾩옱 媛쒗솕 以묒씤 ??? ?섎Т ?놁쓬";
     summaryBloomingShrubs.appendChild(li);
   } else {
     shrubs.forEach((name) => {
@@ -562,7 +562,7 @@ function renderHomeSummary(summary) {
   progressRows.forEach((row) => {
     const item = document.createElement("article");
     item.className = "progress-item";
-    item.title = "클릭하면 해당 카탈로그로 이동";
+    item.title = "?대┃?섎㈃ ?대떦 移댄깉濡쒓렇濡??대룞";
     item.addEventListener("click", () => {
       const mode = String(row.catalog_type || "");
       window.dispatchEvent(new CustomEvent("acnh:navigate-mode", { detail: { mode } }));
@@ -577,7 +577,7 @@ function renderHomeSummary(summary) {
     const total = Number(row.total || 0);
     const partial = Number(row.partial || 0);
     const rate = Number(row.completion_rate || 0);
-    meta.textContent = `${owned}/${total} (${rate}%) | 일부 보유 ${partial}`;
+    meta.textContent = `${owned}/${total} (${rate}%) | ?쇰? 蹂댁쑀 ${partial}`;
     item.append(label, meta);
     summaryCatalogProgress.appendChild(item);
   });
@@ -586,6 +586,39 @@ function renderHomeSummary(summary) {
 export async function loadHomeSummary(getHomeSummary) {
   const summary = await getHomeSummary();
   renderHomeSummary(summary);
+}
+
+export function renderHomeCatalogProgress(progressRows) {
+  summaryCatalogProgress.innerHTML = "";
+  const rows = Array.isArray(progressRows) ? progressRows : [];
+  rows.forEach((row) => {
+    const item = document.createElement("article");
+    item.className = "progress-item";
+    item.title = "Open catalog";
+    item.addEventListener("click", () => {
+      const mode = String(row.catalog_type || "");
+      window.dispatchEvent(new CustomEvent("acnh:navigate-mode", { detail: { mode } }));
+    });
+
+    const label = document.createElement("p");
+    label.className = "label";
+    label.textContent = `${row.label || row.catalog_type || "-"}`;
+    const meta = document.createElement("p");
+    meta.className = "meta";
+    const owned = Number(row.owned || 0);
+    const total = Number(row.total || 0);
+    const partial = Number(row.partial || 0);
+    const rate = Number(row.completion_rate || 0);
+    meta.textContent = `${owned}/${total} (${rate}%) | partial ${partial}`;
+    item.append(label, meta);
+    summaryCatalogProgress.appendChild(item);
+  });
+}
+
+export async function loadHomeCatalogProgress(getHomeCatalogProgress) {
+  if (typeof getHomeCatalogProgress !== "function") return;
+  const progress = await getHomeCatalogProgress();
+  renderHomeCatalogProgress(progress);
 }
 
 function renderHomeCreatureRows(payload) {
@@ -604,7 +637,7 @@ function renderHomeCreatureRows(payload) {
     const td = document.createElement("td");
     td.colSpan = hideSizeColumn ? 6 : 7;
     td.className = "home-creature-empty";
-    td.textContent = "조건에 맞는 출현 생물이 없습니다.";
+    td.textContent = "議곌굔??留욌뒗 異쒗쁽 ?앸Ъ???놁뒿?덈떎.";
     tr.appendChild(td);
     homeCreatureTableBody.appendChild(tr);
   } else {
@@ -618,7 +651,7 @@ function renderHomeCreatureRows(payload) {
       icon.className = "home-creature-icon";
       icon.loading = "lazy";
       icon.decoding = "async";
-      icon.alt = row.name_ko || row.name_en || "생물";
+      icon.alt = row.name_ko || row.name_en || "?앸Ъ";
       icon.src = row.icon_url || "/static/no-image.svg";
       icon.addEventListener("error", () => {
         icon.src = "/static/no-image.svg";
@@ -641,9 +674,9 @@ function renderHomeCreatureRows(payload) {
       const monthsTd = document.createElement("td");
       monthsTd.textContent = row.months || "-";
       const ownedTd = document.createElement("td");
-      ownedTd.textContent = row.owned ? "예" : "아니오";
+      ownedTd.textContent = row.owned ? "?? : "?꾨땲??;
       const donatedTd = document.createElement("td");
-      donatedTd.textContent = row.donated ? "예" : "아니오";
+      donatedTd.textContent = row.donated ? "?? : "?꾨땲??;
 
       tr.append(nameTd, sizeTd, locationTd, timeTd, monthsTd, ownedTd, donatedTd);
       homeCreatureTableBody.appendChild(tr);
@@ -653,7 +686,7 @@ function renderHomeCreatureRows(payload) {
   if (homeCreatureStatus) {
     const count = Number(payload?.count || rows.length || 0);
     const dt = String(payload?.effective_datetime || "").trim();
-    homeCreatureStatus.textContent = `총 ${count}종${dt ? ` | 기준 시각: ${dt}` : ""}`;
+    homeCreatureStatus.textContent = `珥?${count}醫?{dt ? ` | 湲곗? ?쒓컖: ${dt}` : ""}`;
   }
 }
 
@@ -664,7 +697,7 @@ export async function loadHomeCreaturesNow(getHomeCreaturesNow) {
   const donatedFilter = parseBoolFilter(state.homeCreatureDonatedFilter);
   if (ownedFilter !== null) params.owned = ownedFilter;
   if (donatedFilter !== null) params.donated = donatedFilter;
-  if (homeCreatureStatus) homeCreatureStatus.textContent = "출현 생물 로딩 중...";
+  if (homeCreatureStatus) homeCreatureStatus.textContent = "異쒗쁽 ?앸Ъ 濡쒕뵫 以?..";
   const payload = await getHomeCreaturesNow(params);
   renderHomeCreatureRows(payload);
 }
@@ -691,11 +724,11 @@ export async function loadHomeIslandResidents(
   const ensureResidentPickerMeta = async () => {
     if (residentPickerMetaLoaded || !getVillagerMeta) return;
     const meta = await getVillagerMeta();
-    fillResidentPickerSelect(homeResidentPersonalitySelect, "성격 전체", meta.personalities || []);
+    fillResidentPickerSelect(homeResidentPersonalitySelect, "?깃꺽 ?꾩껜", meta.personalities || []);
     const species = [...(meta.species || [])].sort((a, b) =>
       (a.ko || a.en).localeCompare(b.ko || b.en, "ko")
     );
-    fillResidentPickerSelect(homeResidentSpeciesSelect, "종 전체", species);
+    fillResidentPickerSelect(homeResidentSpeciesSelect, "醫??꾩껜", species);
     residentPickerMetaLoaded = true;
   };
 
@@ -718,10 +751,10 @@ export async function loadHomeIslandResidents(
           await reloadPicker();
         } catch (err) {
           const msg = String(err?.message || "");
-          if (msg.includes("최대 10명")) {
-            homeResidentPickerStatus.textContent = "현재 섬 주민은 최대 10명까지 등록할 수 있습니다.";
+          if (msg.includes("理쒕? 10紐?)) {
+            homeResidentPickerStatus.textContent = "?꾩옱 ??二쇰?? 理쒕? 10紐낃퉴吏 ?깅줉?????덉뒿?덈떎.";
           } else {
-            homeResidentPickerStatus.textContent = "주민 등록에 실패했습니다.";
+            homeResidentPickerStatus.textContent = "二쇰? ?깅줉???ㅽ뙣?덉뒿?덈떎.";
           }
         }
       },
@@ -750,7 +783,7 @@ export async function loadHomeIslandResidents(
         notifyVillagerStateChanged();
         await refresh();
       } catch (err) {
-        homeResidentStatus.textContent = "주민 삭제에 실패했습니다.";
+        homeResidentStatus.textContent = "二쇰? ??젣???ㅽ뙣?덉뒿?덈떎.";
       }
     },
     onReorder: async (orderedIds) => {
@@ -760,7 +793,7 @@ export async function loadHomeIslandResidents(
         notifyVillagerStateChanged();
         await refresh();
       } catch (err) {
-        homeResidentStatus.textContent = "주민 순서 변경에 실패했습니다.";
+        homeResidentStatus.textContent = "二쇰? ?쒖꽌 蹂寃쎌뿉 ?ㅽ뙣?덉뒿?덈떎.";
       }
     },
   });
@@ -843,25 +876,25 @@ export function bindHomeEvents({
   islandSwitcherSelect?.addEventListener("change", async () => {
     const nextId = Number.parseInt(String(islandSwitcherSelect.value || "1"), 10);
     if (!Number.isFinite(nextId) || nextId <= 0 || nextId === state.currentIslandId) return;
-    islandSwitcherStatus.textContent = "섬 전환 중...";
+    islandSwitcherStatus.textContent = "???꾪솚 以?..";
     persistCurrentIslandId(nextId);
     try {
       if (typeof onIslandChange === "function") {
         await onIslandChange(nextId);
       }
-      islandSwitcherStatus.textContent = "섬이 전환되었습니다.";
+      islandSwitcherStatus.textContent = "?ъ씠 ?꾪솚?섏뿀?듬땲??";
     } catch (err) {
       console.error(err);
-      islandSwitcherStatus.textContent = "섬 전환에 실패했습니다.";
+      islandSwitcherStatus.textContent = "???꾪솚???ㅽ뙣?덉뒿?덈떎.";
     }
   });
   createIslandBtn?.addEventListener("click", async () => {
     const name = String(newIslandNameInput?.value || "").trim();
     if (!name) {
-      islandSwitcherStatus.textContent = "새 섬 이름을 입력해 주세요.";
+      islandSwitcherStatus.textContent = "?????대쫫???낅젰??二쇱꽭??";
       return;
     }
-    islandSwitcherStatus.textContent = "섬 생성 중...";
+    islandSwitcherStatus.textContent = "???앹꽦 以?..";
     try {
       const created = await createIsland({ name });
       newIslandNameInput.value = "";
@@ -873,10 +906,10 @@ export function bindHomeEvents({
       if (typeof onIslandChange === "function") {
         await onIslandChange(state.currentIslandId);
       }
-      islandSwitcherStatus.textContent = "새 섬이 추가되었습니다.";
+      islandSwitcherStatus.textContent = "???ъ씠 異붽??섏뿀?듬땲??";
     } catch (err) {
       console.error(err);
-      islandSwitcherStatus.textContent = "섬 추가에 실패했습니다.";
+      islandSwitcherStatus.textContent = "??異붽????ㅽ뙣?덉뒿?덈떎.";
     }
   });
 deleteIslandBtn?.addEventListener("click", async () => {
@@ -887,16 +920,16 @@ deleteIslandBtn?.addEventListener("click", async () => {
       islands = Array.isArray(state.islands) ? state.islands : [];
     }
     if (islands.length <= 1) {
-      islandSwitcherStatus.textContent = "마지막 섬은 삭제할 수 없습니다.";
+      islandSwitcherStatus.textContent = "留덉?留??ъ? ??젣?????놁뒿?덈떎.";
       return;
     }
     const current = islands.find((item) => Number(item?.id) === Number(state.currentIslandId));
     const islandName = current?.name || `Island ${state.currentIslandId}`;
     const confirmed = window.confirm(
-      `'${islandName}' 섬을 삭제할까요? 이 섬의 주민/카탈로그/달력/플레이어 데이터도 함께 삭제됩니다.`
+      `'${islandName}' ?ъ쓣 ??젣?좉퉴?? ???ъ쓽 二쇰?/移댄깉濡쒓렇/?щ젰/?뚮젅?댁뼱 ?곗씠?곕룄 ?④퍡 ??젣?⑸땲??`
     );
     if (!confirmed) return;
-    islandSwitcherStatus.textContent = "섬 삭제 중...";
+    islandSwitcherStatus.textContent = "????젣 以?..";
     try {
       await deleteIsland(state.currentIslandId);
       const remaining = islands.filter((item) => Number(item?.id) !== Number(state.currentIslandId));
@@ -909,7 +942,7 @@ deleteIslandBtn?.addEventListener("click", async () => {
       if (typeof onIslandChange === "function") {
         await onIslandChange(nextIslandId);
       }
-      islandSwitcherStatus.textContent = "섬이 삭제되었습니다.";
+      islandSwitcherStatus.textContent = "?ъ씠 ??젣?섏뿀?듬땲??";
     } catch (err) {
       console.error(err);
       const message = String(err?.message || "");
@@ -917,10 +950,10 @@ deleteIslandBtn?.addEventListener("click", async () => {
         await loadIslands(getIslands, { onIslandChange });
       }
       islandSwitcherStatus.textContent = message.includes("last island")
-        ? "마지막 섬은 삭제할 수 없습니다."
+        ? "留덉?留??ъ? ??젣?????놁뒿?덈떎."
         : message.includes("island not found")
-          ? "섬 목록을 다시 불러왔습니다. 다시 시도해 주세요."
-          : "섬 삭제에 실패했습니다.";
+          ? "??紐⑸줉???ㅼ떆 遺덈윭?붿뒿?덈떎. ?ㅼ떆 ?쒕룄??二쇱꽭??"
+          : "????젣???ㅽ뙣?덉뒿?덈떎.";
     }
   });
   if (settingsModalBackdrop) {
@@ -962,7 +995,7 @@ deleteIslandBtn?.addEventListener("click", async () => {
     }
   });
   setNowGameTimeBtn.addEventListener("click", () => {
-    profileStatus.textContent = "저장 중...";
+    profileStatus.textContent = "???以?..";
     const now = toDateTimeLocalValue(new Date());
     gameDateTimeInput.value = now;
     state.gameDateTime = now;
@@ -973,28 +1006,28 @@ deleteIslandBtn?.addEventListener("click", async () => {
     }
     saveProfile()
       .then(() => {
-        profileStatus.textContent = "현재 시간으로 저장되었습니다.";
+        profileStatus.textContent = "?꾩옱 ?쒓컙?쇰줈 ??λ릺?덉뒿?덈떎.";
         setTimeout(() => {
-          if (profileStatus.textContent === "현재 시간으로 저장되었습니다.") profileStatus.textContent = "";
+          if (profileStatus.textContent === "?꾩옱 ?쒓컙?쇰줈 ??λ릺?덉뒿?덈떎.") profileStatus.textContent = "";
         }, 1500);
       })
       .catch((err) => {
         console.error(err);
-        profileStatus.textContent = `저장에 실패했습니다. ${err?.message || ""}`.trim();
+        profileStatus.textContent = `??μ뿉 ?ㅽ뙣?덉뒿?덈떎. ${err?.message || ""}`.trim();
       });
   });
 
   saveProfileBtn.addEventListener("click", async () => {
-    profileStatus.textContent = "저장 중...";
+    profileStatus.textContent = "???以?..";
     try {
       await saveProfile();
-      profileStatus.textContent = "저장되었습니다.";
+      profileStatus.textContent = "??λ릺?덉뒿?덈떎.";
       setTimeout(() => {
-        if (profileStatus.textContent === "저장되었습니다.") profileStatus.textContent = "";
+        if (profileStatus.textContent === "??λ릺?덉뒿?덈떎.") profileStatus.textContent = "";
       }, 1500);
     } catch (err) {
       console.error(err);
-      profileStatus.textContent = `저장에 실패했습니다. ${err?.message || ""}`.trim();
+      profileStatus.textContent = `??μ뿉 ?ㅽ뙣?덉뒿?덈떎. ${err?.message || ""}`.trim();
     }
   });
 
@@ -1013,7 +1046,7 @@ deleteIslandBtn?.addEventListener("click", async () => {
   addSubPlayerBtn.addEventListener("click", () => {
     const subCount = (state.players || []).filter((p) => Boolean(p?.is_sub)).length;
     if (subCount >= 7 && !editingPlayerId) {
-      playerStatus.textContent = "부주 플레이어는 최대 7명까지 등록할 수 있습니다.";
+      playerStatus.textContent = "遺二??뚮젅?댁뼱??理쒕? 7紐낃퉴吏 ?깅줉?????덉뒿?덈떎.";
       return;
     }
     playerStatus.textContent = "";
@@ -1026,7 +1059,7 @@ deleteIslandBtn?.addEventListener("click", async () => {
   });
 
   savePlayerBtn.addEventListener("click", async () => {
-    playerStatus.textContent = "저장 중...";
+    playerStatus.textContent = "???以?..";
     try {
       await savePlayer({
         id: editingPlayerId,
@@ -1037,13 +1070,13 @@ deleteIslandBtn?.addEventListener("click", async () => {
       });
       await reloadPlayers();
       closeSubPlayerForm();
-      playerStatus.textContent = "부주 플레이어가 저장되었습니다.";
+      playerStatus.textContent = "遺二??뚮젅?댁뼱媛 ??λ릺?덉뒿?덈떎.";
       setTimeout(() => {
-        if (playerStatus.textContent === "부주 플레이어가 저장되었습니다.") playerStatus.textContent = "";
+        if (playerStatus.textContent === "遺二??뚮젅?댁뼱媛 ??λ릺?덉뒿?덈떎.") playerStatus.textContent = "";
       }, 1500);
     } catch (err) {
       console.error(err);
-      playerStatus.textContent = `부주 저장 실패: ${err?.message || ""}`.trim();
+      playerStatus.textContent = `遺二?????ㅽ뙣: ${err?.message || ""}`.trim();
     }
   });
 
@@ -1077,3 +1110,4 @@ deleteIslandBtn?.addEventListener("click", async () => {
     });
   }
 }
+

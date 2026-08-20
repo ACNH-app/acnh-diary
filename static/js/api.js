@@ -97,6 +97,10 @@ export function getHomeSummary() {
   return getJSON("/api/home/summary");
 }
 
+export function getHomeCatalogProgress() {
+  return getJSON("/api/home/catalog-progress");
+}
+
 export function getHomeCreaturesNow(params = {}) {
   const q = new URLSearchParams();
   Object.entries(params || {}).forEach(([k, v]) => {

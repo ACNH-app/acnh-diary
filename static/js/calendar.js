@@ -334,11 +334,23 @@ export function initializeCalendarState() {
   if (calendarSelectedDate) calendarSelectedDate.value = state.calendarSelectedDate;
 }
 
-export async function loadCalendarMonth(getCalendarEntries, getCalendarAnnotations) {
+export async function loadCalendarMonth(getCalendarEntries, getCalendarAnnotations, onAnnotationsLoaded) {
   const rows = await getCalendarEntries(state.calendarMonth);
   state.calendarMonthEntries = mergeWithWeeklyDefaultsForMonth(state.calendarMonth, rows);
-  state.calendarMonthAnnotations = getCalendarAnnotations ? await getCalendarAnnotations(state.calendarMonth) : [];
+  state.calendarMonthAnnotations = [];
   renderGrid();
+  if (!getCalendarAnnotations) return;
+  const targetMonth = String(state.calendarMonth || "");
+  getCalendarAnnotations(targetMonth)
+    .then(async (annotations) => {
+      if (String(state.calendarMonth || "") !== targetMonth) return;
+      state.calendarMonthAnnotations = Array.isArray(annotations) ? annotations : [];
+      renderGrid();
+      if (typeof onAnnotationsLoaded === "function") {
+        await onAnnotationsLoaded();
+      }
+    })
+    .catch((err) => console.error(err));
 }
 
 export function createDayLoader({

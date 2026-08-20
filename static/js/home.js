@@ -121,7 +121,7 @@ function fillMonthDayOptions(monthSelect, daySelect) {
     for (let month = 1; month <= 12; month += 1) {
       const opt = document.createElement("option");
       opt.value = String(month).padStart(2, "0");
-      opt.textContent = `${month}??;
+      opt.textContent = `${month}`;
       monthSelect.appendChild(opt);
     }
   }
@@ -132,11 +132,11 @@ function updateDayOptions(monthSelect, daySelect) {
   if (!monthSelect || !daySelect) return;
   const maxDay = daysInMonth(monthSelect.value);
   const prev = String(daySelect.value || "");
-  daySelect.innerHTML = '<option value="">??/option>';
+  daySelect.innerHTML = '<option value=""></option>';
   for (let day = 1; day <= maxDay; day += 1) {
     const opt = document.createElement("option");
     opt.value = String(day).padStart(2, "0");
-    opt.textContent = `${day}??;
+    opt.textContent = `${day}`;
     daySelect.appendChild(opt);
   }
   if (prev && Number(prev) <= maxDay) {
@@ -178,17 +178,17 @@ function closeSettingsModal() {
 
 function renderEffectiveDateTime() {
   const now = getEffectiveNow(state);
-  const source = state.timeTravelEnabled ? "??꾩뒳由?湲곗?" : "?ㅼ떆媛?湲곗?";
+  const source = state.timeTravelEnabled ? "Game time" : "Real time";
   effectiveDateTimeText.textContent = `${source}: ${now.toLocaleString("ko-KR")}`;
 }
 
 function renderHomeSimpleOverview() {
-  homeIslandNameText.textContent = `???대쫫: ${state.homeIslandName || "誘몄꽕??}`;
+  homeIslandNameText.textContent = `Island: ${state.homeIslandName || "Unset"}`;
   const mainPlayer = (state.players || []).find((p) => p.is_main) || null;
-  const repName = mainPlayer?.name || state.homeRepresentativeName || "誘몃벑濡?;
+  const repName = mainPlayer?.name || state.homeRepresentativeName || "Unregistered";
   const repBirthday = mainPlayer?.birthday || state.homeRepresentativeBirthday || "-";
-  homeMainPlayerText.textContent = `二쇰???? ${repName}`;
-  homeMainPlayerBirthdayText.textContent = `二쇰?????앹씪: ${repBirthday}`;
+  homeMainPlayerText.textContent = `Representative: ${repName}`;
+  homeMainPlayerBirthdayText.textContent = `Birthday: ${repBirthday}`;
 }
 
 function renderHomeIslandResidents(
@@ -674,9 +674,9 @@ function renderHomeCreatureRows(payload) {
       const monthsTd = document.createElement("td");
       monthsTd.textContent = row.months || "-";
       const ownedTd = document.createElement("td");
-      ownedTd.textContent = row.owned ? "?? : "?꾨땲??;
+      ownedTd.textContent = row.owned ? "Yes" : "No";
       const donatedTd = document.createElement("td");
-      donatedTd.textContent = row.donated ? "?? : "?꾨땲??;
+      donatedTd.textContent = row.donated ? "Yes" : "No";
 
       tr.append(nameTd, sizeTd, locationTd, timeTd, monthsTd, ownedTd, donatedTd);
       homeCreatureTableBody.appendChild(tr);
@@ -686,7 +686,7 @@ function renderHomeCreatureRows(payload) {
   if (homeCreatureStatus) {
     const count = Number(payload?.count || rows.length || 0);
     const dt = String(payload?.effective_datetime || "").trim();
-    homeCreatureStatus.textContent = `珥?${count}醫?{dt ? ` | 湲곗? ?쒓컖: ${dt}` : ""}`;
+    homeCreatureStatus.textContent = `Total ${count}${dt ? ` | Time: ${dt}` : ""}`;
   }
 }
 

@@ -724,11 +724,11 @@ export async function loadHomeIslandResidents(
   const ensureResidentPickerMeta = async () => {
     if (residentPickerMetaLoaded || !getVillagerMeta) return;
     const meta = await getVillagerMeta();
-    fillResidentPickerSelect(homeResidentPersonalitySelect, "?깃꺽 ?꾩껜", meta.personalities || []);
+    fillResidentPickerSelect(homeResidentPersonalitySelect, "성격 전체", meta.personalities || []);
     const species = [...(meta.species || [])].sort((a, b) =>
       (a.ko || a.en).localeCompare(b.ko || b.en, "ko")
     );
-    fillResidentPickerSelect(homeResidentSpeciesSelect, "醫??꾩껜", species);
+    fillResidentPickerSelect(homeResidentSpeciesSelect, "종 전체", species);
     residentPickerMetaLoaded = true;
   };
 
@@ -751,10 +751,10 @@ export async function loadHomeIslandResidents(
           await reloadPicker();
         } catch (err) {
           const msg = String(err?.message || "");
-          if (msg.includes("理쒕? 10紐?)) {
-            homeResidentPickerStatus.textContent = "?꾩옱 ??二쇰?? 理쒕? 10紐낃퉴吏 ?깅줉?????덉뒿?덈떎.";
+          if (msg.includes("최대 10명")) {
+            homeResidentPickerStatus.textContent = "현재 섬 주민은 최대 10명까지 등록할 수 있습니다.";
           } else {
-            homeResidentPickerStatus.textContent = "二쇰? ?깅줉???ㅽ뙣?덉뒿?덈떎.";
+            homeResidentPickerStatus.textContent = "주민 등록에 실패했습니다.";
           }
         }
       },

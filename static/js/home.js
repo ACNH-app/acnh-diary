@@ -213,7 +213,7 @@ function renderHomeIslandResidents(
       card.dataset.villagerId = cardId;
       card.draggable = Boolean(onReorder);
       const img = document.createElement("img");
-      img.alt = "二쇰? ?대?吏";
+      img.alt = "주민 이미지";
       img.src = v.icon_uri || v.image_uri || "/static/no-image.svg";
       img.addEventListener("error", () => {
         img.src = "/static/no-image.svg";
@@ -225,8 +225,8 @@ function renderHomeIslandResidents(
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.className = "home-resident-remove-btn";
-      removeBtn.setAttribute("aria-label", "??二쇰? ??젣");
-      removeBtn.textContent = "횞";
+      removeBtn.setAttribute("aria-label", "주민 삭제");
+      removeBtn.textContent = "×";
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         if (onRemoveResident) await onRemoveResident(v);
@@ -783,7 +783,7 @@ export async function loadHomeIslandResidents(
         notifyVillagerStateChanged();
         await refresh();
       } catch (err) {
-        homeResidentStatus.textContent = "二쇰? ??젣???ㅽ뙣?덉뒿?덈떎.";
+        homeResidentStatus.textContent = "주민 삭제에 실패했습니다.";
       }
     },
     onReorder: async (orderedIds) => {
@@ -793,7 +793,7 @@ export async function loadHomeIslandResidents(
         notifyVillagerStateChanged();
         await refresh();
       } catch (err) {
-        homeResidentStatus.textContent = "二쇰? ?쒖꽌 蹂寃쎌뿉 ?ㅽ뙣?덉뒿?덈떎.";
+        homeResidentStatus.textContent = "주민 순서 변경에 실패했습니다.";
       }
     },
   });

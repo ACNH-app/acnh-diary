@@ -467,17 +467,17 @@ body:not([data-active-mode="home"]):not([data-active-mode="villagers"]) .catalog
 
 .home-resident-remove-btn {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  min-height: 18px;
+  top: -7px;
+  right: -7px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
   border-radius: 999px;
   border: 1px solid #d8dfcf;
   background: #ffffff;
   color: #687565;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
   padding: 0;
@@ -485,6 +485,9 @@ body:not([data-active-mode="home"]):not([data-active-mode="villagers"]) .catalog
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  z-index: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(69, 85, 61, 0.15);
 }
 
 .home-resident-remove-btn:hover,

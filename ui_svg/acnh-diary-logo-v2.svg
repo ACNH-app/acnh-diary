@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="680" height="190" viewBox="0 0 680 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cover" x1="24" y1="24" x2="150" y2="166" gradientUnits="userSpaceOnUse"><stop stop-color="#F4C85B"/><stop offset="1" stop-color="#E9AD48"/></linearGradient>
+  </defs>
+  <!-- simple diary mark -->
+  <g transform="translate(24 20)">
+    <rect x="4" y="4" width="146" height="146" rx="42" fill="#FFF8E9"/>
+    <rect x="24" y="20" width="102" height="116" rx="22" fill="url(#cover)"/>
+    <path d="M75 20v116" stroke="#D29438" stroke-width="3"/>
+    <path d="M45 67c4-25 17-40 30-47 14 8 26 22 30 47" stroke="#5BA96C" stroke-width="4" stroke-linecap="round"/>
+    <path d="M75 20v39M55 39c10 2 16 7 20 15M95 39c-10 2-16 7-20 15" stroke="#5BA96C" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M43 80h20M43 94h20M87 80h20M87 94h20" stroke="#FFF4D8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="18" cy="60" r="5" fill="#F1B85B"/><circle cx="137" cy="78" r="4" fill="#A9D9AF"/><circle cx="18" cy="105" r="3" fill="#A9D9AF"/>
+  </g>
+
+  <!-- Korean-first wordmark -->
+  <g transform="translate(204 48)">
+    <text x="0" y="53" fill="#5D4428" font-family="Nunito, sans-serif" font-size="43" font-weight="700" letter-spacing="-2">모동숲</text>
+    <text x="3" y="101" fill="#6BA774" font-family="Nunito, sans-serif" font-size="35" font-weight="700" letter-spacing="-1">다이어리</text>
+    <path d="M5 122c31-9 63-9 94 0 31 9 63 9 94 0" stroke="#E7BC61" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="207" cy="121" r="4" fill="#E7BC61"/>
+  </g>
+</svg>

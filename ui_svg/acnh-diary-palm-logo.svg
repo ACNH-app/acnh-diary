@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="720" height="220" viewBox="0 0 720 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="book" x1="28" y1="18" x2="156" y2="176" gradientUnits="userSpaceOnUse"><stop stop-color="#F6D06A"/><stop offset="1" stop-color="#E8AC49"/></linearGradient></defs>
+  <g transform="translate(24 20)">
+    <rect x="4" y="4" width="156" height="156" rx="48" fill="#FFF8E9"/>
+    <path d="M36 40h48c17 0 30 13 30 30v72H66c-17 0-30-13-30-30V40Z" fill="url(#book)" stroke="#C98734" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M84 40h47c17 0 30 13 30 30v72H114c-17 0-30-13-30-30V40Z" fill="#F2BF58" stroke="#C98734" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M84 42v99" stroke="#C98734" stroke-width="3"/>
+    <path d="M84 81c0-27 4-48 16-64 10 3 21 12 28 23M84 81c-4-22-15-38-31-47M100 32c9-2 19-1 28 8" stroke="#4D9660" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M52 105h18M52 119h18M101 105h18M101 119h18" stroke="#FFF5D8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="24" cy="65" r="5" fill="#F1B85B"/><circle cx="159" cy="58" r="4" fill="#A9D9AF"/><circle cx="19" cy="115" r="3" fill="#A9D9AF"/>
+  </g>
+  <g transform="translate(230 57)">
+    <text x="0" y="50" fill="#5D4428" font-family="Nunito, sans-serif" font-size="44" font-weight="700" letter-spacing="-2">모동숲</text>
+    <text x="3" y="99" fill="#6BA774" font-family="Nunito, sans-serif" font-size="36" font-weight="700" letter-spacing="-1">다이어리</text>
+    <path d="M5 122h190" stroke="#E7BC61" stroke-width="3" stroke-linecap="round"/>
+    <text x="5" y="148" fill="#A08869" font-family="Nunito, sans-serif" font-size="12" font-weight="700" letter-spacing="2">ISLAND DIARY</text>
+  </g>
+</svg>

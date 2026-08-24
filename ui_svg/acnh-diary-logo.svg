@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="720" height="240" viewBox="0 0 720 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="island" x1="30" y1="22" x2="188" y2="196" gradientUnits="userSpaceOnUse"><stop stop-color="#DDF2DD"/><stop offset="1" stop-color="#A9D9AF"/></linearGradient>
+    <linearGradient id="book" x1="92" y1="64" x2="176" y2="168" gradientUnits="userSpaceOnUse"><stop stop-color="#F4C85B"/><stop offset="1" stop-color="#E6A944"/></linearGradient>
+  </defs>
+
+  <!-- Logo mark -->
+  <g transform="translate(20 20)">
+    <circle cx="100" cy="100" r="88" fill="#FFF8E9" stroke="#EBDDC8" stroke-width="4"/>
+    <path d="M40 126c10-35 37-56 67-56 31 0 57 21 67 56-28 25-105 25-134 0Z" fill="url(#island)"/>
+    <path d="M51 123c24 12 76 14 112 0" stroke="#75B77E" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+    <path d="M70 110c3-25 16-43 33-53 19 11 31 29 33 53" stroke="#4D9660" stroke-width="4" stroke-linecap="round"/>
+    <path d="M103 59v47M83 78c11 1 17 7 20 14M123 78c-11 1-17 7-20 14" stroke="#4D9660" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M72 108h56v49H72z" fill="url(#book)" stroke="#B67A2E" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M100 108v49" stroke="#B67A2E" stroke-width="3"/>
+    <path d="M82 122h9M82 132h9M109 122h9M109 132h9" stroke="#FFF5D8" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="54" cy="54" r="5" fill="#F2B861"/><circle cx="151" cy="48" r="4" fill="#F2B861"/><circle cx="164" cy="84" r="3" fill="#F2B861"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(230 65)">
+    <text x="0" y="48" fill="#5D4428" font-family="Nunito, sans-serif" font-size="46" font-weight="800" letter-spacing="-2">모동숲</text>
+    <text x="3" y="94" fill="#78A77B" font-family="Nunito, sans-serif" font-size="34" font-weight="800" letter-spacing="1">다이어리</text>
+    <path d="M5 113h225" stroke="#E2B45A" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="244" cy="113" r="4" fill="#E2B45A"/><circle cx="260" cy="113" r="4" fill="#E2B45A"/>
+    <text x="5" y="143" fill="#9A8467" font-family="Nunito, sans-serif" font-size="13" font-weight="700" letter-spacing="2">ISLAND LIFE NOTES</text>
+  </g>
+</svg>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="760" height="220" viewBox="0 0 760 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="diary" x1="20" y1="16" x2="126" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#F4C85B"/><stop offset="1" stop-color="#E8AC49"/></linearGradient></defs>
+
+  <!-- Existing palm icon, kept as a separate mark -->
+  <g transform="translate(24 28)">
+    <circle cx="78" cy="78" r="72" fill="#EFF9EF" stroke="#D8EBD9" stroke-width="3"/>
+    <ellipse cx="78" cy="139" rx="53" ry="11" fill="#B5DAB0" opacity=".65"/>
+    <path d="M78 137c-4-44-5-78 8-111" stroke="#9B632F" stroke-width="8" stroke-linecap="round"/>
+    <path d="M86 28C62 14 46 0 39-19c25 4 42 14 53 31M88 28c2-27 11-48 29-64 6 25 2 46-15 64M91 30c24-6 45-2 65 10-23 13-45 14-65 1M84 31C61 38 40 50 23 68c27 1 48-9 63-27" fill="#4E9C66" transform="translate(0 30)"/>
+    <path d="M86 58C62 44 46 30 39 11c25 4 42 14 53 31M88 58c2-27 11-48 29-64 6 25 2 46-15 64M91 60c24-6 45-2 65 10-23 13-45 14-65 1M84 61C61 68 40 80 23 98c27 1 48-9 63-27" stroke="#3C814F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Existing diary icon, kept as a separate mark -->
+  <g transform="translate(164 28)">
+    <rect x="4" y="4" width="144" height="144" rx="42" fill="#FFF8E9" stroke="#EBDDC8" stroke-width="3"/>
+    <path d="M29 37h47c16 0 28 12 28 28v69H57c-16 0-28-12-28-28V37Z" fill="url(#diary)" stroke="#C98734" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M76 37h47c16 0 28 12 28 28v69H104c-16 0-28-12-28-28V37Z" fill="#F2BF58" stroke="#C98734" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M76 39v95M46 96h19M46 110h19M94 96h19M94 110h19" stroke="#FFF5D8" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Wordmark only; no new symbol added -->
+  <g transform="translate(360 58)">
+    <text x="0" y="48" fill="#5D4428" font-family="Nunito, sans-serif" font-size="43" font-weight="700" letter-spacing="-2">모동숲</text>
+    <text x="3" y="96" fill="#6BA774" font-family="Nunito, sans-serif" font-size="36" font-weight="700" letter-spacing="-1">다이어리</text>
+    <path d="M5 121h210" stroke="#E7BC61" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

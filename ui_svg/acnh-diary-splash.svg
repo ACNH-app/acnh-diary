@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="390" height="844" viewBox="0 0 390 844" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="195" y1="0" x2="195" y2="844" gradientUnits="userSpaceOnUse"><stop stop-color="#BCE8EF"/><stop offset=".52" stop-color="#FFF4D6"/><stop offset="1" stop-color="#F3D9A3"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="548" x2="390" y2="844" gradientUnits="userSpaceOnUse"><stop stop-color="#75C6CC"/><stop offset="1" stop-color="#3D9CA8"/></linearGradient>
+    <linearGradient id="sand" x1="195" y1="560" x2="195" y2="844" gradientUnits="userSpaceOnUse"><stop stop-color="#F9E9B9"/><stop offset="1" stop-color="#EFCB88"/></linearGradient>
+  </defs>
+  <rect width="390" height="844" rx="36" fill="url(#sky)"/>
+  <circle cx="312" cy="142" r="55" fill="#FFF3B1" opacity=".85"/>
+  <circle cx="312" cy="142" r="76" stroke="#FFF7D2" stroke-width="2" opacity=".35"/>
+  <path d="M0 556c66-35 113-34 180-3 67 31 134 30 210-5v296H0V556Z" fill="url(#sea)"/>
+  <path d="M0 626c76-36 132-21 193 4 62 26 122 24 197-11v225H0V626Z" fill="url(#sand)"/>
+  <path d="M0 626c76-36 132-21 193 4 62 26 122 24 197-11" stroke="#FFF4CE" stroke-width="3" opacity=".7"/>
+  <path d="M58 678c32-12 62-12 92 0M253 710c28-10 55-10 81 0M116 770c31-11 60-11 88 0" stroke="#D5AE6C" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+
+  <!-- palm tree -->
+  <path d="M288 621c-5-66-6-116 11-170" stroke="#9B632F" stroke-width="10" stroke-linecap="round"/>
+  <path d="M299 451c-30-19-49-39-58-65 31 5 53 18 65 36M302 449c2-34 13-61 36-81 8 31 2 59-19 81M306 452c30-7 57-3 82 13-29 16-57 17-82 1M298 454c-29 9-56 24-78 48 34 1 61-12 80-35" fill="#4E9C66"/>
+  <path d="M299 451c-30-19-49-39-58-65 31 5 53 18 65 36M302 449c2-34 13-61 36-81 8 31 2 59-19 81M306 452c30-7 57-3 82 13-29 16-57 17-82 1M298 454c-29 9-56 24-78 48 34 1 61-12 80-35" stroke="#3C814F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="300" cy="628" rx="46" ry="13" fill="#C99C58" opacity=".55"/>
+
+  <!-- centered logo -->
+  <g transform="translate(55 228)">
+    <rect x="4" y="4" width="156" height="156" rx="48" fill="#FFF8E9" opacity=".96"/>
+    <path d="M36 40h48c17 0 30 13 30 30v72H66c-17 0-30-13-30-30V40Z" fill="#F1C057" stroke="#B87931" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M84 40h47c17 0 30 13 30 30v72H114c-17 0-30-13-30-30V40Z" fill="#EAAF4B" stroke="#B87931" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M84 42v99M84 81c0-27 4-48 16-64 10 3 21 12 28 23M84 81c-4-22-15-38-31-47M100 32c9-2 19-1 28 8" stroke="#4D9660" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M52 105h18M52 119h18M101 105h18M101 119h18" stroke="#FFF5D8" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="24" y="438" fill="#5D4428" font-family="Nunito, sans-serif" font-size="30" font-weight="700" letter-spacing="-1.2">모동숲 다이어리</text>
+  <text x="26" y="472" fill="#6B8D6A" font-family="Nunito, sans-serif" font-size="14" font-weight="700">오늘도 섬에서 만나요</text>
+  <g transform="translate(168 510)"><circle cx="0" cy="0" r="5" fill="#FFF8E9"/><circle cx="27" cy="0" r="5" fill="#FFF8E9" opacity=".65"/><circle cx="54" cy="0" r="5" fill="#FFF8E9" opacity=".35"/></g>
+  <text x="195" y="806" text-anchor="middle" fill="#FFF6D9" font-family="Nunito, sans-serif" font-size="11" font-weight="700" letter-spacing="1.6">ISLAND LIFE NOTES</text>
+</svg>

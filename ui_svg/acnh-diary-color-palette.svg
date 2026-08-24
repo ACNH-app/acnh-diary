@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="720" height="920" viewBox="0 0 720 920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="920" rx="28" fill="#FFF8E9"/>
+  <text x="48" y="72" fill="#5D4428" font-family="Nunito, sans-serif" font-size="30" font-weight="800">ACNH Diary Color Palette</text>
+  <text x="48" y="103" fill="#8A735A" font-family="Nunito, sans-serif" font-size="14">처음 오늘 화면과 도감 화면에 사용한 기본 컬러</text>
+
+  <text x="48" y="157" fill="#5D4428" font-family="Nunito, sans-serif" font-size="16" font-weight="800">Foundation</text>
+  <g transform="translate(48 178)"><rect width="190" height="82" rx="16" fill="#FFF8E9" stroke="#EBDDC8"/><text x="18" y="29" fill="#5D4428" font-family="Nunito, sans-serif" font-size="13" font-weight="800">App Background</text><text x="18" y="55" fill="#8A735A" font-family="Nunito, sans-serif" font-size="13">#FFF8E9</text></g>
+  <g transform="translate(265 178)"><rect width="190" height="82" rx="16" fill="#F3E8D4"/><text x="18" y="29" fill="#5D4428" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Background End</text><text x="18" y="55" fill="#8A735A" font-family="Nunito, sans-serif" font-size="13">#F3E8D4</text></g>
+  <g transform="translate(482 178)"><rect width="190" height="82" rx="16" fill="#FFFDF7" stroke="#EBDDC8"/><text x="18" y="29" fill="#5D4428" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Card Surface</text><text x="18" y="55" fill="#8A735A" font-family="Nunito, sans-serif" font-size="13">#FFFDF7</text></g>
+
+  <text x="48" y="312" fill="#5D4428" font-family="Nunito, sans-serif" font-size="16" font-weight="800">Text &amp; Border</text>
+  <g transform="translate(48 333)"><rect width="190" height="82" rx="16" fill="#5D4428"/><text x="18" y="29" fill="#FFF8E9" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Primary Text</text><text x="18" y="55" fill="#FFF8E9" font-family="Nunito, sans-serif" font-size="13">#5D4428</text></g>
+  <g transform="translate(265 333)"><rect width="190" height="82" rx="16" fill="#8A735A"/><text x="18" y="29" fill="#FFFDF7" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Secondary Text</text><text x="18" y="55" fill="#FFFDF7" font-family="Nunito, sans-serif" font-size="13">#8A735A</text></g>
+  <g transform="translate(482 333)"><rect width="190" height="82" rx="16" fill="#EBDDC8"/><text x="18" y="29" fill="#5D4428" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Card Border</text><text x="18" y="55" fill="#5D4428" font-family="Nunito, sans-serif" font-size="13">#EBDDC8</text></g>
+
+  <text x="48" y="467" fill="#5D4428" font-family="Nunito, sans-serif" font-size="16" font-weight="800">Brand Colors</text>
+  <g transform="translate(48 488)"><rect width="190" height="82" rx="16" fill="#6BA774"/><text x="18" y="29" fill="white" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Leaf Green</text><text x="18" y="55" fill="white" font-family="Nunito, sans-serif" font-size="13">#6BA774</text></g>
+  <g transform="translate(265 488)"><rect width="190" height="82" rx="16" fill="#DDF2DD"/><text x="18" y="29" fill="#438454" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Soft Mint</text><text x="18" y="55" fill="#438454" font-family="Nunito, sans-serif" font-size="13">#DDF2DD</text></g>
+  <g transform="translate(482 488)"><rect width="190" height="82" rx="16" fill="#F3C85E"/><text x="18" y="29" fill="#6A4B20" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Warm Yellow</text><text x="18" y="55" fill="#6A4B20" font-family="Nunito, sans-serif" font-size="13">#F3C85E</text></g>
+  <g transform="translate(48 586)"><rect width="190" height="82" rx="16" fill="#E9A08C"/><text x="18" y="29" fill="#7E5146" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Peach Coral</text><text x="18" y="55" fill="#7E5146" font-family="Nunito, sans-serif" font-size="13">#E9A08C</text></g>
+  <g transform="translate(265 586)"><rect width="190" height="82" rx="16" fill="#8BC9D4"/><text x="18" y="29" fill="#3E747C" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Sky Blue</text><text x="18" y="55" fill="#3E747C" font-family="Nunito, sans-serif" font-size="13">#8BC9D4</text></g>
+  <g transform="translate(482 586)"><rect width="190" height="82" rx="16" fill="#8061A9"/><text x="18" y="29" fill="white" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Lavender</text><text x="18" y="55" fill="white" font-family="Nunito, sans-serif" font-size="13">#8061A9</text></g>
+
+  <text x="48" y="722" fill="#5D4428" font-family="Nunito, sans-serif" font-size="16" font-weight="800">Supporting Colors</text>
+  <g transform="translate(48 743)"><rect width="190" height="82" rx="16" fill="#FFF0D8"/><text x="18" y="29" fill="#8C6128" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Cream Chip</text><text x="18" y="55" fill="#8C6128" font-family="Nunito, sans-serif" font-size="13">#FFF0D8</text></g>
+  <g transform="translate(265 743)"><rect width="190" height="82" rx="16" fill="#F1E7FF"/><text x="18" y="29" fill="#7457A4" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Lavender Chip</text><text x="18" y="55" fill="#7457A4" font-family="Nunito, sans-serif" font-size="13">#F1E7FF</text></g>
+  <g transform="translate(482 743)"><rect width="190" height="82" rx="16" fill="#EFFBF3"/><text x="18" y="29" fill="#438454" font-family="Nunito, sans-serif" font-size="13" font-weight="800">Green Soft</text><text x="18" y="55" fill="#438454" font-family="Nunito, sans-serif" font-size="13">#EFFBF3</text></g>
+</svg>

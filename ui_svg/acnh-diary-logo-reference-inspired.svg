@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="760" height="240" viewBox="0 0 760 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pageL" x1="20" y1="28" x2="132" y2="182" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFDF5"/><stop offset="1" stop-color="#F8EBC9"/></linearGradient>
+    <linearGradient id="pageR" x1="90" y1="28" x2="204" y2="182" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF9E8"/><stop offset="1" stop-color="#F2DBA8"/></linearGradient>
+  </defs>
+
+  <!-- One unified palm + open diary mark -->
+  <g transform="translate(22 24)">
+    <circle cx="104" cy="96" r="90" fill="#EAF6E8"/>
+    <path d="M104 166 25 148V55c0-13 12-22 25-19l54 13v117Z" fill="url(#pageL)" stroke="#D6C39A" stroke-width="3" stroke-linejoin="round"/>
+    <path d="m104 166 79-18V55c0-13-12-22-25-19l-54 13v117Z" fill="url(#pageR)" stroke="#D6C39A" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M104 49v117" stroke="#C9AD70" stroke-width="3"/>
+    <path d="M104 100c0-16 5-25 15-30" stroke="#9B632F" stroke-width="8" stroke-linecap="round"/>
+    <path d="M118 16C94 4 76-9 68-29c26 4 44 15 56 34M119 17c3-27 14-48 35-64 5 27-1 49-19 67M122 20c27-7 52-3 75 12-27 14-52 15-75 1M115 21C88 28 65 42 45 64c31 1 55-11 72-33" transform="translate(0 55)" fill="#61A86E" stroke="#478E58" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M51 93h27M51 108h27M130 93h27M130 108h27" stroke="#C5A967" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+    <circle cx="24" cy="47" r="4" fill="#F1B85B"/><circle cx="188" cy="67" r="4" fill="#F1B85B"/>
+  </g>
+
+  <g transform="translate(258 67)">
+    <text x="0" y="52" fill="#5D4428" font-family="Nunito, sans-serif" font-size="45" font-weight="700" letter-spacing="-2">모동숲</text>
+    <text x="3" y="103" fill="#5F9D69" font-family="Nunito, sans-serif" font-size="37" font-weight="700" letter-spacing="-1">다이어리</text>
+    <path d="M6 129c42-10 85-10 127 0 42 10 85 10 127 0" stroke="#E7BC61" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

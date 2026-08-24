@@ -29,6 +29,7 @@ content.db
 content.db-shm
 content.db-wal
 *.log
+tmp/
 data/.cache/
 data/content_full_snapshot.json
 

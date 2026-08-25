@@ -36,11 +36,12 @@ MVP 제외 범위:
 ## 3. 현재 상태 요약
 
 현재 저장소 기준 웹앱 상태:
-- `frontend/`에 React + Vite 기반 신규 웹앱 프로토타입이 존재한다.
-- 현재 `frontend/src/screens/App.tsx`는 `TodayScreen`만 렌더링한다.
-- `Today`, `Catalog`, `Guide`, `MyIsland`, `Residents` 화면 컴포넌트가 있으나 상당 부분이 하드코딩된 UI 프로토타입 상태다.
-- 실제 런타임 배포 경로는 아직 `static/` + FastAPI 쪽이 중심이다.
-- 백엔드는 `app/` 아래 FastAPI와 기존 상태/콘텐츠 로직을 이미 가지고 있다.
+- `frontend/`에 React + Vite 기반 라우팅 웹앱이 존재하며 MVP 화면 엔트리가 연결되어 있다.
+- `Today`, `Catalog`, `Residents`, `MyIsland` 화면은 FastAPI 실데이터와 상태 API를 사용하고, 루틴/사진 상태처럼 백엔드 계약이 없는 항목은 섬별 `localStorage`로 격리한다.
+- 프로필의 게임 날짜 변경은 전역 이벤트로 오늘 요약·루틴 날짜·사이드바 프로필을 함께 갱신한다.
+- 주민 API는 성격/종족/서브타입 필터와 주민 상세 상태를 제공한다.
+- `scripts/webapp_smoke_test.py`로 SQLite 로컬 API의 주요 읽기 경로를 자동 검증한다.
+- 실제 런타임 배포 경로는 아직 `static/` + FastAPI 쪽이 중심이며, 신규 웹앱은 `frontend/`를 기준 구현체로 확장한다.
 
 즉, 지금 필요한 일은 “새 웹앱 UI를 실제 API와 상태 모델에 연결하고, 배포 기준 화면으로 끌어올리는 것”이다.
 

@@ -1,15 +1,46 @@
 import { ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { useCallback, useEffect } from "react";
 
+import { getIslandProfile } from "../../api/islands";
 import { Button } from "../../components/ui/Button";
 import { Pill } from "../../components/ui/Pill";
+import type { Island } from "../../api/islands";
+import { useAsync } from "../../hooks/useAsync";
 
 type IslandSidebarProps = {
   open: boolean;
+  activeIslandId: number;
+  islands: Island[];
   islandName: string;
   onClose: () => void;
+  onSelectIsland: (islandId: number) => void;
+  onAddIsland: () => void;
+  onDeleteIsland: () => void;
 };
 
-export function IslandSidebar({ open, islandName, onClose }: IslandSidebarProps) {
+export function IslandSidebar({
+  open,
+  activeIslandId,
+  islands,
+  islandName,
+  onClose,
+  onSelectIsland,
+  onAddIsland,
+  onDeleteIsland,
+}: IslandSidebarProps) {
+  const loadProfile = useCallback(() => getIslandProfile(activeIslandId), [activeIslandId]);
+  const profileState = useAsync(loadProfile);
+  const profile = profileState.status === "success" ? profileState.data : null;
+
+  useEffect(() => {
+    function handleProfileUpdated(event: Event) {
+      const islandEvent = event as CustomEvent<{ islandId?: number }>;
+      if (islandEvent.detail?.islandId === activeIslandId) profileState.reload();
+    }
+    window.addEventListener("acnh-diary.profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("acnh-diary.profile-updated", handleProfileUpdated);
+  }, [activeIslandId]);
+
   return (
     <aside className={open ? "island-sidebar is-open" : "island-sidebar"} aria-label="섬 정보">
       <div className="sidebar-scrim" onClick={onClose} />
@@ -18,14 +49,17 @@ export function IslandSidebar({ open, islandName, onClose }: IslandSidebarProps)
           <X aria-hidden="true" size={20} />
         </button>
 
-        <button className="current-island" type="button">
+        <label className="current-island">
           <span className="island-badge">섬</span>
           <span>
             <small>현재 섬</small>
             <strong>{islandName}</strong>
           </span>
           <ChevronRight aria-hidden="true" size={20} />
-        </button>
+          <select aria-label="활성 섬 선택" value={activeIslandId} onChange={(event) => onSelectIsland(Number(event.target.value))}>
+            {islands.map((island) => <option key={island.id} value={island.id}>{island.name}</option>)}
+          </select>
+        </label>
 
         <section className="island-info-card">
           <h2>섬 정보</h2>
@@ -37,28 +71,28 @@ export function IslandSidebar({ open, islandName, onClose }: IslandSidebarProps)
               <div>
                 <dt>친구</dt>
                 <dd>
-                  <Pill tone="mint">북반구</Pill>
+                  <Pill tone="mint">{profile?.hemisphere === "south" ? "남반구" : "북반구"}</Pill>
                 </dd>
               </div>
               <div>
                 <dt>대표 과일</dt>
                 <dd>
-                  <Pill tone="sun">복숭아</Pill>
+                  <Pill tone="sun">{profile?.representative_fruit || "—"}</Pill>
                 </dd>
               </div>
               <div>
                 <dt>자생 꽃</dt>
                 <dd>
-                  <Pill tone="violet">코스모스</Pill>
+                  <Pill tone="violet">{profile?.representative_flower || "—"}</Pill>
                 </dd>
               </div>
               <div>
                 <dt>주민대표</dt>
-                <dd>은하</dd>
+                <dd>{profile?.nickname || "—"}</dd>
               </div>
               <div>
                 <dt>생일</dt>
-                <dd>12월 8일</dd>
+                <dd>{profile?.birthday || "—"}</dd>
               </div>
             </dl>
             <Button className="profile-edit" variant="secondary">
@@ -69,12 +103,12 @@ export function IslandSidebar({ open, islandName, onClose }: IslandSidebarProps)
 
         <section className="island-actions">
           <h2>섬 관리</h2>
-          <button className="action-row action-row--add" type="button">
+          <button className="action-row action-row--add" onClick={onAddIsland} type="button">
             <Plus aria-hidden="true" size={22} />
             <span>새 섬 추가</span>
             <ChevronRight aria-hidden="true" size={20} />
           </button>
-          <button className="action-row action-row--delete" type="button">
+          <button className="action-row action-row--delete" disabled={islands.length <= 1} onClick={onDeleteIsland} type="button">
             <Trash2 aria-hidden="true" size={22} />
             <span>현재 섬 삭제</span>
             <ChevronRight aria-hidden="true" size={20} />

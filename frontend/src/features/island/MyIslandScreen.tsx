@@ -1,12 +1,16 @@
 import { BriefcaseBusiness, ChevronDown, Menu, UserRound } from "lucide-react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
+import { getIslandProfile, updateIslandProfile, type IslandProfileInput } from "../../api/islands";
 import type { AppTab } from "../../components/layout/BottomNavigation";
 import { BottomNavigation, type BottomNavItem } from "../../components/layout/BottomNavigation";
 import { MobileScreen } from "../../components/layout/MobileScreen";
 import { Button } from "../../components/ui/Button";
 import { Pill } from "../../components/ui/Pill";
+import { useAsync } from "../../hooks/useAsync";
 
 type MyIslandScreenProps = {
+  islandId: number;
   navItems: BottomNavItem[];
   currentTab: AppTab;
   islandName: string;
@@ -14,7 +18,43 @@ type MyIslandScreenProps = {
   onOpenMenu: () => void;
 };
 
-export function MyIslandScreen({ navItems, currentTab, islandName, onTabChange, onOpenMenu }: MyIslandScreenProps) {
+export function MyIslandScreen({ navItems, currentTab, islandId, islandName, onTabChange, onOpenMenu }: MyIslandScreenProps) {
+  const loadProfile = useCallback(() => getIslandProfile(islandId), [islandId]);
+  const profileState = useAsync(loadProfile);
+  const profile = profileState.status === "success" ? profileState.data : null;
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState<IslandProfileInput>({
+    island_name: islandName,
+    nickname: "",
+    representative_fruit: "",
+    representative_flower: "",
+    birthday: "",
+    hemisphere: "north",
+    time_travel_enabled: false,
+    game_datetime: "",
+  });
+
+  useEffect(() => {
+    if (profile) {
+      const { island_id: _islandId, ...profileDraft } = profile;
+      setDraft(profileDraft);
+    }
+  }, [profile]);
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      await updateIslandProfile(islandId, draft);
+      profileState.reload();
+      window.dispatchEvent(new CustomEvent("acnh-diary.profile-updated", { detail: { islandId } }));
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <MobileScreen
       action={
@@ -27,10 +67,12 @@ export function MyIslandScreen({ navItems, currentTab, islandName, onTabChange, 
       title="내 섬"
       tone="green"
     >
+      {profileState.status === "loading" ? <div className="screen-state">섬 프로필을 불러오는 중이에요…</div> : null}
+      {profileState.status === "error" ? <div className="screen-state screen-state--error" role="alert">섬 프로필을 불러오지 못했어요.<button className="retry-button" onClick={profileState.reload} type="button">다시 시도</button></div> : null}
       <section className="island-passport">
         <div className="passport-card-header">
           <Pill tone="mint">섬 여권</Pill>
-          <Button size="sm" variant="ghost">정보 수정</Button>
+          <Button onClick={() => setEditing((value) => !value)} size="sm" variant="ghost">{editing ? "수정 닫기" : "정보 수정"}</Button>
         </div>
         <div className="passport-main">
           <span className="passport-icon">
@@ -43,13 +85,24 @@ export function MyIslandScreen({ navItems, currentTab, islandName, onTabChange, 
         </div>
         <dl className="passport-grid">
           <div><dt>섬 이름</dt><dd>{islandName}</dd></div>
-          <div><dt>대표 과일</dt><dd>복숭아</dd></div>
-          <div><dt>자생 꽃</dt><dd>장미</dd></div>
-          <div><dt>반구</dt><dd>북반구</dd></div>
-          <div><dt>주민대표</dt><dd>김태민</dd></div>
-          <div><dt>생일</dt><dd>8월 19일</dd></div>
+          <div><dt>대표 과일</dt><dd>{profile?.representative_fruit || "—"}</dd></div>
+          <div><dt>자생 꽃</dt><dd>{profile?.representative_flower || "—"}</dd></div>
+          <div><dt>반구</dt><dd>{profile?.hemisphere === "south" ? "남반구" : "북반구"}</dd></div>
+          <div><dt>주민대표</dt><dd>{profile?.nickname || "—"}</dd></div>
+          <div><dt>생일</dt><dd>{profile?.birthday || "—"}</dd></div>
         </dl>
       </section>
+
+      {editing ? (
+        <form className="profile-edit-form" onSubmit={handleSave}>
+          <label className="field"><span>섬 이름</span><input value={draft.island_name} onChange={(event) => setDraft({ ...draft, island_name: event.target.value })} /></label>
+          <label className="field"><span>주민대표</span><input value={draft.nickname} onChange={(event) => setDraft({ ...draft, nickname: event.target.value })} /></label>
+          <label className="field"><span>생일</span><input type="date" value={draft.birthday.length === 5 ? `2026-${draft.birthday}` : draft.birthday} onChange={(event) => setDraft({ ...draft, birthday: event.target.value })} /></label>
+          <label className="field field--checkbox"><span>게임 날짜 직접 사용</span><input checked={draft.time_travel_enabled} onChange={(event) => setDraft({ ...draft, time_travel_enabled: event.target.checked })} type="checkbox" /></label>
+          {draft.time_travel_enabled ? <label className="field"><span>게임 날짜/시간</span><input type="datetime-local" value={draft.game_datetime.slice(0, 16)} onChange={(event) => setDraft({ ...draft, game_datetime: event.target.value })} /></label> : null}
+          <Button disabled={saving} type="submit">{saving ? "저장 중…" : "저장하기"}</Button>
+        </form>
+      ) : null}
 
       <section className="resident-strip">
         <div className="section-row">

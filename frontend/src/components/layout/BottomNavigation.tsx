@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type AppTab = "today" | "catalog" | "guide" | "island";
+export type AppTab = "today" | "catalog" | "villagers" | "guide" | "island";
 
 export type BottomNavItem = {
   value: AppTab;

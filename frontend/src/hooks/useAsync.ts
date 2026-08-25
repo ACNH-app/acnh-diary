@@ -5,7 +5,10 @@ type AsyncState<T> =
   | { status: "success"; data: T; error: null }
   | { status: "error"; data: null; error: Error };
 
-export function useAsync<T>(loader: () => Promise<T>): AsyncState<T> {
+type AsyncResult<T> = AsyncState<T> & { reload: () => void };
+
+export function useAsync<T>(loader: () => Promise<T>): AsyncResult<T> {
+  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<AsyncState<T>>({
     status: "loading",
     data: null,
@@ -14,6 +17,7 @@ export function useAsync<T>(loader: () => Promise<T>): AsyncState<T> {
 
   useEffect(() => {
     let alive = true;
+    setState({ status: "loading", data: null, error: null });
 
     loader()
       .then((data) => {
@@ -30,7 +34,7 @@ export function useAsync<T>(loader: () => Promise<T>): AsyncState<T> {
     return () => {
       alive = false;
     };
-  }, [loader]);
+  }, [loader, reloadKey]);
 
-  return state;
+  return { ...state, reload: () => setReloadKey((value) => value + 1) };
 }

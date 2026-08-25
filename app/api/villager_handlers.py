@@ -15,11 +15,15 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
         q: str = "",
         personality: str = "",
         species: str = "",
+        subtype: str = "",
         liked: bool | None = None,
         on_island: bool | None = None,
         former_resident: bool | None = None,
     ) -> dict[str, Any]:
-        villagers = deps.with_villager_state(island_id, deps.load_villagers())
+        villagers = [
+            {**villager, "subtype": str(villager.get("sub_personality") or "")}
+            for villager in deps.with_villager_state(island_id, deps.load_villagers())
+        ]
 
         q_norm = q.strip().lower()
         if q_norm:
@@ -35,6 +39,8 @@ def create_villager_handlers(deps: VillagerHandlerDeps) -> VillagerHandlers:
             villagers = [v for v in villagers if v["personality"] == personality]
         if species:
             villagers = [v for v in villagers if v["species"] == species]
+        if subtype:
+            villagers = [v for v in villagers if str(v.get("sub_personality") or "") == subtype]
         if liked is not None:
             villagers = [v for v in villagers if v["liked"] is liked]
         if on_island is not None:

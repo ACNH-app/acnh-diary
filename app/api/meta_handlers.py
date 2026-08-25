@@ -156,11 +156,13 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         species_map = deps.load_species_map()
         personalities = sorted({str(v.get("personality") or "").strip() for v in villagers if str(v.get("personality") or "").strip()})
         species = sorted({str(v.get("species") or "").strip() for v in villagers if str(v.get("species") or "").strip()})
+        subtypes = sorted({str(v.get("sub_personality") or "").strip() for v in villagers if str(v.get("sub_personality") or "").strip()})
         return {
             "personalities": [
                 {"en": p, "ko": personality_map.get(p, p)} for p in personalities
             ],
             "species": [{"en": s, "ko": species_map.get(s, s)} for s in species],
+            "subtypes": [{"en": s, "ko": s} for s in subtypes],
         }
 
     def get_islands() -> list[dict[str, Any]]:

@@ -1,6 +1,7 @@
 import {
   catalogCardTemplate,
   catalogPanel,
+  encyclopediaPanel,
   homePanel,
   list,
   loadMoreWrap,
@@ -122,7 +123,7 @@ function buildNavGroups(modes) {
   // 홈은 브랜드 버튼에서만 진입한다.
   pick(["home"]);
   const villagerModes = pick(["villagers"]);
-  const encyclopediaModes = pick(["fossils", "bugs", "fish", "sea", "art"]);
+  const encyclopediaModes = pick(["encyclopedia", "fossils", "bugs", "fish", "sea", "art"]);
   const catalogModes = pick([
     "furniture",
     "interior",
@@ -266,6 +267,14 @@ function renderMobileBottomNav({ onModeChange } = {}) {
         syncLegacyNavState();
         renderNav({ onModeChange });
         if (onModeChange) onModeChange(target);
+        return;
+      }
+      if (entry.key === "encyclopedia") {
+        clearOpenPrimary();
+        state.activeMode = "encyclopedia";
+        syncLegacyNavState();
+        renderNav({ onModeChange });
+        if (onModeChange) onModeChange("encyclopedia");
         return;
       }
       state.nav.openPrimaryKey = state.nav.openPrimaryKey === entry.key ? "" : entry.key;
@@ -451,6 +460,15 @@ export function renderNav({ onModeChange } = {}) {
         if (onModeChange) onModeChange(target);
         return;
       }
+      if (group.key === "encyclopedia") {
+        clearOpenPrimary();
+        state.activeMode = "encyclopedia";
+        syncLegacyNavState();
+        updateNavBreadcrumb();
+        renderNav({ onModeChange });
+        if (onModeChange) onModeChange("encyclopedia");
+        return;
+      }
       if (!state.nav.isTapNav) return;
       state.nav.openPrimaryKey = prevOpenPrimary === group.key ? "" : group.key;
       syncLegacyNavState();
@@ -498,12 +516,14 @@ export function updatePanels() {
 
   const homeMode = state.activeMode === "home";
   const villagerMode = state.activeMode === "villagers";
+  const encyclopediaMode = state.activeMode === "encyclopedia";
   homePanel.classList.toggle("hidden", !homeMode);
+  if (encyclopediaPanel) encyclopediaPanel.classList.toggle("hidden", !encyclopediaMode);
   villagerPanel.classList.toggle("hidden", !villagerMode);
-  catalogPanel.classList.toggle("hidden", villagerMode || homeMode);
-  resultCount.classList.toggle("hidden", homeMode);
-  list.classList.toggle("hidden", homeMode);
-  loadMoreWrap.classList.toggle("hidden", homeMode || villagerMode || !state.catalogHasMore);
+  catalogPanel.classList.toggle("hidden", villagerMode || homeMode || encyclopediaMode);
+  resultCount.classList.toggle("hidden", homeMode || encyclopediaMode);
+  list.classList.toggle("hidden", homeMode || encyclopediaMode);
+  loadMoreWrap.classList.toggle("hidden", homeMode || villagerMode || encyclopediaMode || !state.catalogHasMore);
 }
 
 export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDetailNav } = {}) {
@@ -613,9 +633,11 @@ export function renderVillagers(items, { onToggleState, onOpenDetail, onSyncDeta
 
 export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
   const forceFiveCols = ["bugs", "fish", "sea", "recipes"].includes(state.activeMode);
+  const forceTwoCols = ["fossils", "art"].includes(state.activeMode);
   const musicMode = state.activeMode === "music";
   const activeSourceFilter = String(state.sourceFilterByMode?.[state.activeMode] || "").trim();
   list.classList.toggle("grid-five-cols", forceFiveCols);
+  list.classList.toggle("grid-two-cols", forceTwoCols);
   list.classList.toggle("grid-music-cards", musicMode);
   list.dataset.catalogMode = String(state.activeMode || "");
 
@@ -660,10 +682,12 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
     const qtyInput = fragment.querySelector(".owned-qty");
     const toggles = fragment.querySelector(".toggles");
     const isArtMode = state.activeMode === "art";
+    const isFossilMode = state.activeMode === "fossils";
     const isFurnitureMode = state.activeMode === "furniture";
     const isMuseumMode = ["art", "fossils", "bugs", "fish", "sea"].includes(state.activeMode);
     const isCritterMode = ["bugs", "fish", "sea"].includes(state.activeMode);
-    const isEncyclopediaMode = ["fossils", "bugs", "fish", "sea"].includes(state.activeMode);
+    const isMuseumCardMode = ["art", "fossils", "bugs", "fish", "sea"].includes(state.activeMode);
+    const isEncyclopediaMode = ["art", "fossils", "bugs", "fish", "sea"].includes(state.activeMode);
     const isMusicMode = musicMode;
     const isRecipeMode = state.activeMode === "recipes";
     const isReactionMode = state.activeMode === "reactions";
@@ -680,7 +704,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     nameKo.textContent = v.name_ko || v.name_en;
     nameEn.textContent =
-      isArtMode || isMusicMode || isRecipeMode || isReactionMode || isCritterMode
+      isMuseumCardMode || isMusicMode || isRecipeMode || isReactionMode
         ? ""
         : v.name_en
           ? `EN: ${v.name_en}`
@@ -699,17 +723,20 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       const sourceNorm = sourceText.toLowerCase().replace(/\s+/g, "");
       const isDuplicate = eventNorm && sourceNorm && (sourceNorm.includes(eventNorm) || eventNorm.includes(sourceNorm));
       meta.textContent = isEventLikeReactionType(eventType) && !isDuplicate ? `타입: ${eventType}` : "";
-    } else if (isCritterMode) {
+    } else if (isMuseumCardMode) {
       meta.textContent = "";
     } else {
       meta.textContent = isArtMode || isMusicMode ? "" : `분류: ${category}${authenticityInfo}${variationInfo}`;
     }
 
-    if (isArtMode) {
+    if (isArtMode || isFossilMode) {
       desc.textContent = "";
-      card.classList.add("art-card");
-      icon.classList.add("art-icon");
-      nameKo.classList.add("art-title");
+      card.classList.add("museum-card", "critter-card");
+      if (isArtMode) {
+        card.classList.add("art-card");
+        icon.classList.add("art-icon");
+        nameKo.classList.add("art-title");
+      }
     } else if (isMusicMode) {
       const buyNum = Number(v.buy || 0);
       const buyPrice = buyNum > 0 ? buyNum.toLocaleString("ko-KR") : "-";
@@ -897,7 +924,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         ownedLabel.textContent = "✓";
       }
     }
-    if (isCritterMode) {
+    if (isMuseumCardMode) {
       card.classList.add("critter-card");
       if (ownedWrapLabel) {
         ownedWrapLabel.classList.add("owned-overlay");
@@ -919,7 +946,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       ownedLabel.textContent = owned.checked ? "습득" : "미습득";
     } else {
       ownedLabel.textContent = isPartialOwned ? "일부 보유" : ownedStatusLabel;
-      if ((isRecipeMode || isCritterMode) && ownedLabel) {
+      if ((isRecipeMode || isMuseumCardMode) && ownedLabel) {
         ownedLabel.textContent = "✓";
       }
     }
@@ -927,7 +954,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
       donatedWrap.classList.toggle("hidden", !isMuseumMode);
     }
     if (ownedWrapLabel) {
-      ownedWrapLabel.classList.toggle("hidden", isArtMode);
+      ownedWrapLabel.classList.toggle("hidden", false);
     }
     if (donated) {
       donated.checked = Boolean(v.donated);
@@ -954,10 +981,10 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
         : isReactionMode
           ? (owned.checked ? "습득" : "미습득")
           : ownedStatusLabel;
-      if ((isRecipeMode || isCritterMode) && ownedWrapLabel) {
+      if ((isRecipeMode || isMuseumCardMode) && ownedWrapLabel) {
         ownedWrapLabel.classList.toggle("checked", owned.checked);
       }
-      if ((isRecipeMode || isCritterMode) && ownedLabel) {
+      if ((isRecipeMode || isMuseumCardMode) && ownedLabel) {
         ownedLabel.textContent = "✓";
       }
       card.classList.remove("partially-owned");
@@ -976,7 +1003,7 @@ export function renderCatalog(items, statusLabel, options = {}, handlers = {}) {
 
     if (isMuseumMode && donated) {
       donated.addEventListener("change", async () => {
-        if (isCritterMode && donatedWrapLabel) {
+        if (isMuseumCardMode && donatedWrapLabel) {
           donatedWrapLabel.classList.toggle("checked", donated.checked);
         }
         if (!handlers.onToggleDonated) return;

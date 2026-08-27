@@ -111,6 +111,10 @@ export function getHomeCreaturesNow(params = {}) {
   return getJSON(`/api/home/creatures-now${qs ? `?${qs}` : ""}`);
 }
 
+export function getEncyclopediaMonthlyTargets() {
+  return getJSON("/api/encyclopedia/monthly-targets");
+}
+
 export function getHomeIslandResidents() {
   return getJSON("/api/villagers?on_island=true");
 }

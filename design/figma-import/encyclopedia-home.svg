@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="860" viewBox="0 0 430 860" role="img" aria-labelledby="title desc">
+  <title id="title">ACNH Diary 도감 홈 화면</title>
+  <desc id="desc">곤충, 물고기, 해산물, 화석, 미술품 도감으로 들어가는 모바일 도감 홈 화면</desc>
+  <defs>
+    <linearGradient id="screen-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF9E8"/>
+      <stop offset="1" stop-color="#F3E8D4"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#70562F" flood-opacity="0.09"/>
+    </filter>
+    <clipPath id="screen-clip"><rect width="430" height="860" rx="34"/></clipPath>
+    <symbol id="icon-bug" viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="5" ry="7" fill="currentColor"/><circle cx="12" cy="6" r="3" fill="currentColor"/><path d="M7 10 3 7M17 10l4-3M7 14H3M17 14h4M8 18l-4 3M16 18l4 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="icon-fish" viewBox="0 0 24 24"><path d="M3 12c4.3-5 10.3-5 15.5 0C13.3 17 7.3 17 3 12Z" fill="currentColor"/><path d="m18 12 3.5-3.5v7Z" fill="currentColor"/><circle cx="8" cy="11" r="1.4" fill="#FFFDF7"/></symbol>
+    <symbol id="icon-sea" viewBox="0 0 24 24"><path d="M4 15c2.5-2.4 5-2.4 7.5 0s5 2.4 8.5 0M4 10c2.5-2.4 5-2.4 7.5 0s5 2.4 8.5 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="6" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="icon-fossil" viewBox="0 0 24 24"><path d="M6 19c-2.2-2.8-2-7.7.6-10.8C9.8 4.4 16.4 4 19 8c2.4 3.8-.2 9.5-5.1 10.7-2.4.6-5 .2-7.9.3Z" fill="currentColor"/><path d="M9 14c3.8-.1 6.2-2.5 6.3-6.1M10 10l-2-2M13 13l2 2" stroke="#FFFDF7" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="icon-art" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor"/><circle cx="9" cy="10" r="2" fill="#FFFDF7"/><path d="m6 17 4-4 3 2.4 2.6-3 2.8 4.6" fill="none" stroke="#FFFDF7" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  </defs>
+
+  <g id="Screen/Encyclopedia/Home" clip-path="url(#screen-clip)" font-family="Inter, Noto Sans KR, sans-serif">
+    <rect width="430" height="860" rx="34" fill="url(#screen-bg)"/>
+    <circle cx="370" cy="78" r="116" fill="#FFE7E4" fill-opacity=".78"/>
+    <circle cx="48" cy="802" r="92" fill="#D9F0EA" fill-opacity=".58"/>
+
+    <g id="HamburgerMenu" transform="translate(370 14)" role="button" tabindex="0">
+      <title>전체 메뉴 열기</title>
+      <rect width="38" height="34" rx="17" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <path d="M12 11h14M12 17h14M12 23h14" fill="none" stroke="#6D4B25" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <g id="Header" transform="translate(28 58)">
+      <text x="0" y="0" fill="#6D4B25" font-size="13" font-weight="800">ACNH Diary</text>
+      <text x="0" y="38" fill="#3E2E1F" font-size="30" font-weight="900">도감</text>
+      <text x="0" y="62" fill="#8A735A" font-size="13" font-weight="800">곤충, 물고기, 해산물, 화석, 미술품을 항목별로 조회해요.</text>
+    </g>
+
+    <g id="ProgressSummary" transform="translate(28 148)" filter="url(#soft-shadow)">
+      <rect width="374" height="74" rx="20" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <g font-size="11.5" font-weight="900">
+        <text x="18" y="27" fill="#6D4B25">전체 진행률</text>
+        <text x="312" y="27" fill="#3E2E1F">48%</text>
+      </g>
+      <rect x="18" y="42" width="338" height="10" rx="5" fill="#F2E5CC"/>
+      <rect x="18" y="42" width="162" height="10" rx="5" fill="#63B879"/>
+    </g>
+
+    <g id="CategoryCards" transform="translate(28 248)" filter="url(#soft-shadow)">
+      <g id="Category/Bugs" role="button" tabindex="0">
+        <title>곤충 도감 열기</title>
+        <rect width="176" height="128" rx="18" fill="#FFFDF7" stroke="#DCCAAA"/>
+        <circle cx="42" cy="42" r="24" fill="#E8F8EF"/>
+        <use href="#icon-bug" x="30" y="28" width="24" height="24" color="#63B879"/>
+        <text x="18" y="90" fill="#3E2E1F" font-size="18" font-weight="900">곤충</text>
+        <text x="18" y="112" fill="#8A735A" font-size="11" font-weight="800">80종 · 35 채집 · 22 기증</text>
+      </g>
+      <g id="Category/Fish" transform="translate(198 0)" role="button" tabindex="0">
+        <title>물고기 도감 열기</title>
+        <rect width="176" height="128" rx="18" fill="#FFFDF7" stroke="#DCCAAA"/>
+        <circle cx="42" cy="42" r="24" fill="#E8EDFC"/>
+        <use href="#icon-fish" x="29" y="30" width="26" height="26" color="#7896D8"/>
+        <text x="18" y="90" fill="#3E2E1F" font-size="18" font-weight="900">물고기</text>
+        <text x="18" y="112" fill="#8A735A" font-size="11" font-weight="800">80종 · 41 채집 · 30 기증</text>
+      </g>
+      <g id="Category/Sea" transform="translate(0 150)" role="button" tabindex="0">
+        <title>해산물 도감 열기</title>
+        <rect width="176" height="128" rx="18" fill="#FFFDF7" stroke="#DCCAAA"/>
+        <circle cx="42" cy="42" r="24" fill="#E7F7F7"/>
+        <use href="#icon-sea" x="29" y="29" width="26" height="26" color="#4BBBC0"/>
+        <text x="18" y="90" fill="#3E2E1F" font-size="18" font-weight="900">해산물</text>
+        <text x="18" y="112" fill="#8A735A" font-size="11" font-weight="800">40종 · 18 채집 · 13 기증</text>
+      </g>
+      <g id="Category/Fossils" transform="translate(198 150)" role="button" tabindex="0">
+        <title>화석 도감 열기</title>
+        <rect width="176" height="128" rx="18" fill="#FFFDF7" stroke="#DCCAAA"/>
+        <circle cx="42" cy="42" r="24" fill="#F2E5D4"/>
+        <use href="#icon-fossil" x="29" y="28" width="26" height="26" color="#B9906A"/>
+        <text x="18" y="90" fill="#3E2E1F" font-size="18" font-weight="900">화석</text>
+        <text x="18" y="112" fill="#8A735A" font-size="11" font-weight="800">73종 · 56 보유 · 48 기증</text>
+      </g>
+      <g id="Category/Art" transform="translate(0 300)" role="button" tabindex="0">
+        <title>미술품 도감 열기</title>
+        <rect width="374" height="116" rx="18" fill="#FFFDF7" stroke="#DCCAAA"/>
+        <circle cx="42" cy="42" r="24" fill="#FFF0C9"/>
+        <use href="#icon-art" x="29" y="29" width="26" height="26" color="#D39C25"/>
+        <text x="84" y="40" fill="#3E2E1F" font-size="18" font-weight="900">미술품</text>
+        <text x="84" y="64" fill="#8A735A" font-size="11" font-weight="800">그림 · 조각 · 진품/가품 구분</text>
+        <text x="84" y="88" fill="#6D4B25" font-size="11" font-weight="900">43종 · 20 보유 · 15 기증</text>
+      </g>
+    </g>
+
+    <g id="MonthlyNewCreaturesCard" transform="translate(28 686)" role="button" tabindex="0">
+      <title>이번 달 새로 잡을 수 있는 생물 열기</title>
+      <rect width="374" height="70" rx="23" fill="#EFFBF3" stroke="#D8EBD9"/>
+      <text x="18" y="29" fill="#438454" font-size="12" font-weight="900">이번 달 새로 잡을 수 있어요</text>
+      <text x="18" y="51" fill="#66816B" font-size="11" font-weight="800">현재 시간과 계절에 맞는 미수집 생물 4종</text>
+      <path d="m350 33 7 7-7 7" fill="none" stroke="#73A479" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="BottomNavigation" transform="translate(22 772)" font-size="10" font-weight="900" text-anchor="middle">
+      <rect width="386" height="64" rx="24" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <text x="39" y="39" fill="#8A735A">오늘</text>
+      <text x="116" y="39" fill="#8A735A">주민</text>
+      <circle cx="193" cy="31" r="22" fill="#E8F8EF"/>
+      <text x="193" y="39" fill="#2F7D4C">도감</text>
+      <text x="270" y="39" fill="#8A735A">카탈로그</text>
+      <text x="347" y="39" fill="#8A735A">공략</text>
+    </g>
+  </g>
+</svg>

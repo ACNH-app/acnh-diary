@@ -135,12 +135,125 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         out.sort(key=lambda x: (int(x.get("number") or 0), str(x.get("name_ko") or x.get("name_en") or "")))
         return out
 
+    def _safe_catalog_state_map(island_id: int, catalog_type: str) -> dict[str, dict[str, Any]]:
+        try:
+            return get_catalog_state_map(island_id, catalog_type)
+        except Exception:
+            return {}
+
+    def _safe_island_profile(island_id: int) -> dict[str, Any]:
+        try:
+            return deps.get_island_profile(island_id)
+        except Exception:
+            return {
+                "island_id": island_id,
+                "island_name": "",
+                "nickname": "",
+                "representative_fruit": "",
+                "representative_flower": "",
+                "birthday": "",
+                "hemisphere": "north",
+                "time_travel_enabled": False,
+                "game_datetime": "",
+            }
+
+    def _critter_month_targets(
+        island_id: int,
+        catalog_type: str,
+        hemisphere: str,
+        month: int,
+    ) -> list[dict[str, Any]]:
+        rows = deps.load_catalog(catalog_type)
+        state_map = _safe_catalog_state_map(island_id, catalog_type)
+        previous_month = 12 if month == 1 else month - 1
+        region_key = "south" if hemisphere == "south" else "north"
+        out: list[dict[str, Any]] = []
+
+        for item in rows:
+            item_id = str(item.get("id") or "").strip()
+            if not item_id:
+                continue
+            raw = _find_catalog_row(catalog_type, item_id) or {}
+            region = raw.get(region_key) if isinstance(raw, dict) else {}
+            if not isinstance(region, dict):
+                continue
+
+            raw_months = region.get("months_array") if isinstance(region.get("months_array"), list) else []
+            months = {int(x) for x in raw_months if str(x).isdigit()}
+            if month not in months:
+                continue
+
+            s = state_map.get(item_id, {"owned": False, "donated": False})
+            owned_bool = bool(s.get("owned"))
+            donated_bool = bool(s.get("donated"))
+            started_this_month = previous_month not in months
+            if owned_bool and donated_bool and not started_this_month:
+                continue
+
+            times_by_month = region.get("times_by_month") if isinstance(region.get("times_by_month"), dict) else {}
+            month_time = str(times_by_month.get(str(month)) or "").strip()
+            if not month_time:
+                month_time = str(region.get("time") or region.get("times") or "All day").strip() or "All day"
+
+            size = "-"
+            if catalog_type in {"fish", "sea"}:
+                size = str(raw.get("shadow_size") or raw.get("shadow") or "-").strip() or "-"
+            elif str(raw.get("size") or "").strip():
+                size = str(raw.get("size")).strip()
+            size = format_critter_size_label(size) or "-"
+
+            location_raw = str(
+                raw.get("location_ko")
+                or raw.get("spawn_location_ko")
+                or raw.get("location")
+                or raw.get("spawn_location")
+                or "-"
+            ).strip() or "-"
+            location = format_critter_location_label(location_raw) or "-"
+
+            reasons: list[str] = []
+            if not owned_bool:
+                reasons.append("미채집")
+            if not donated_bool:
+                reasons.append("미기증")
+            if started_this_month:
+                reasons.append("이번 달 시작")
+
+            out.append(
+                {
+                    "id": item_id,
+                    "catalog_type": catalog_type,
+                    "number": int(item.get("number") or 0),
+                    "name_ko": str(item.get("name_ko") or item.get("name") or "").strip(),
+                    "name_en": str(item.get("name_en") or "").strip(),
+                    "icon_url": str(item.get("image_url") or "").strip(),
+                    "time": month_time,
+                    "size": size,
+                    "location": location,
+                    "owned": owned_bool,
+                    "donated": donated_bool,
+                    "started_this_month": started_this_month,
+                    "reasons": reasons,
+                }
+            )
+
+        out.sort(
+            key=lambda x: (
+                0 if bool(x.get("started_this_month")) else 1,
+                {"bugs": 0, "fish": 1, "sea": 2}.get(str(x.get("catalog_type")), 9),
+                int(x.get("number") or 0),
+                str(x.get("name_ko") or x.get("name_en") or ""),
+            )
+        )
+        return out
+
     def home() -> FileResponse:
         return FileResponse(deps.base_dir / "static" / "index.html")
 
     def get_nav() -> dict[str, Any]:
         return {
             "modes": [
+                {"key": "encyclopedia", "label": "도감"},
                 {"key": "home", "label": "홈"},
                 {"key": "villagers", "label": "주민"},
                 *[
@@ -148,6 +261,42 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
                     for key, cfg in deps.catalog_types.items()
                 ],
             ]
+        }
+
+    def get_encyclopedia_monthly_targets(island_id: int) -> dict[str, Any]:
+        profile = _safe_island_profile(island_id)
+        now = parse_effective_now(profile)
+        hemisphere = str(profile.get("hemisphere") or "north").strip().lower()
+        if hemisphere not in {"north", "south"}:
+            hemisphere = "north"
+
+        items: list[dict[str, Any]] = []
+        counts: dict[str, int] = {"bugs": 0, "fish": 0, "sea": 0}
+        new_counts: dict[str, int] = {"bugs": 0, "fish": 0, "sea": 0}
+        for catalog_type in ("bugs", "fish", "sea"):
+            rows = _critter_month_targets(island_id, catalog_type, hemisphere, now.month)
+            counts[catalog_type] = len(rows)
+            new_counts[catalog_type] = sum(1 for row in rows if bool(row.get("started_this_month")))
+            items.extend(rows)
+
+        items.sort(
+            key=lambda x: (
+                0 if bool(x.get("started_this_month")) else 1,
+                {"bugs": 0, "fish": 1, "sea": 2}.get(str(x.get("catalog_type")), 9),
+                int(x.get("number") or 0),
+                str(x.get("name_ko") or x.get("name_en") or ""),
+            )
+        )
+
+        return {
+            "effective_datetime": now.strftime("%Y-%m-%dT%H:%M"),
+            "month": now.month,
+            "previous_month": 12 if now.month == 1 else now.month - 1,
+            "hemisphere": hemisphere,
+            "count": len(items),
+            "counts_by_type": counts,
+            "new_counts_by_type": new_counts,
+            "items": items[:12],
         }
 
     def get_villager_meta() -> dict[str, Any]:
@@ -323,6 +472,7 @@ def create_meta_handlers(deps: MetaHandlerDeps) -> MetaHandlers:
         home=home,
         get_nav=get_nav,
         get_villager_meta=get_villager_meta,
+        get_encyclopedia_monthly_targets=get_encyclopedia_monthly_targets,
         get_islands=get_islands,
         create_island=create_island,
         delete_island=delete_island,

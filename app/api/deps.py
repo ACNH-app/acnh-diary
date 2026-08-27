@@ -75,6 +75,7 @@ class MetaHandlers:
     home: Callable[[], Any]
     get_nav: Callable[[], dict[str, Any]]
     get_villager_meta: Callable[[], dict[str, Any]]
+    get_encyclopedia_monthly_targets: Callable[[int], dict[str, Any]]
     get_home_summary: Callable[[int], dict[str, Any]]
     get_home_catalog_progress: Callable[[int], list[dict[str, Any]]]
     get_home_creatures_now: Callable[..., dict[str, Any]]

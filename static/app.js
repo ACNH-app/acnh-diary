@@ -10,6 +10,7 @@ import {
   getHomeSummary,
   getHomeCatalogProgress,
   getHomeCreaturesNow,
+  getEncyclopediaMonthlyTargets,
   getHomeIslandResidents,
   getVillagerMeta,
   getVillagers,
@@ -52,6 +53,7 @@ import {
 } from "./js/dom.js";
 import { createDataController } from "./js/data.js";
 import { createDetailController } from "./js/detail.js";
+import { bindEncyclopediaEvents, loadEncyclopediaOverview } from "./js/encyclopedia.js";
 import { bindMainEvents } from "./js/events.js";
 import {
   bindHomeEvents,
@@ -74,7 +76,7 @@ let historyRestoreInProgress = false;
 let lastViewQuery = "";
 
 function isCatalogMode(mode) {
-  return mode !== "home" && mode !== "villagers";
+  return mode !== "home" && mode !== "villagers" && mode !== "encyclopedia";
 }
 
 function syncTabButtonStates() {
@@ -215,6 +217,12 @@ async function navigateToMode(mode) {
         commitViewHistory("push");
         return;
       }
+      if (state.activeMode === "encyclopedia") {
+        await ensureHomeProfileLoaded();
+        await ensureEncyclopediaOverviewLoaded();
+        commitViewHistory("push");
+        return;
+      }
       await dataController.loadCurrentModeData();
       commitViewHistory("push");
     },
@@ -225,6 +233,12 @@ async function navigateToMode(mode) {
     await ensureHomeSummaryLoaded();
     await ensurePlayersLoaded();
     await ensureCalendarLoaded();
+    commitViewHistory("push");
+    return;
+  }
+  if (state.activeMode === "encyclopedia") {
+    await ensureHomeProfileLoaded();
+    await ensureEncyclopediaOverviewLoaded();
     commitViewHistory("push");
     return;
   }
@@ -285,6 +299,10 @@ bindHomeEvents({
     } else {
       await ensureCalendarLoaded();
     }
+    if (state.activeMode === "encyclopedia") {
+      await ensureEncyclopediaOverviewLoaded();
+      return;
+    }
     if (state.activeMode !== "home") {
       await dataController.loadCurrentModeData();
     }
@@ -297,6 +315,7 @@ bindHomeEvents({
   setMainPlayer,
   deletePlayer,
 });
+bindEncyclopediaEvents();
 
 bindMainEvents({
   scheduleLoad: dataController.scheduleLoad,
@@ -329,6 +348,10 @@ async function ensureHomeSummaryLoaded() {
   await loadHomeSummary(getHomeSummary);
   loadHomeCatalogProgress(getHomeCatalogProgress).catch((err) => console.error(err));
   loadHomeCreaturesNow(getHomeCreaturesNow).catch((err) => console.error(err));
+}
+
+async function ensureEncyclopediaOverviewLoaded() {
+  await loadEncyclopediaOverview(getEncyclopediaMonthlyTargets);
 }
 
 async function ensureHomeIslandResidentsLoaded() {
@@ -418,6 +441,9 @@ async function syncCalendarToEffectiveDate() {
 window.addEventListener("acnh:effective-date-changed", () => {
   syncCalendarToEffectiveDate().catch((err) => console.error(err));
   ensureHomeSummaryLoaded().catch((err) => console.error(err));
+  if (state.activeMode === "encyclopedia") {
+    ensureEncyclopediaOverviewLoaded().catch((err) => console.error(err));
+  }
 });
 window.addEventListener("acnh:villager-state-changed", (e) => {
   ensureHomeIslandResidentsLoaded().catch((err) => console.error(err));
@@ -452,6 +478,11 @@ window.addEventListener("popstate", () => {
         ensureCalendarLoaded().catch((err) => console.error(err));
         return;
       }
+      if (state.activeMode === "encyclopedia") {
+        ensureHomeProfileLoaded().catch((err) => console.error(err));
+        ensureEncyclopediaOverviewLoaded().catch((err) => console.error(err));
+        return;
+      }
       dataController.loadCurrentModeData().catch((err) => console.error(err));
     },
   });
@@ -463,7 +494,12 @@ window.addEventListener("popstate", () => {
         ensurePlayersLoaded(),
         ensureCalendarLoaded(),
       ])
-    : dataController.loadCurrentModeData();
+    : state.activeMode === "encyclopedia"
+      ? Promise.all([
+          ensureHomeProfileLoaded(),
+          ensureEncyclopediaOverviewLoaded(),
+        ])
+      : dataController.loadCurrentModeData();
   Promise.resolve(task)
     .catch((err) => console.error(err))
     .finally(() => {
@@ -490,6 +526,10 @@ if (brandHomeBtn) {
       state.navModes.unshift({ key: "villagers", label: "주민" });
     }
 
+    if (!state.navModes.find((m) => m.key === "encyclopedia")) {
+      state.navModes.push({ key: "encyclopedia", label: "도감" });
+    }
+
     applyViewFromUrlSearch(window.location.search);
     window.__acnhCurrentMode = state.activeMode;
 
@@ -509,6 +549,12 @@ if (brandHomeBtn) {
           commitViewHistory("push");
           return;
         }
+        if (state.activeMode === "encyclopedia") {
+          ensureHomeProfileLoaded().catch((err) => console.error(err));
+          ensureEncyclopediaOverviewLoaded().catch((err) => console.error(err));
+          commitViewHistory("push");
+          return;
+        }
         dataController.loadCurrentModeData().catch((err) => console.error(err));
         commitViewHistory("push");
       },
@@ -521,8 +567,13 @@ if (brandHomeBtn) {
     await ensureHomeSummaryLoaded();
     await ensurePlayersLoaded();
     await ensureCalendarLoaded();
+    if (state.activeMode === "encyclopedia") {
+      await ensureEncyclopediaOverviewLoaded();
+    }
     if (state.activeMode !== "home") {
-      await dataController.loadCurrentModeData();
+      if (state.activeMode !== "encyclopedia") {
+        await dataController.loadCurrentModeData();
+      }
     }
     commitViewHistory("replace");
     updateScrollTopButton();

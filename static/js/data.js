@@ -996,13 +996,16 @@ export function createDataController({
       String(catalogSortOrderSelect.value || "asc")
     );
 
-    const targetPage = append
-      ? Math.max(1, Number(state.catalogLoadedPages || 1)) + 1
-      : preserveVisible
-        ? Math.max(1, Number(state.catalogLoadedPages || 1))
-        : 1;
-    const start = append ? (targetPage - 1) * state.catalogPageSize : 0;
-    const end = targetPage * state.catalogPageSize;
+    const showFullList = ["bugs", "fish", "sea", "fossils", "art"].includes(catalogType);
+    const targetPage = showFullList
+      ? 1
+      : append
+        ? Math.max(1, Number(state.catalogLoadedPages || 1)) + 1
+        : preserveVisible
+          ? Math.max(1, Number(state.catalogLoadedPages || 1))
+          : 1;
+    const start = showFullList ? 0 : append ? (targetPage - 1) * state.catalogPageSize : 0;
+    const end = showFullList ? filtered.length : targetPage * state.catalogPageSize;
     const items = filtered.slice(start, end);
     state.catalogPage = targetPage;
     state.catalogLoadedPages = targetPage;
@@ -1023,7 +1026,7 @@ export function createDataController({
       {
         append,
         totalCount: filtered.length,
-        hasMore: end < filtered.length,
+        hasMore: !showFullList && end < filtered.length,
       },
       {
         onSyncDetailNav: safeSyncDetailNav,
@@ -1112,6 +1115,7 @@ export function createDataController({
   /** Dispatch loading based on current active mode (villagers/catalog). */
   async function loadCurrentModeData() {
     if (state.activeMode === "home") return;
+    if (state.activeMode === "encyclopedia") return;
     if (state.activeMode === "villagers") {
       await loadVillagers();
       return;

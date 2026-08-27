@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="860" viewBox="0 0 430 860" role="img" aria-labelledby="title desc">
+  <title id="title">ACNH Diary 미술품 도감 목록 화면</title>
+  <desc id="desc">미술품 도감의 breadcrumb 상단 바, 검색과 필터 컨트롤, 조회 숫자를 보여주는 모바일 화면</desc>
+  <defs>
+    <linearGradient id="screen-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF9E8"/>
+      <stop offset="1" stop-color="#F3E8D4"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#70562F" flood-opacity="0.09"/>
+    </filter>
+    <clipPath id="screen-clip"><rect width="430" height="860" rx="34"/></clipPath>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="currentColor"/>
+      <path d="m7.5 12.2 3 3.1 6-7" fill="none" stroke="#FFFDF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-owl" viewBox="0 0 24 24">
+      <path d="M5 10c0-4 3-7 7-7s7 3 7 7v7.5c0 2-1.5 3.5-3.5 3.5h-7C6.5 21 5 19.5 5 17.5Z" fill="currentColor"/>
+      <circle cx="9.2" cy="10.5" r="2.2" fill="#FFFDF7"/>
+      <circle cx="14.8" cy="10.5" r="2.2" fill="#FFFDF7"/>
+      <path d="m10.5 14 1.5 1.6 1.5-1.6Z" fill="#FFFDF7"/>
+    </symbol>
+    <symbol id="item-art" viewBox="0 0 48 48">
+      <rect x="10" y="7" width="28" height="34" rx="3" fill="currentColor"/>
+      <circle cx="24" cy="21" r="8" fill="#FFFDF7" opacity=".8"/>
+      <path d="M14 36h20" stroke="#FFFDF7" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+
+  <g id="Screen/Encyclopedia/Art" clip-path="url(#screen-clip)" font-family="Inter, Noto Sans KR, sans-serif">
+    <rect width="430" height="860" rx="34" fill="url(#screen-bg)"/>
+    <circle cx="370" cy="80" r="116" fill="#FFF0C9" fill-opacity=".8"/>
+
+    <g id="Header" transform="translate(24 20)">
+      <g role="button" tabindex="0">
+        <title>도감 홈으로 돌아가기</title>
+        <rect width="40" height="34" rx="17" fill="#FFFDF7" stroke="#EAD9B8"/>
+        <path d="M24 11 16 17l8 6" fill="none" stroke="#6D4B25" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <text x="54" y="22" fill="#8A735A" font-size="12" font-weight="900">도감</text>
+      <path d="m87 13 5 5-5 5" fill="none" stroke="#B8A284" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="104" y="2" width="74" height="30" rx="15" fill="#FFF0C9" stroke="#E0CDAA"/>
+      <text x="141" y="22" text-anchor="middle" fill="#8A641C" font-size="12" font-weight="900">미술품</text>
+      <g id="HamburgerMenu" transform="translate(342 0)" role="button" tabindex="0">
+        <title>전체 메뉴 열기</title>
+        <rect width="40" height="34" rx="17" fill="#FFFDF7" stroke="#EAD9B8"/>
+        <path d="M12 11h16M12 17h16M12 23h16" fill="none" stroke="#6D4B25" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <g id="SearchAndFilters" transform="translate(22 76)" filter="url(#soft-shadow)">
+      <rect width="386" height="146" rx="22" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <g transform="translate(12 12)">
+        <rect width="362" height="38" rx="19" fill="#FFFFFF" stroke="#EAD9B8"/>
+        <circle cx="24" cy="19" r="7" fill="none" stroke="#AA8E6C" stroke-width="2"/>
+        <path d="M29 24l5 5" stroke="#AA8E6C" stroke-width="2" stroke-linecap="round"/>
+        <text x="48" y="25" fill="#B79D7A" font-size="12.5" font-weight="800">미술품 이름 검색</text>
+      </g>
+      <g transform="translate(12 62)" font-size="10.5" font-weight="900">
+        <text x="0" y="19" fill="#A08A70">필터</text>
+        <g transform="translate(42)"><rect width="48" height="26" rx="13" fill="#FFF0C9" stroke="#E0CDAA"/><text x="24" y="18" text-anchor="middle" fill="#8A641C">전체</text></g>
+        <g transform="translate(96)"><rect width="52" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="26" y="18" text-anchor="middle" fill="#6D4B25">그림</text></g>
+        <g transform="translate(154)"><rect width="52" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="26" y="18" text-anchor="middle" fill="#6D4B25">조각</text></g>
+        <g transform="translate(212)"><rect width="68" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="34" y="18" text-anchor="middle" fill="#6D4B25">진품</text></g>
+        <g transform="translate(286)"><rect width="68" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="34" y="18" text-anchor="middle" fill="#6D4B25">가품</text></g>
+      </g>
+      <g transform="translate(12 100)" font-size="10.5" font-weight="900">
+        <text x="0" y="20" fill="#A08A70">정렬</text>
+        <g transform="translate(42)"><rect width="104" height="30" rx="15" fill="#FFF8EA" stroke="#D8C9AA"/><text x="44" y="20" text-anchor="middle" fill="#6D4B25">이름순</text><path d="m86 12 5 5 5-5" fill="none" stroke="#8A735A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <text x="164" y="20" fill="#A08A70">상태 변경</text>
+        <g transform="translate(222)"><rect width="66" height="30" rx="15" fill="#FFF0C9" stroke="#E0CDAA"/><text x="33" y="20" text-anchor="middle" fill="#8A641C">보유</text></g>
+        <g transform="translate(296)"><rect width="66" height="30" rx="15" fill="#DDF4E0" stroke="#B8D7C2"/><text x="33" y="20" text-anchor="middle" fill="#347043">기증</text></g>
+      </g>
+    </g>
+
+    <g id="ArtListPanel" transform="translate(22 240)" filter="url(#soft-shadow)">
+      <rect width="386" height="514" rx="22" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <text x="324" y="28" fill="#8A735A" font-size="11" font-weight="900">20 / 43</text>
+
+      <g id="ArtGrid" transform="translate(14 24)" font-size="10.5" font-weight="900">
+        <g id="ArtCard/FamousPainting" role="button" tabindex="0">
+          <rect width="172" height="112" rx="14" fill="#FFFAF5" stroke="#EAD9B8"/>
+          <rect x="12" y="12" width="58" height="72" rx="10" fill="#FFF0C9"/>
+          <use href="#item-art" x="17" y="24" width="48" height="48" color="#A58666"/>
+          <text x="84" y="29" fill="#3E2E1F" font-size="13">유명한 명화</text>
+          <use href="#icon-check" x="132" y="82" width="16" height="16" color="#D39C25"/>
+          <use href="#icon-owl" x="150" y="82" width="16" height="16" color="#D39C25"/>
+        </g>
+        <g id="ArtCard/AcademicPainting" transform="translate(186 0)" role="button" tabindex="0">
+          <rect width="172" height="112" rx="14" fill="#FFFAF5" stroke="#EAD9B8"/>
+          <rect x="12" y="12" width="58" height="72" rx="10" fill="#FFF0C9"/>
+          <use href="#item-art" x="17" y="24" width="48" height="48" color="#D6B184"/>
+          <text x="84" y="29" fill="#3E2E1F" font-size="13">아카데믹한 명화</text>
+          <use href="#icon-check" x="132" y="82" width="16" height="16" color="#D39C25"/>
+          <use href="#icon-owl" x="150" y="82" width="16" height="16" color="#C8B89F"/>
+        </g>
+        <g id="ArtCard/AncientStatue" transform="translate(0 128)" role="button" tabindex="0">
+          <rect width="172" height="112" rx="14" fill="#FFFAF5" stroke="#EAD9B8"/>
+          <rect x="12" y="12" width="58" height="72" rx="10" fill="#FFF0C9"/>
+          <use href="#item-art" x="17" y="24" width="48" height="48" color="#7F8A91"/>
+          <text x="84" y="29" fill="#3E2E1F" font-size="13">태고의 조각</text>
+          <use href="#icon-check" x="132" y="82" width="16" height="16" color="#C8B89F"/>
+          <use href="#icon-owl" x="150" y="82" width="16" height="16" color="#C8B89F"/>
+        </g>
+        <g id="ArtCard/CalmPainting" transform="translate(186 128)" role="button" tabindex="0">
+          <rect width="172" height="112" rx="14" fill="#FFFAF5" stroke="#EAD9B8"/>
+          <rect x="12" y="12" width="58" height="72" rx="10" fill="#FFF0C9"/>
+          <use href="#item-art" x="17" y="24" width="48" height="48" color="#565656" opacity=".42"/>
+          <text x="84" y="29" fill="#8A735A" font-size="13">평온한 명화</text>
+          <use href="#icon-check" x="132" y="82" width="16" height="16" color="#C8B89F"/>
+          <use href="#icon-owl" x="150" y="82" width="16" height="16" color="#C8B89F"/>
+        </g>
+        <g id="ArtCard/BeautifulStatue" transform="translate(0 256)" role="button" tabindex="0">
+          <rect width="172" height="112" rx="14" fill="#FFFAF5" stroke="#EAD9B8"/>
+          <rect x="12" y="12" width="58" height="72" rx="10" fill="#FFF0C9"/>
+          <use href="#item-art" x="17" y="24" width="48" height="48" color="#CDA366"/>
+          <text x="84" y="29" fill="#3E2E1F" font-size="13">아름다운 조각</text>
+          <use href="#icon-check" x="132" y="82" width="16" height="16" color="#D39C25"/>
+          <use href="#icon-owl" x="150" y="82" width="16" height="16" color="#D39C25"/>
+        </g>
+        <g id="ArtCard/CommonPainting" transform="translate(186 256)" role="button" tabindex="0">
+          <rect width="172" height="112" rx="14" fill="#FFFAF5" stroke="#EAD9B8"/>
+          <rect x="12" y="12" width="58" height="72" rx="10" fill="#FFF0C9"/>
+          <use href="#item-art" x="17" y="24" width="48" height="48" color="#A88C65"/>
+          <text x="84" y="29" fill="#3E2E1F" font-size="13">평범한 명화</text>
+          <use href="#icon-check" x="132" y="82" width="16" height="16" color="#D39C25"/>
+          <use href="#icon-owl" x="150" y="82" width="16" height="16" color="#C8B89F"/>
+        </g>
+      </g>
+    </g>
+
+    <g id="BottomNavigation" transform="translate(22 772)" font-size="10" font-weight="900" text-anchor="middle">
+      <rect width="386" height="64" rx="24" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <text x="39" y="39" fill="#8A735A">오늘</text>
+      <text x="116" y="39" fill="#8A735A">주민</text>
+      <circle cx="193" cy="31" r="22" fill="#FFF0C9"/>
+      <text x="193" y="39" fill="#8A641C">도감</text>
+      <text x="270" y="39" fill="#8A735A">카탈로그</text>
+      <text x="347" y="39" fill="#8A735A">공략</text>
+    </g>
+  </g>
+</svg>

@@ -37,6 +37,7 @@ def create_meta_router(
     home_handler: Callable[[], FileResponse],
     nav_handler: Callable[[], dict[str, Any]],
     villager_meta_handler: Callable[[], dict[str, Any]],
+    encyclopedia_monthly_targets_handler: Callable[[int], dict[str, Any]],
     islands_handler: Callable[[], list[dict[str, Any]]],
     create_island_handler: Callable[[str], dict[str, Any]],
     delete_island_handler: Callable[[int], dict[str, Any]],
@@ -69,6 +70,10 @@ def create_meta_router(
     @router.get("/api/meta")
     def get_villager_meta() -> dict[str, Any]:
         return villager_meta_handler()
+
+    @router.get("/api/encyclopedia/monthly-targets")
+    def get_encyclopedia_monthly_targets(x_island_id: str | None = Header(default=None)) -> dict[str, Any]:
+        return encyclopedia_monthly_targets_handler(_resolve_island_id(x_island_id))
 
     @router.get("/api/islands", response_model=list[IslandOut])
     def get_islands() -> list[dict[str, Any]]:

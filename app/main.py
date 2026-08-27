@@ -242,6 +242,7 @@ app.include_router(
         home_handler=handlers.meta.home,
         nav_handler=handlers.meta.get_nav,
         villager_meta_handler=handlers.meta.get_villager_meta,
+        encyclopedia_monthly_targets_handler=handlers.meta.get_encyclopedia_monthly_targets,
         islands_handler=handlers.meta.get_islands,
         create_island_handler=handlers.meta.create_island,
         delete_island_handler=handlers.meta.delete_island,

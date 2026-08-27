@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="860" viewBox="0 0 430 860" role="img" aria-labelledby="title desc">
+  <title id="title">ACNH Diary 곤충 도감 목록 화면</title>
+  <desc id="desc">곤충 도감의 breadcrumb 상단 바, 필터 컨트롤, 그리드 상단 검색창을 보여주는 모바일 화면</desc>
+  <defs>
+    <linearGradient id="screen-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9E8"/><stop offset="1" stop-color="#F3E8D4"/></linearGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#70562F" flood-opacity="0.09"/></filter>
+    <clipPath id="screen-clip"><rect width="430" height="860" rx="34"/></clipPath>
+    <symbol id="icon-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="m7.5 12.2 3 3.1 6-7" fill="none" stroke="#FFFDF7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-owl" viewBox="0 0 24 24"><path d="M5 10c0-4 3-7 7-7s7 3 7 7v7.5c0 2-1.5 3.5-3.5 3.5h-7C6.5 21 5 19.5 5 17.5Z" fill="currentColor"/><circle cx="9.2" cy="10.5" r="2.2" fill="#FFFDF7"/><circle cx="14.8" cy="10.5" r="2.2" fill="#FFFDF7"/><path d="m10.5 14 1.5 1.6 1.5-1.6Z" fill="#FFFDF7"/></symbol>
+    <symbol id="bug-butterfly" viewBox="0 0 48 48"><path d="M22 24C12 6 3 10 6 24c2.3 10.2 12 7.8 16 0Z" fill="currentColor"/><path d="M26 24C36 6 45 10 42 24c-2.3 10.2-12 7.8-16 0Z" fill="currentColor"/><ellipse cx="24" cy="25" rx="2.5" ry="9" fill="#3E2E1F"/><path d="M22 16c-4-4-7-5-10-4M26 16c4-4 7-5 10-4" fill="none" stroke="#3E2E1F" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="bug-beetle" viewBox="0 0 48 48"><ellipse cx="24" cy="25" rx="11" ry="14" fill="currentColor"/><path d="M16 14c0-5 16-5 16 0M16 25h16M12 20 6 16M36 20l6-4M12 29H6M36 29h6M15 36l-5 5M33 36l5 5" stroke="#3E2E1F" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+
+  <g id="Screen/Encyclopedia/Bugs" clip-path="url(#screen-clip)" font-family="Inter, Noto Sans KR, sans-serif">
+    <rect width="430" height="860" rx="34" fill="url(#screen-bg)"/>
+    <circle cx="370" cy="80" r="116" fill="#FFE7E4" fill-opacity=".78"/>
+
+    <g id="Header" transform="translate(24 20)">
+      <g id="BackButton" role="button" tabindex="0">
+        <title>도감 홈으로 돌아가기</title>
+        <rect width="40" height="34" rx="17" fill="#FFFDF7" stroke="#EAD9B8"/>
+        <path d="M24 11 16 17l8 6" fill="none" stroke="#6D4B25" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <text x="54" y="22" fill="#8A735A" font-size="12" font-weight="900">도감</text>
+      <path d="m87 13 5 5-5 5" fill="none" stroke="#B8A284" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="104" y="2" width="62" height="30" rx="15" fill="#E8F8EF" stroke="#B8D7C2"/>
+      <text x="135" y="22" text-anchor="middle" fill="#2F7D4C" font-size="12" font-weight="900">곤충</text>
+      <g id="HamburgerMenu" transform="translate(342 0)" role="button" tabindex="0">
+        <title>전체 메뉴 열기</title>
+        <rect width="40" height="34" rx="17" fill="#FFFDF7" stroke="#EAD9B8"/>
+        <path d="M12 11h16M12 17h16M12 23h16" fill="none" stroke="#6D4B25" stroke-width="2" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <g id="SearchAndFilters" transform="translate(22 76)" filter="url(#soft-shadow)">
+      <rect width="386" height="100" rx="22" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <g id="FilterChips" transform="translate(12 14)" font-size="10.5" font-weight="900">
+        <text x="0" y="19" fill="#A08A70">필터</text>
+        <g transform="translate(42)"><rect width="48" height="26" rx="13" fill="#E8F8EF" stroke="#B8D7C2"/><text x="24" y="18" text-anchor="middle" fill="#2F7D4C">전체</text></g>
+        <g transform="translate(96)"><rect width="62" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="31" y="18" text-anchor="middle" fill="#6D4B25">채집</text></g>
+        <g transform="translate(164)"><rect width="62" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="31" y="18" text-anchor="middle" fill="#6D4B25">미채집</text></g>
+        <g transform="translate(232)"><rect width="62" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="31" y="18" text-anchor="middle" fill="#6D4B25">기증</text></g>
+        <g transform="translate(300)"><rect width="62" height="26" rx="13" fill="#FFFFFF" stroke="#EAD9B8"/><text x="31" y="18" text-anchor="middle" fill="#6D4B25">미기증</text></g>
+      </g>
+      <g id="SortAndBulk" transform="translate(12 58)" font-size="10.5" font-weight="900">
+        <text x="0" y="20" fill="#A08A70">정렬</text>
+        <g transform="translate(42)"><rect width="104" height="30" rx="15" fill="#FFF8EA" stroke="#D8C9AA"/><text x="44" y="20" text-anchor="middle" fill="#6D4B25">번호순</text><path d="m86 12 5 5 5-5" fill="none" stroke="#8A735A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <text x="164" y="20" fill="#A08A70">상태 변경</text>
+        <g transform="translate(222)"><rect width="66" height="30" rx="15" fill="#E8F8EF" stroke="#B8D7C2"/><text x="33" y="20" text-anchor="middle" fill="#2F7D4C">채집</text></g>
+        <g transform="translate(296)"><rect width="66" height="30" rx="15" fill="#FFF0C9" stroke="#E0CDAA"/><text x="33" y="20" text-anchor="middle" fill="#8A641C">기증</text></g>
+      </g>
+    </g>
+
+    <g id="BugGridPanel" transform="translate(22 192)" filter="url(#soft-shadow)">
+      <rect width="386" height="562" rx="22" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <g id="SearchField" transform="translate(12 14)">
+        <rect width="274" height="38" rx="19" fill="#FFFFFF" stroke="#EAD9B8"/>
+        <circle cx="24" cy="19" r="7" fill="none" stroke="#AA8E6C" stroke-width="2"/>
+        <path d="M29 24l5 5" stroke="#AA8E6C" stroke-width="2" stroke-linecap="round"/>
+        <text x="48" y="25" fill="#B79D7A" font-size="12.5" font-weight="800">곤충 이름 검색</text>
+      </g>
+      <text x="322" y="39" fill="#8A735A" font-size="11" font-weight="900">35 / 80</text>
+
+      <g id="BugGrid" transform="translate(12 68)" font-size="9.5" font-weight="900" text-anchor="middle">
+        <g id="BugCard/01" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#F2F0DD"/>
+          <text x="33" y="86" fill="#3E2E1F">배추흰</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#D39C25"/></g>
+        </g>
+        <g id="BugCard/02" transform="translate(74)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#F0D85B"/>
+          <text x="33" y="86" fill="#3E2E1F">노랑나비</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+        <g id="BugCard/03" transform="translate(148)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#F3B24E"/>
+          <text x="33" y="86" fill="#3E2E1F">호랑나비</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#C8B89F"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+        <g id="BugCard/04" transform="translate(222)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#565656" opacity=".42"/>
+          <text x="33" y="86" fill="#8A735A">제비나비</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#C8B89F"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+        <g id="BugCard/05" transform="translate(296)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#63B879"/>
+          <text x="33" y="86" fill="#3E2E1F">청띠제비</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#D39C25"/></g>
+        </g>
+
+        <g id="BugCard/06" transform="translate(0 118)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#FFFFFF"/>
+          <text x="33" y="86" fill="#3E2E1F">왕얼룩</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+        <g id="BugCard/07" transform="translate(74 118)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#5B5B93"/>
+          <text x="33" y="86" fill="#3E2E1F">왕오색</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#D39C25"/></g>
+        </g>
+        <g id="BugCard/08" transform="translate(148 118)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#C97637"/>
+          <text x="33" y="86" fill="#3E2E1F">왕나비</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#D39C25"/></g>
+        </g>
+        <g id="BugCard/09" transform="translate(222 118)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#517AD3"/>
+          <text x="33" y="86" fill="#3E2E1F">몰포나비</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#C8B89F"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+        <g id="BugCard/10" transform="translate(296 118)" role="button" tabindex="0">
+          <rect width="66" height="102" rx="12" fill="#FFFAF5" stroke="#EAD9B8"/>
+          
+          <use href="#bug-butterfly" x="9" y="24" width="48" height="48" color="#C84141"/>
+          <text x="33" y="86" fill="#3E2E1F">아그리아스</text>
+          <g transform="translate(10 6)"><use href="#icon-check" x="34" y="0" width="14" height="14" color="#63B879"/><use href="#icon-owl" x="48" y="0" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+</g>
+    </g>
+
+    <g id="BottomNavigation" transform="translate(22 772)" font-size="10" font-weight="900" text-anchor="middle">
+      <rect width="386" height="64" rx="24" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <text x="39" y="39" fill="#8A735A">오늘</text><text x="116" y="39" fill="#8A735A">주민</text>
+      <circle cx="193" cy="31" r="22" fill="#E8F8EF"/><text x="193" y="39" fill="#2F7D4C">도감</text>
+      <text x="270" y="39" fill="#8A735A">카탈로그</text><text x="347" y="39" fill="#8A735A">공략</text>
+    </g>
+  </g>
+</svg>

@@ -1,8 +1,20 @@
 # Figma 가져오기
 
-`residents-list.svg`와 `resident-detail.svg`를 Figma 캔버스에 드래그하거나 `File > Place image`로 선택합니다.
+SVG 파일을 Figma 캔버스에 드래그하거나 `File > Place image`로 선택합니다.
 
-- 각 파일의 크기는 430 × 860px입니다.
+- `residents-list.svg`: 주민 목록 화면
+- `resident-detail.svg`: 주민 상세 스크롤 화면
+- `encyclopedia-home.svg`: 도감 홈 화면
+- `encyclopedia-bugs.svg`: 곤충 도감 목록 화면
+- `encyclopedia-bug-detail.svg`: 곤충 상세 스크롤 화면
+- `encyclopedia-fish.svg`: 물고기 도감 목록 화면
+- `encyclopedia-fish-detail.svg`: 물고기 상세 스크롤 화면
+- `encyclopedia-sea.svg`: 해산물 도감 목록 화면
+- `encyclopedia-sea-detail.svg`: 해산물 상세 스크롤 화면
+- `encyclopedia-fossils.svg`: 화석 도감 목록 화면
+- `encyclopedia-fossil-detail.svg`: 화석 상세 스크롤 화면
+- `encyclopedia-art.svg`: 미술품 도감 목록 화면
+- `encyclopedia-art-detail.svg`: 미술품 상세 스크롤 화면
 - 외부 이미지나 네트워크 폰트에 의존하지 않습니다.
 - Figma로 가져온 뒤 그룹을 풀어 색상, 텍스트, 도형을 편집할 수 있습니다.
 - 한글 글꼴이 대체되면 텍스트 레이어를 선택하고 `Inter` 또는 설치된 한글 UI 글꼴로 변경합니다.

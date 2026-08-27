@@ -274,6 +274,34 @@
         </article>
       </section>
 
+      <section id="encyclopediaPanel" class="hidden">
+        <section class="encyclopedia-hero">
+          <div>
+            <p class="section-kicker">도감</p>
+            <h2>이번 달에 만날 생물</h2>
+          </div>
+          <span id="encyclopediaMonthLabel">-</span>
+        </section>
+
+        <button id="monthlyTargetsCard" class="monthly-target-card" type="button">
+          <span>
+            <strong>이번 달 새로 잡을 수 있어요</strong>
+            <small id="monthlyTargetsSummary">이번 달 출현 생물을 확인하는 중이에요.</small>
+          </span>
+          <b aria-hidden="true">›</b>
+        </button>
+
+        <section id="monthlyTargetsList" class="monthly-target-list" aria-live="polite"></section>
+
+        <section class="encyclopedia-shortcuts" aria-label="도감 카테고리">
+          <button type="button" data-mode="bugs">곤충</button>
+          <button type="button" data-mode="fish">물고기</button>
+          <button type="button" data-mode="sea">해산물</button>
+          <button type="button" data-mode="fossils">화석</button>
+          <button type="button" data-mode="art">미술품</button>
+        </section>
+      </section>
+
       <section id="villagerPanel" class="hidden">
         <section class="control-groups">
           <div class="control-group">

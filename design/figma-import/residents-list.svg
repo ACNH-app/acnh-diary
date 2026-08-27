@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="860" viewBox="0 0 430 860" role="img" aria-labelledby="title desc">
+  <title id="title">ACNH Diary 주민 목록 화면</title>
+  <desc id="desc">주민 검색, 필터, 상태 탭, 주민 카드와 하단 내비게이션이 포함된 모바일 화면</desc>
+  <defs>
+    <linearGradient id="screen-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF9E8"/>
+      <stop offset="1" stop-color="#F3E8D4"/>
+    </linearGradient>
+    <radialGradient id="rose-glow" cx="0" cy="0" r="1" gradientTransform="translate(372 84) rotate(90) scale(122)">
+      <stop stop-color="#FFE7E4" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#FFE7E4" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#70562F" flood-opacity="0.09"/>
+    </filter>
+    <symbol id="icon-heart" viewBox="0 0 24 24"><path d="M12 20S4 15.4 4 9.2C4 5 9.4 3.7 12 7.2 14.6 3.7 20 5 20 9.2 20 15.4 12 20 12 20Z" fill="currentColor"/></symbol>
+    <symbol id="icon-house" viewBox="0 0 24 24"><path d="M3.5 11.2 12 4l8.5 7.2V20H15v-5.5H9V20H3.5Z" fill="currentColor"/><path d="M7.5 10.7h9" stroke="#FFFDF7" stroke-width="1.4" opacity=".75"/></symbol>
+    <symbol id="icon-camp" viewBox="0 0 24 24"><path d="m3 20 9-16 9 16Z" fill="currentColor"/><path d="m7.5 20 4.5-8 4.5 8M12 12v8" fill="none" stroke="#FFFDF7" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-box" viewBox="0 0 24 24"><path d="m3.5 7.5 8.5-4 8.5 4-8.5 4Z" fill="currentColor"/><path d="M3.5 7.5V17l8.5 4v-9.5ZM20.5 7.5V17L12 21v-9.5Z" fill="currentColor" opacity=".78"/><path d="M8 5.4 16.5 9" stroke="#FFFDF7" stroke-width="1.2" opacity=".8"/></symbol>
+    <symbol id="icon-plane" viewBox="0 0 24 24"><path d="m21 4-7.1 16-2.6-6.8L4 10.4Z" fill="currentColor"/><path d="m11.3 13.2 4.5-4.1" stroke="#FFFDF7" stroke-width="1.3"/></symbol>
+    <symbol id="icon-photo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="3" fill="currentColor"/><circle cx="9" cy="10" r="2" fill="#FFFDF7"/><path d="m5.5 18 4.5-4 3.2 2.5 2.8-3 3.5 4.5" fill="none" stroke="#FFFDF7" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-grid" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3" fill="currentColor"/><circle cx="17" cy="7" r="3" fill="currentColor"/><circle cx="7" cy="17" r="3" fill="currentColor"/><circle cx="17" cy="17" r="3" fill="currentColor"/></symbol>
+    <clipPath id="screen-clip"><rect width="430" height="860" rx="34"/></clipPath>
+  </defs>
+
+  <g id="Screen/Residents/List" clip-path="url(#screen-clip)">
+    <rect id="Background" width="430" height="860" rx="34" fill="url(#screen-bg)"/>
+    <circle cx="372" cy="84" r="122" fill="url(#rose-glow)"/>
+
+    <g id="HamburgerMenu" transform="translate(370 14)" role="button" tabindex="0">
+      <title>전체 메뉴 열기</title>
+      <rect width="38" height="34" rx="17" fill="#FFFDF7" stroke="#EAD9B8"/>
+      <path d="M12 11h14M12 17h14M12 23h14" fill="none" stroke="#6D4B25" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <g id="CategoryPanelBackground">
+      <rect x="22" y="54" width="386" height="78" rx="22" fill="#FFF4F1" stroke="#EAD9B8"/>
+    </g>
+
+    <g id="SearchAndFiltersPanel">
+      <rect x="22" y="148" width="386" height="112" rx="22" fill="#FFFDF7" fill-opacity="0.92" stroke="#EAD9B8" filter="url(#soft-shadow)"/>
+    </g>
+
+    <g id="SearchField" transform="translate(34 160)" font-family="Inter, Noto Sans KR, sans-serif">
+      <rect width="362" height="46" rx="23" fill="#FFFFFF" stroke="#EAD9B8"/>
+      <circle cx="25" cy="23" r="7" fill="none" stroke="#AA8E6C" stroke-width="2"/>
+      <path d="M30 28l5 5" fill="none" stroke="#AA8E6C" stroke-width="2" stroke-linecap="round"/>
+      <text x="48" y="30" fill="#B79D7A" font-size="13">주민 이름, 성격, 종 검색</text>
+    </g>
+
+    <g id="Filters" transform="translate(34 214)" font-family="Inter, Noto Sans KR, sans-serif" font-size="11.5" font-weight="700">
+      <g id="Filter/Personality">
+        <rect width="114" height="34" rx="17" fill="#FFFFFF" stroke="#EAD9B8"/>
+        <text x="14" y="24" fill="#8A735A">모든 성격</text>
+        <path d="M94 14l5 5 5-5" fill="none" stroke="#8A735A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <g id="Filter/Species" transform="translate(124 0)">
+        <rect width="114" height="34" rx="17" fill="#FFFFFF" stroke="#EAD9B8"/>
+        <text x="14" y="24" fill="#8A735A">모든 종</text>
+        <path d="M94 14l5 5 5-5" fill="none" stroke="#8A735A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <g id="Filter/Subtype" transform="translate(248 0)">
+        <rect width="114" height="34" rx="17" fill="#FFFFFF" stroke="#EAD9B8"/>
+        <text x="14" y="24" fill="#8A735A">모든 타입</text>
+        <path d="M94 14l5 5 5-5" fill="none" stroke="#8A735A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <g id="CategoryNavigation/SingleRow" transform="translate(29 60)" font-family="Inter, Noto Sans KR, sans-serif" font-size="10" font-weight="800" text-anchor="middle">
+      <g id="Category/All/Active" role="button" tabindex="0">
+        <title>전체 주민 보기</title><rect width="58" height="66" rx="16" fill="#FFFFFF"/>
+        <use href="#icon-grid" x="19" y="8" width="20" height="20" color="#63B879"/><text x="29" y="47" fill="#39724A">전체</text><rect x="17" y="57" width="24" height="3" rx="1.5" fill="#63B879"/>
+      </g>
+      <g id="Category/Wishlist" transform="translate(63)" role="button" tabindex="0">
+        <title>위시 주민 보기</title><use href="#icon-heart" x="19" y="8" width="20" height="20" color="#F04B76"/><text x="29" y="47" fill="#6D6154">위시</text>
+      </g>
+      <g id="Category/Island" transform="translate(126)" role="button" tabindex="0">
+        <title>섬 주민 보기</title><use href="#icon-house" x="19" y="8" width="20" height="20" color="#63B879"/><text x="29" y="47" fill="#6D6154">섬 주민</text>
+      </g>
+      <g id="Category/Camping" transform="translate(189)" role="button" tabindex="0">
+        <title>캠핑장 방문 주민 보기</title><use href="#icon-camp" x="19" y="8" width="20" height="20" color="#7896D8"/><text x="29" y="47" fill="#6D6154" font-size="8.5">캠핑장 방문</text>
+      </g>
+      <g id="Category/Former" transform="translate(252)" role="button" tabindex="0">
+        <title>이사 주민 보기</title><use href="#icon-box" x="19" y="8" width="20" height="20" color="#B9906A"/><text x="29" y="47" fill="#6D6154">이사</text>
+      </g>
+      <g id="Category/Photo" transform="translate(315)" role="button" tabindex="0">
+        <title>액자를 선물받은 주민 보기</title><use href="#icon-photo" x="19" y="8" width="20" height="20" color="#D39C25"/><text x="29" y="47" fill="#6D6154">액자수집</text>
+      </g>
+    </g>
+
+    <g id="ResidentList" transform="translate(22 282)" font-family="Inter, Noto Sans KR, sans-serif">
+      <rect width="386" height="430" rx="22" fill="#FFFDF7" fill-opacity="0.94" stroke="#EAD9B8" filter="url(#soft-shadow)"/>
+
+      <g id="ResidentRow/Marshal" transform="translate(10 12)">
+        <rect width="366" height="68" rx="34" fill="#FFFAF5"/>
+        <g id="Avatar/Marshal" transform="translate(8 9)">
+          <circle cx="25" cy="25" r="24" fill="#DCEFFF"/>
+          <path d="M8 18C5 9 10 3 18 8M42 18c3-9-2-15-10-10" fill="#EFE8DE" stroke="#B6A18A" stroke-width="1.2"/>
+          <ellipse cx="25" cy="26" rx="17" ry="16" fill="#F5EFE8"/>
+          <circle cx="19" cy="23" r="2" fill="#3D3936"/><circle cx="31" cy="23" r="2" fill="#3D3936"/>
+          <path d="M22 30q3 3 6 0" fill="none" stroke="#8A735A" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M12 17q13-10 26 0" fill="#D8C8B8"/>
+        </g>
+        <text x="70" y="24" fill="#6D4B25" font-size="15" font-weight="800">쭈니</text>
+        <text x="70" y="41" fill="#8A735A" font-size="10.5">느끼함 · 다람쥐 · A</text>
+        <text x="70" y="57" fill="#B37B62" font-size="10.5" font-weight="700">🎂 9월 29일</text>
+        <g id="StatusButtons/Marshal" transform="translate(226 20)">
+          <g id="Wishlist/On" role="button" tabindex="0"><title>위시 상태 해제</title><rect width="24" height="28" rx="12" fill="#FFE7EE"/><use href="#icon-heart" x="5" y="7" width="14" height="14" color="#F04B76"/></g>
+          <g id="Island/Off" transform="translate(28)" role="button" tabindex="0"><title>우리 섬 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-house" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Camping/Off" transform="translate(56)" role="button" tabindex="0"><title>캠핑장 방문 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-camp" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Former/Off" transform="translate(84)" role="button" tabindex="0"><title>이사 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-box" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Photo/Off" transform="translate(112)" role="button" tabindex="0"><title>액자 수집 상태 등록</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-photo" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+      </g>
+
+      <g id="ResidentRow/Apple" transform="translate(10 88)">
+        <rect width="366" height="68" rx="34" fill="#FFFAF5"/>
+        <g id="Avatar/Apple" transform="translate(8 9)">
+          <circle cx="25" cy="25" r="24" fill="#FFE2DC"/>
+          <circle cx="13" cy="13" r="9" fill="#E94D61"/><circle cx="37" cy="13" r="9" fill="#E94D61"/>
+          <ellipse cx="25" cy="27" rx="18" ry="17" fill="#F05A6A"/>
+          <ellipse cx="25" cy="31" rx="11" ry="8" fill="#FFE8D8"/>
+          <circle cx="19" cy="24" r="2" fill="#3D3936"/><circle cx="31" cy="24" r="2" fill="#3D3936"/>
+          <path d="M23 31q2 2 4 0" fill="none" stroke="#8A4B4A" stroke-width="1.4" stroke-linecap="round"/>
+        </g>
+        <text x="70" y="24" fill="#6D4B25" font-size="15" font-weight="800">애플</text>
+        <text x="70" y="41" fill="#8A735A" font-size="10.5">아이돌 · 햄스터 · A</text>
+        <text x="70" y="57" fill="#B37B62" font-size="10.5" font-weight="700">🎂 9월 24일</text>
+        <g id="StatusButtons/Apple" transform="translate(226 20)">
+          <g id="Wishlist/On" role="button" tabindex="0"><title>위시 상태 해제</title><rect width="24" height="28" rx="12" fill="#FFE7EE"/><use href="#icon-heart" x="5" y="7" width="14" height="14" color="#F04B76"/></g>
+          <g id="Island/On" transform="translate(28)" role="button" tabindex="0"><title>우리 섬 주민 상태 해제</title><rect width="24" height="28" rx="12" fill="#E4F4E8"/><use href="#icon-house" x="5" y="7" width="14" height="14" color="#63B879"/></g>
+          <g id="Camping/Off" transform="translate(56)" role="button" tabindex="0"><title>캠핑장 방문 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-camp" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Former/Off" transform="translate(84)" role="button" tabindex="0"><title>이사 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-box" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Photo/On" transform="translate(112)" role="button" tabindex="0"><title>액자 수집 상태 해제</title><rect width="24" height="28" rx="12" fill="#FFF0C9"/><use href="#icon-photo" x="5" y="7" width="14" height="14" color="#D39C25"/></g>
+        </g>
+      </g>
+
+      <g id="ResidentRow/Flurry" transform="translate(10 164)">
+        <rect width="366" height="68" rx="34" fill="#FFFAF5"/>
+        <g id="Avatar/Flurry" transform="translate(8 9)">
+          <circle cx="25" cy="25" r="24" fill="#EFE1FF"/>
+          <circle cx="13" cy="13" r="9" fill="#FFFFFF" stroke="#DCCEEA"/><circle cx="37" cy="13" r="9" fill="#FFFFFF" stroke="#DCCEEA"/>
+          <ellipse cx="25" cy="27" rx="18" ry="17" fill="#FFFFFF" stroke="#E4D8EC"/>
+          <ellipse cx="25" cy="31" rx="10" ry="7" fill="#F7D9E0"/>
+          <circle cx="19" cy="24" r="2" fill="#515157"/><circle cx="31" cy="24" r="2" fill="#515157"/>
+          <path d="M23 31q2 2 4 0" fill="none" stroke="#9C6F76" stroke-width="1.4" stroke-linecap="round"/>
+        </g>
+        <text x="70" y="24" fill="#6D4B25" font-size="15" font-weight="800">뽀야미</text>
+        <text x="70" y="41" fill="#8A735A" font-size="10.5">친절함 · 햄스터 · A</text>
+        <text x="70" y="57" fill="#B37B62" font-size="10.5" font-weight="700">🎂 1월 30일</text>
+        <g id="StatusButtons/Flurry" transform="translate(226 20)">
+          <g id="Wishlist/On" role="button" tabindex="0"><title>위시 상태 해제</title><rect width="24" height="28" rx="12" fill="#FFE7EE"/><use href="#icon-heart" x="5" y="7" width="14" height="14" color="#F04B76"/></g>
+          <g id="Island/On" transform="translate(28)" role="button" tabindex="0"><title>우리 섬 주민 상태 해제</title><rect width="24" height="28" rx="12" fill="#E4F4E8"/><use href="#icon-house" x="5" y="7" width="14" height="14" color="#63B879"/></g>
+          <g id="Camping/Off" transform="translate(56)" role="button" tabindex="0"><title>캠핑장 방문 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-camp" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Former/Off" transform="translate(84)" role="button" tabindex="0"><title>이사 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-box" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Photo/Off" transform="translate(112)" role="button" tabindex="0"><title>액자 수집 상태 등록</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-photo" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+      </g>
+
+      <g id="ResidentRow/Judy" transform="translate(10 240)">
+        <rect width="366" height="68" rx="34" fill="#FFFAF5"/>
+        <g id="Avatar/Judy" transform="translate(8 9)">
+          <circle cx="25" cy="25" r="24" fill="#DFF2FF"/>
+          <circle cx="13" cy="14" r="9" fill="#9ED8F6"/><circle cx="37" cy="14" r="9" fill="#C7A7E8"/>
+          <ellipse cx="25" cy="27" rx="18" ry="17" fill="#B7DFF1"/>
+          <circle cx="19" cy="24" r="2" fill="#3F4962"/><circle cx="31" cy="24" r="2" fill="#3F4962"/>
+          <path d="M22 31q3 2 6 0" fill="none" stroke="#6A6888" stroke-width="1.4" stroke-linecap="round"/>
+        </g>
+        <text x="70" y="24" fill="#6D4B25" font-size="15" font-weight="800">미애</text>
+        <text x="70" y="41" fill="#8A735A" font-size="10.5">성숙함 · 아기곰 · B</text>
+        <text x="70" y="57" fill="#B37B62" font-size="10.5" font-weight="700">🎂 3월 10일</text>
+        <g id="StatusButtons/Judy" transform="translate(226 20)">
+          <g id="Wishlist/Off" role="button" tabindex="0"><title>위시 상태 등록</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-heart" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Island/Off" transform="translate(28)" role="button" tabindex="0"><title>우리 섬 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-house" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Camping/On" transform="translate(56)" role="button" tabindex="0"><title>캠핑장 방문 상태 해제</title><rect width="24" height="28" rx="12" fill="#E8EDFC"/><use href="#icon-camp" x="5" y="7" width="14" height="14" color="#7896D8"/></g>
+          <g id="Former/Off" transform="translate(84)" role="button" tabindex="0"><title>이사 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-box" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Photo/Off" transform="translate(112)" role="button" tabindex="0"><title>액자 수집 상태 등록</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-photo" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+      </g>
+
+      <g id="ResidentRow/Sasha" transform="translate(10 316)">
+        <rect width="366" height="68" rx="34" fill="#FFFAF5"/>
+        <g id="Avatar/Sasha" transform="translate(8 9)">
+          <circle cx="25" cy="25" r="24" fill="#DFF5DF"/>
+          <path d="M12 17C4 3 13-2 21 12M38 17C46 3 37-2 29 12" fill="#B9DDF5" stroke="#82B7D8" stroke-width="1.2"/>
+          <ellipse cx="25" cy="28" rx="18" ry="17" fill="#B9DDF5"/>
+          <ellipse cx="25" cy="33" rx="10" ry="7" fill="#F8F3EA"/>
+          <circle cx="19" cy="25" r="2" fill="#3D5261"/><circle cx="31" cy="25" r="2" fill="#3D5261"/>
+          <path d="M23 33q2 2 4 0" fill="none" stroke="#688496" stroke-width="1.4" stroke-linecap="round"/>
+        </g>
+        <text x="70" y="24" fill="#6D4B25" font-size="15" font-weight="800">미첼</text>
+        <text x="70" y="41" fill="#8A735A" font-size="10.5">먹보 · 토끼 · A</text>
+        <text x="70" y="57" fill="#B37B62" font-size="10.5" font-weight="700">🎂 5월 19일</text>
+        <g id="StatusButtons/Sasha" transform="translate(226 20)">
+          <g id="Wishlist/Off" role="button" tabindex="0"><title>위시 상태 등록</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-heart" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Island/Off" transform="translate(28)" role="button" tabindex="0"><title>우리 섬 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-house" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Camping/Off" transform="translate(56)" role="button" tabindex="0"><title>캠핑장 방문 주민으로 변경</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-camp" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+          <g id="Former/On" transform="translate(84)" role="button" tabindex="0"><title>이사 주민 상태 해제</title><rect width="24" height="28" rx="12" fill="#F3E8DC"/><use href="#icon-box" x="5" y="7" width="14" height="14" color="#B9906A"/></g>
+          <g id="Photo/Off" transform="translate(112)" role="button" tabindex="0"><title>액자 수집 상태 등록</title><rect width="24" height="28" rx="12" fill="#FFFDF7" stroke="#EAD9B8"/><use href="#icon-photo" x="5" y="7" width="14" height="14" color="#C8B89F"/></g>
+        </g>
+      </g>
+    </g>
+
+    <g id="BottomNavigation" transform="translate(22 778)" font-family="Inter, Noto Sans KR, sans-serif" font-size="9.5" font-weight="700">
+      <rect width="386" height="62" rx="31" fill="#FFFDF7" fill-opacity="0.94"/>
+      <g id="Nav/Today" transform="translate(7 6)">
+        <rect width="68" height="50" rx="25" fill="transparent"/>
+        <path d="M26 23l8-7 8 7v10H26z" fill="none" stroke="#7F735F" stroke-width="1.8" stroke-linejoin="round"/>
+        <text x="34" y="45" text-anchor="middle" fill="#7F735F">오늘</text>
+      </g>
+      <g id="Nav/Residents/Active" transform="translate(83 6)">
+        <rect width="68" height="50" rx="25" fill="#F6C75A"/>
+        <circle cx="29" cy="21" r="4" fill="none" stroke="#65461F" stroke-width="1.6"/>
+        <circle cx="39" cy="21" r="4" fill="none" stroke="#65461F" stroke-width="1.6"/>
+        <path d="M23 31c1-5 5-7 11-7s10 2 11 7" fill="none" stroke="#65461F" stroke-width="1.6" stroke-linecap="round"/>
+        <text x="34" y="45" text-anchor="middle" fill="#65461F" font-weight="800">주민</text>
+      </g>
+      <g id="Nav/Encyclopedia" transform="translate(159 6)">
+        <rect width="68" height="50" rx="25" fill="transparent"/>
+        <path d="M21 17c5-2 9-1 13 2v15c-4-3-8-4-13-2Zm26 0c-5-2-9-1-13 2v15c4-3 8-4 13-2Z" fill="none" stroke="#7F735F" stroke-width="1.6" stroke-linejoin="round"/>
+        <text x="34" y="45" text-anchor="middle" fill="#7F735F">도감</text>
+      </g>
+      <g id="Nav/Catalog" transform="translate(235 6)">
+        <rect width="68" height="50" rx="25" fill="transparent"/>
+        <rect x="25" y="17" width="7" height="7" rx="1.5" fill="none" stroke="#7F735F" stroke-width="1.5"/><rect x="36" y="17" width="7" height="7" rx="1.5" fill="none" stroke="#7F735F" stroke-width="1.5"/><rect x="25" y="27" width="7" height="7" rx="1.5" fill="none" stroke="#7F735F" stroke-width="1.5"/><rect x="36" y="27" width="7" height="7" rx="1.5" fill="none" stroke="#7F735F" stroke-width="1.5"/>
+        <text x="34" y="45" text-anchor="middle" fill="#7F735F">카탈로그</text>
+      </g>
+      <g id="Nav/Guide" transform="translate(311 6)">
+        <rect width="68" height="50" rx="25" fill="transparent"/>
+        <circle cx="34" cy="25" r="9" fill="none" stroke="#7F735F" stroke-width="1.5"/><path d="m38 20-2.5 7-7 2.5 2.5-7Z" fill="none" stroke="#7F735F" stroke-width="1.5" stroke-linejoin="round"/>
+        <text x="34" y="45" text-anchor="middle" fill="#7F735F">공략</text>
+      </g>
+    </g>
+  </g>
+</svg>
